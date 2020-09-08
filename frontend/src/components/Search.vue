@@ -1,0 +1,95 @@
+<template>
+  <input
+    class="bg-white focus:outline-none focus:shadow-outline border border-gray-300 rounded-lg py-2 px-4 block w-full appearance-none leading-normal"
+    type="email"
+    placeholder="enter screenshot text query"
+    v-model="query"
+  />
+  <p class="my-3 text-gray-500 text-right">
+    {{ response.total_hits }} results found in {{ tookMS }}ms
+  </p>
+  <hr class="my-3" />
+  <div id="photos">
+    <Thumbnail
+      v-for="screenshot in response.hits"
+      :key="screenshot.id"
+      :screenshot="screenshot"
+      class="photo border border-gray-300 rounded-lg"
+    />
+  </div>
+</template>
+
+<script>
+import { ref } from "vue";
+import throttle from "lodash.debounce";
+
+import Thumbnail from "./Thumbnail.vue";
+
+export default {
+  data() {
+    return {
+      query: "",
+      response: {
+        hits: [],
+        total_hits: 0,
+        took: 0,
+      },
+    };
+  },
+  components: {
+    Thumbnail,
+  },
+  watch: {
+    query(query, _) {
+      if (query) this.fetchScreenshots();
+    },
+  },
+  computed: {
+    tookMS() {
+      return Math.round((this.response.took / 100000) * 100) / 100;
+    },
+  },
+  methods: {
+    fetchScreenshots: throttle(async function () {
+      const body = {
+        size: 40,
+        fields: ["blocks.text", "blocks.position", "size.height", "size.width"],
+        highlight: {
+          fields: ["blocks.text"],
+        },
+        query: {
+          term: this.query,
+        },
+      };
+      const response = await fetch("http://localhost:81/search", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+      this.response = await response.json();
+    }, 200),
+  },
+};
+</script>
+
+<style>
+#photos {
+  line-height: 0;
+  column-count: 4;
+  column-gap: 5px;
+}
+
+#photos .photo {
+  width: 100%;
+  height: auto;
+  margin: 5px 0;
+  display: flex;
+  justify-content: center;
+}
+
+/* prettier-ignore */
+@media (max-width: 1200px) { #photos { column-count: 3; } }
+/* prettier-ignore */
+@media (max-width: 1000px) { #photos { column-count: 2; } }
+/* prettier-ignore */
+@media (max-width: 800px)  { #photos { column-count: 1; } }
+</style>
