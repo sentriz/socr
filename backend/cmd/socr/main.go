@@ -63,8 +63,6 @@ func main() {
 	confListenAddr := mustEnv("SOCR_LISTEN_ADDR")
 	confScreenshotsPath := mustEnv("SOCR_SCREENSHOTS_PATH")
 	confIndexPath := mustEnv("SOCR_INDEX_PATH")
-	confFrontendDir := mustEnv("SOCR_FRONTEND_DIR")
-	confFrontendURL := mustEnv("SOCR_FRONTEND_URL")
 	//
 	index, err := getOrCreateIndex(confIndexPath)
 	if err != nil {
@@ -72,8 +70,6 @@ func main() {
 	}
 	ctrl := &controller.Controller{
 		ScreenshotsDir: confScreenshotsPath,
-		FrontendDir:    confFrontendDir,
-		FrontendURL:    confFrontendURL,
 		Index:          index,
 	}
 	//
@@ -86,7 +82,6 @@ func main() {
 	))
 	r.HandleFunc("/api/upload", ctrl.ServeUpload)
 	r.HandleFunc("/api/image/{id}", ctrl.ServeImage)
-	r.HandleFunc("/", ctrl.ServeFrontend)
 
 	bleveHTTP.RegisterIndexName("screenshots", index)
 	r.Handle("/api/search", bleveHTTP.NewSearchHandler("screenshots"))

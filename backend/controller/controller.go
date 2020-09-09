@@ -13,8 +13,6 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"net/http/httputil"
-	"net/url"
 	"path/filepath"
 	"time"
 
@@ -83,8 +81,6 @@ type Block struct {
 
 type Controller struct {
 	ScreenshotsDir string
-	FrontendDir    string
-	FrontendURL    string
 	Index          bleve.Index
 }
 
@@ -190,16 +186,4 @@ func (c *Controller) ServeImage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	filename := fmt.Sprintf("%s.png", vars["id"])
 	http.ServeFile(w, r, filepath.Join(c.ScreenshotsDir, filename))
-}
-
-func (c *Controller) ServeFrontend(w http.ResponseWriter, r *http.Request) {
-	switch {
-	case c.FrontendURL != "":
-		frontendURL, _ := url.Parse(c.FrontendURL)
-		proxy := httputil.NewSingleHostReverseProxy(frontendURL)
-		proxy.ServeHTTP(w, r)
-	case c.FrontendDir != "":
-		files := http.FileServer(http.Dir(c.FrontendDir))
-		files.ServeHTTP(w, r)
-	}
 }
