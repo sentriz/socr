@@ -51,7 +51,7 @@ export default {
   },
   methods: {
     fetchScreenshots: throttle(async function () {
-      const body = {
+      this.response = await api.doSearch({
         size: 40,
         fields: ["blocks.text", "blocks.position", "size.height", "size.width"],
         highlight: {
@@ -60,12 +60,7 @@ export default {
         query: {
           term: this.query,
         },
-      };
-      const response = await fetch("http://localhost:81/search", {
-        method: "POST",
-        body: JSON.stringify(body),
       });
-      this.response = await response.json();
     }, 200),
   },
 };
