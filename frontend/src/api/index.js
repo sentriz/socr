@@ -1,4 +1,6 @@
-const base_url = process.env.API_BASE;
+const baseURL = process.env.SOCR_API_URL;
+
+console.log(baseURL)
 
 export const doSearch = async (body) => {
   const response = await fetch(`${base_url}/search`, {
