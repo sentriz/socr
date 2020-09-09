@@ -13,3 +13,5 @@ ENV SOCR_LISTEN_ADDR :80
 ENV SOCR_SCREENSHOTS_PATH /screenshots
 ENV SOCR_FRONTEND_DIR /frontend
 ENV SOCR_INDEX_PATH /index
+
+CMD ["go", "run", "cmd/socr/main.go"]

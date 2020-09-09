@@ -3,7 +3,7 @@
 FROM golang:1.15-alpine3.12 AS build
 RUN apk add --no-cache ca-certificates
 WORKDIR /src
-COPY . .
+COPY backend/* .
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     CGO_ENABLED=0 GOOS=linux go build -a -installsuffix nocgo -o socr cmd/socr/main.go
@@ -15,4 +15,6 @@ COPY --from=build /src/socr /
 ENV SOCR_LISTEN_ADDR :80
 ENV SOCR_SCREENSHOTS_PATH /screenshots
 ENV SOCR_INDEX_PATH /index
+ENV SOCR_FRONTEND_URL ""
+ENV SOCR_FRONTEND_DIR ""
 ENTRYPOINT ["/socr"]
