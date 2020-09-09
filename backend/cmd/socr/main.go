@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -12,7 +13,6 @@ import (
 	bleveHTTP "github.com/blevesearch/bleve/http"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-
 	"go.senan.xyz/socr/controller"
 )
 
@@ -26,8 +26,12 @@ func mustEnv(key string) string {
 
 func getOrCreateIndex(path string) (bleve.Index, error) {
 	index, err := bleve.Open(path)
-	if !errors.Is(err, bleve.ErrorIndexPathDoesNotExist) {
-		return index, err
+	if err != nil {
+		if !errors.Is(err, bleve.ErrorIndexPathDoesNotExist) {
+			return index, nil
+		} else {
+			return nil, fmt.Errorf("open index: %w", err)
+		}
 	}
 
 	fieldMapNumeric := bleve.NewNumericFieldMapping()
