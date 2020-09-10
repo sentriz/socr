@@ -80,7 +80,7 @@ func ProcessBytes(raw []byte) (*Screenshot, error) {
 		return nil, fmt.Errorf("encode scaled and greyed image: %w", err)
 	}
 
-	scrotBlocks, err := ExtractText(imagePNG.Bytes())
+	scrotBlocks, err := ExtractText(imagePNG.Bytes(), ScaleFactor)
 	if err != nil {
 		return nil, fmt.Errorf("extract image text: %w", err)
 	}

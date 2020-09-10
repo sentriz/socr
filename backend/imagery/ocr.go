@@ -6,7 +6,7 @@ import (
 	"github.com/otiai10/gosseract/v2"
 )
 
-func ExtractText(img []byte) ([]*Block, error) {
+func ExtractText(img []byte, scale int) ([]*Block, error) {
 	client := gosseract.NewClient()
 	defer client.Close()
 	if err := client.SetImageFromBytes(img); err != nil {
@@ -22,8 +22,10 @@ func ExtractText(img []byte) ([]*Block, error) {
 	for _, block := range boxes {
 		blocks = append(blocks, &Block{
 			Position: [...]int{
-				block.Box.Min.X, block.Box.Min.Y,
-				block.Box.Max.X, block.Box.Max.Y,
+				// TODO: divide by scale factor in caller
+				// ExtractText shouldn't care about scaling
+				block.Box.Min.X / scale, block.Box.Min.Y / scale,
+				block.Box.Max.X / scale, block.Box.Max.Y / scale,
 			},
 			Text: block.Word,
 		})
