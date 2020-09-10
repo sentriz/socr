@@ -54,9 +54,14 @@ export default {
     fetchScreenshots: throttle(async function () {
       this.response = await doSearch({
         size: 40,
-        fields: ["blocks.text", "blocks.position", "size.height", "size.width"],
+        fields: [
+          "processed.blocks.text",
+          "processed.blocks.position",
+          "processed.dimensions.height",
+          "processed.dimensions.width",
+        ],
         highlight: {
-          fields: ["blocks.text"],
+          fields: ["processed.blocks.text"],
         },
         query: {
           term: this.query,

@@ -1,8 +1,8 @@
 <template>
   <canvas
     ref="canvas"
-    :height="screenshot.fields['size.height']"
-    :width="screenshot.fields['size.width']"
+    :height="screenshot.fields['processed.dimensions.height']"
+    :width="screenshot.fields['processed.dimensions.width']"
     :style="{
       background: `url(${imageURL(screenshot.id)})`,
       backgroundSize: 'cover',
@@ -12,9 +12,11 @@
 
 <script>
 const zipBlocks = (screenshot) => {
-  const textField = "blocks.text";
+  const textField = "processed.blocks.text";
+  const positionField = "processed.blocks.position";
+
   let flatText = screenshot.fields[textField];
-  let flatPosition = screenshot.fields["blocks.position"];
+  let flatPosition = screenshot.fields[positionField];
   if (!Array.isArray(flatText)) flatText = [flatText];
   if (!Array.isArray(flatPosition)) flatPosition = [flatPosition];
   // const locationText =
