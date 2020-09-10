@@ -14,8 +14,9 @@ import (
 )
 
 type Controller struct {
-	ScreenshotsDir string
-	Index          bleve.Index
+	ScreenshotsPath string
+	ImportPath      string
+	Index           bleve.Index
 }
 
 type Screenshot struct {
@@ -48,7 +49,7 @@ func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 
 	scrotID := IDNew()
 	scrotFilename := fmt.Sprintf("%s.%s", scrotID, scrotProcessed.Filetype)
-	scrotPath := filepath.Join(c.ScreenshotsDir, scrotFilename)
+	scrotPath := filepath.Join(c.ScreenshotsPath, scrotFilename)
 	if err := ioutil.WriteFile(scrotPath, raw, 0644); err != nil {
 		http.Error(w, fmt.Sprintf("write processed bytes: %v", err), 500)
 		return
@@ -72,5 +73,8 @@ func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 func (c *Controller) ServeImage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	filename := fmt.Sprintf("%s.png", vars["id"])
-	http.ServeFile(w, r, filepath.Join(c.ScreenshotsDir, filename))
+	http.ServeFile(w, r, filepath.Join(c.ScreenshotsPath, filename))
+}
+
+func (c *Controller) StartImport(w http.ResponseWriter, r *http.Request) {
 }

@@ -70,6 +70,7 @@ func main() {
 	confListenAddr := mustEnv("SOCR_LISTEN_ADDR")
 	confScreenshotsPath := mustEnv("SOCR_SCREENSHOTS_PATH")
 	confIndexPath := mustEnv("SOCR_INDEX_PATH")
+	confImportPath := mustEnv("SOCR_IMPORT_PATH")
 
 	index, err := getOrCreateIndex(confIndexPath)
 	if err != nil {
@@ -77,8 +78,9 @@ func main() {
 	}
 
 	ctrl := &controller.Controller{
-		ScreenshotsDir: confScreenshotsPath,
-		Index:          index,
+		ScreenshotsPath: confScreenshotsPath,
+		ImportPath:      confImportPath,
+		Index:           index,
 	}
 
 	r := mux.NewRouter()
@@ -91,6 +93,7 @@ func main() {
 
 	r.HandleFunc("/api/upload", ctrl.ServeUpload)
 	r.HandleFunc("/api/image/{id}", ctrl.ServeImage)
+	r.HandleFunc("/api/start_import", ctrl.StartImport)
 
 	bleveHTTP.RegisterIndexName("screenshots", index)
 	r.Handle("/api/search", bleveHTTP.NewSearchHandler("screenshots"))
