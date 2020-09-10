@@ -5,13 +5,15 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/gorilla/mux"
 )
 
-const processedSuffix = ".processed"
+func procSuffixHas(in string) bool   { return strings.HasSuffix(in, ".processed") }
+func procSuffixAdd(in string) string { return fmt.Sprintf("%s.processed", in) }
 
 func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(32 << 20)
@@ -52,7 +54,7 @@ func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		for _, file := range files {
-			if strings.HasSuffix(file.Name(), processedSuffix) {
+			if procSuffixHas(file.Name()) {
 				continue
 			}
 
@@ -67,6 +69,12 @@ func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
 			screenshot, err := c.ProcessBytes(bytes)
 			if err != nil {
 				log.Printf("error processing import: %v", err)
+				continue
+
+			}
+
+			if err := os.Rename(filePath, procSuffixAdd(filePath)); err != nil {
+				log.Printf("error renaming processed import: %v", err)
 				continue
 
 			}
