@@ -3,21 +3,13 @@ package controller
 import (
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"path/filepath"
 	"time"
 
-	"github.com/gorilla/mux"
 	"go.senan.xyz/socr/imagery"
 
 	"github.com/blevesearch/bleve"
 )
-
-type Controller struct {
-	ScreenshotsPath string
-	ImportPath      string
-	Index           bleve.Index
-}
 
 type Screenshot struct {
 	ID        string              `json:"id"`
@@ -26,33 +18,23 @@ type Screenshot struct {
 	Processed *imagery.Screenshot `json:"processed"`
 }
 
-func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
-	r.ParseMultipartForm(32 << 20)
-	infile, _, err := r.FormFile("image")
-	if err != nil {
-		http.Error(w, fmt.Sprintf("read form: %v", err), 500)
-		return
-	}
-	defer infile.Close()
+type Controller struct {
+	ScreenshotsPath string
+	ImportPath      string
+	Index           bleve.Index
+}
 
-	raw, err := ioutil.ReadAll(infile)
+func (c *Controller) ProcessBytes(bytes []byte) (*Screenshot, error) {
+	scrotProcessed, err := imagery.ProcessBytes(bytes)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("read form bytes: %v", err), 500)
-		return
-	}
-
-	scrotProcessed, err := imagery.ProcessBytes(raw)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("processing image: %v", err), 500)
-		return
+		return nil, fmt.Errorf("processing image: %w", err)
 	}
 
 	scrotID := IDNew()
 	scrotFilename := fmt.Sprintf("%s.%s", scrotID, scrotProcessed.Filetype)
 	scrotPath := filepath.Join(c.ScreenshotsPath, scrotFilename)
-	if err := ioutil.WriteFile(scrotPath, raw, 0644); err != nil {
-		http.Error(w, fmt.Sprintf("write processed bytes: %v", err), 500)
-		return
+	if err := ioutil.WriteFile(scrotPath, bytes, 0644); err != nil {
+		return nil, fmt.Errorf("write processed bytes: %w", err)
 	}
 
 	screenshot := &Screenshot{
@@ -63,18 +45,8 @@ func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := c.Index.Index(screenshot.ID, screenshot); err != nil {
-		http.Error(w, fmt.Sprintf("indexing screenshot: %v", err), 500)
-		return
+		return nil, fmt.Errorf("indexing screenshot: %w", err)
 	}
 
-	fmt.Fprintf(w, "%s\n", scrotFilename)
-}
-
-func (c *Controller) ServeImage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	filename := fmt.Sprintf("%s.png", vars["id"])
-	http.ServeFile(w, r, filepath.Join(c.ScreenshotsPath, filename))
-}
-
-func (c *Controller) StartImport(w http.ResponseWriter, r *http.Request) {
+	return screenshot, nil
 }

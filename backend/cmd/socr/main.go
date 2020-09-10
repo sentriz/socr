@@ -17,6 +17,10 @@ import (
 	"go.senan.xyz/socr/controller"
 )
 
+const (
+	screenshotIndex = "screenshots"
+)
+
 func mustEnv(key string) string {
 	if v, ok := os.LookupEnv(key); ok {
 		return v
@@ -93,10 +97,10 @@ func main() {
 
 	r.HandleFunc("/api/upload", ctrl.ServeUpload)
 	r.HandleFunc("/api/image/{id}", ctrl.ServeImage)
-	r.HandleFunc("/api/start_import", ctrl.StartImport)
+	r.HandleFunc("/api/start_import", ctrl.ServeStartImport)
 
-	bleveHTTP.RegisterIndexName("screenshots", index)
-	r.Handle("/api/search", bleveHTTP.NewSearchHandler("screenshots"))
+	bleveHTTP.RegisterIndexName(screenshotIndex, index)
+	r.Handle("/api/search", bleveHTTP.NewSearchHandler(screenshotIndex))
 
 	server := http.Server{
 		Addr:    confListenAddr,
