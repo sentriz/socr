@@ -4,7 +4,7 @@
     :height="screenshot.fields['size.height']"
     :width="screenshot.fields['size.width']"
     :style="{
-      background: `url(http://localhost:81/image/${screenshot.id})`,
+      background: `url(${imageURL(screenshot.id)})`,
       backgroundSize: 'cover',
     }"
   />
@@ -33,6 +33,7 @@ const zipBlocks = (screenshot) => {
 };
 
 import { ref, onMounted } from "vue";
+import { imageURL } from "../api/";
 
 export default {
   props: {
@@ -45,7 +46,7 @@ export default {
     onMounted(() => {
       var ctx = canvas.value.getContext("2d");
       for (const block of blocks) {
-        ctx.fillStyle = "rgba(236, 201, 75, 0.2)";
+        ctx.fillStyle = "rgba(236, 201, 75, 0.3)";
         ctx.fillRect(
           block.position.minX,
           block.position.minY,
@@ -55,6 +56,9 @@ export default {
       }
     });
     return { canvas };
+  },
+  methods: {
+    imageURL,
   },
 };
 </script>

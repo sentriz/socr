@@ -23,6 +23,7 @@
 import { ref } from "vue";
 import throttle from "lodash.debounce";
 
+import { doSearch } from "../api";
 import Thumbnail from "./Thumbnail.vue";
 
 export default {
@@ -51,7 +52,7 @@ export default {
   },
   methods: {
     fetchScreenshots: throttle(async function () {
-      this.response = await api.doSearch({
+      this.response = await doSearch({
         size: 40,
         fields: ["blocks.text", "blocks.position", "size.height", "size.width"],
         highlight: {

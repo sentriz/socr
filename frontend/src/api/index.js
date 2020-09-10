@@ -1,9 +1,9 @@
-const baseURL = process.env.SOCR_API_URL;
-
-console.log(baseURL)
+export const imageURL = (id) => {
+  return `/api/image/${id}`
+}
 
 export const doSearch = async (body) => {
-  const response = await fetch(`${base_url}/search`, {
+  const response = await fetch(`/api/search`, {
     method: "POST",
     body: JSON.stringify(body),
   });
