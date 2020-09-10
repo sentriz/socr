@@ -11,6 +11,7 @@ import (
 	"github.com/blevesearch/bleve/analysis/lang/en"
 	"github.com/blevesearch/bleve/analysis/token/keyword"
 	bleveHTTP "github.com/blevesearch/bleve/http"
+	"github.com/blevesearch/bleve/mapping"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"go.senan.xyz/socr/controller"
@@ -24,16 +25,7 @@ func mustEnv(key string) string {
 	return ""
 }
 
-func getOrCreateIndex(path string) (bleve.Index, error) {
-	index, err := bleve.Open(path)
-	if err != nil {
-		if !errors.Is(err, bleve.ErrorIndexPathDoesNotExist) {
-			return index, nil
-		} else {
-			return nil, fmt.Errorf("open index: %w", err)
-		}
-	}
-
+func createIndexMapping() *mapping.IndexMappingImpl {
 	fieldMapNumeric := bleve.NewNumericFieldMapping()
 
 	fieldMapEnglish := bleve.NewTextFieldMapping()
@@ -56,23 +48,39 @@ func getOrCreateIndex(path string) (bleve.Index, error) {
 	mappingIndex := bleve.NewIndexMapping()
 	mappingIndex.DefaultMapping = mappingScreenshot
 
-	return bleve.New(path, mappingIndex)
+	return mappingIndex
+}
+
+func getOrCreateIndex(path string) (bleve.Index, error) {
+	index, err := bleve.Open(path)
+	switch {
+	case
+		errors.Is(err, bleve.ErrorIndexMetaMissing),
+		errors.Is(err, bleve.ErrorIndexPathDoesNotExist):
+		indexMapping := createIndexMapping()
+		return bleve.New(path, indexMapping)
+	case err != nil:
+		return nil, fmt.Errorf("open index: %w", err)
+	default:
+		return index, nil
+	}
 }
 
 func main() {
 	confListenAddr := mustEnv("SOCR_LISTEN_ADDR")
 	confScreenshotsPath := mustEnv("SOCR_SCREENSHOTS_PATH")
 	confIndexPath := mustEnv("SOCR_INDEX_PATH")
-	//
+
 	index, err := getOrCreateIndex(confIndexPath)
 	if err != nil {
 		log.Fatalf("error getting index: %v", err)
 	}
+
 	ctrl := &controller.Controller{
 		ScreenshotsDir: confScreenshotsPath,
 		Index:          index,
 	}
-	//
+
 	r := mux.NewRouter()
 	r.Use(handlers.CORS(
 		handlers.AllowedOrigins([]string{"*"}),
@@ -80,6 +88,7 @@ func main() {
 		handlers.AllowedHeaders([]string{"DNT", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Range"}),
 		handlers.MaxAge(1728000),
 	))
+
 	r.HandleFunc("/api/upload", ctrl.ServeUpload)
 	r.HandleFunc("/api/image/{id}", ctrl.ServeImage)
 
@@ -90,6 +99,7 @@ func main() {
 		Addr:    confListenAddr,
 		Handler: r,
 	}
+
 	log.Printf("listening on %q", confListenAddr)
 	log.Fatalf("error starting server: %v", server.ListenAndServe())
 }

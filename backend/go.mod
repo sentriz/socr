@@ -11,6 +11,8 @@ require (
 	github.com/gorilla/mux v1.7.4
 	github.com/ikawaha/kagome.ipadic v1.1.2 // indirect
 	github.com/jmhodges/levigo v1.0.0 // indirect
+	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
+	github.com/otiai10/gosseract v2.2.1+incompatible
 	github.com/otiai10/gosseract/v2 v2.2.4
 	github.com/tebeka/snowball v0.4.2 // indirect
 	github.com/tecbot/gorocksdb v0.0.0-20191217155057-f0fad39f321c // indirect
