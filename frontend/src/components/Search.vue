@@ -55,13 +55,13 @@ export default {
       this.response = await doSearch({
         size: 40,
         fields: [
-          "processed.blocks.text",
-          "processed.blocks.position",
-          "processed.dimensions.height",
-          "processed.dimensions.width",
+          "blocks.text",
+          "blocks.position",
+          "dimensions.height",
+          "dimensions.width",
         ],
         highlight: {
-          fields: ["processed.blocks.text"],
+          fields: ["blocks.text"],
         },
         query: {
           term: this.query,
