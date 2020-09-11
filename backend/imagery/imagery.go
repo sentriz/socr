@@ -1,14 +1,16 @@
 package imagery
 
 import (
-	"bytes"
 	"fmt"
 	"image"
 	"image/gif"
 	"image/jpeg"
 	"image/png"
 	"io"
-	"net/http"
+
+	"github.com/buckket/go-blurhash"
+	"github.com/nfnt/resize"
+	"github.com/otiai10/gosseract/v2"
 )
 
 type Filetype string
@@ -42,61 +44,55 @@ func FormatFromMIME(in string) (Format, bool) {
 	return f, ok
 }
 
-type Screenshot struct {
-	Filetype   Filetype
-	Dimensions Dimensions `json:"dimensions"`
-	Blocks     []*Block   `json:"blocks"`
-	Blurhash   string     `json:"blurhash"`
+func ExtractText(img []byte, scale int) ([]gosseract.BoundingBox, error) {
+	client := gosseract.NewClient()
+	defer client.Close()
+	if err := client.SetImageFromBytes(img); err != nil {
+		return nil, fmt.Errorf("set image bytes: %w", err)
+	}
+
+	boxes, err := client.GetBoundingBoxes(gosseract.RIL_TEXTLINE)
+	if err != nil {
+		return nil, fmt.Errorf("get bounding boxes: %w", err)
+	}
+
+	return boxes, nil
 }
 
-type Dimensions struct {
-	Height int `json:"height"`
-	Width  int `json:"width"`
+const (
+	ScaleFactor = 3
+)
+
+func Resize(img image.Image, factor int) image.Image {
+	return resize.Resize(
+		uint(img.Bounds().Max.X*factor), 0,
+		img, resize.Lanczos3,
+	)
 }
 
-type Block struct {
-	// [x1 y1 x2 y2]
-	Position [4]int `json:"position"`
-	Text     string `json:"text"`
+func ScaleDownRect(rect image.Rectangle) [4]int {
+	return [...]int{
+		rect.Min.X / ScaleFactor, rect.Min.Y / ScaleFactor,
+		rect.Max.X / ScaleFactor, rect.Max.Y / ScaleFactor,
+	}
 }
 
-func ProcessBytes(raw []byte) (*Screenshot, error) {
-	mime := http.DetectContentType(raw)
-	format, ok := FormatFromMIME(mime)
-	if !ok {
-		return nil, fmt.Errorf("unrecognised format: %s", mime)
+func GreyScale(img image.Image) *image.Gray {
+	bounds := img.Bounds()
+	gray := image.NewGray(bounds)
+	for x := 0; x < bounds.Max.X; x++ {
+		for y := 0; y < bounds.Max.Y; y++ {
+			gray.Set(x, y, img.At(x, y))
+		}
 	}
+	return gray
+}
 
-	rawReader := bytes.NewReader(raw)
-	image, err := format.Decode(rawReader)
-	if err != nil {
-		return nil, fmt.Errorf("decoding: %s", mime)
-	}
+const (
+	BlurhashXC = 4
+	BlurhashYC = 3
+)
 
-	imageGrey := GreyScale(image)
-	imageBig := Resize(imageGrey, ScaleFactor)
-	imagePNG := &bytes.Buffer{}
-	if err := EncodePNG(imagePNG, imageBig); err != nil {
-		return nil, fmt.Errorf("encode scaled and greyed image: %w", err)
-	}
-
-	scrotBlocks, err := ExtractText(imagePNG.Bytes(), ScaleFactor)
-	if err != nil {
-		return nil, fmt.Errorf("extract image text: %w", err)
-	}
-
-	scrotBlurhash, err := CalculateBlurhash(image)
-	if err != nil {
-		return nil, fmt.Errorf("calculate blurhash: %w", err)
-	}
-
-	return &Screenshot{
-		Filetype: format.Filetype,
-		Dimensions: Dimensions{
-			Width:  image.Bounds().Size().X,
-			Height: image.Bounds().Size().Y,
-		},
-		Blurhash: scrotBlurhash,
-		Blocks:   scrotBlocks,
-	}, nil
+func CalculateBlurhash(img image.Image) (string, error) {
+	return blurhash.Encode(BlurhashXC, BlurhashXC, img)
 }

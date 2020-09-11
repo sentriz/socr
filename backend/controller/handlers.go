@@ -5,15 +5,10 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/gorilla/mux"
 )
-
-func procSuffixHas(in string) bool   { return strings.HasSuffix(in, ".processed") }
-func procSuffixAdd(in string) string { return fmt.Sprintf("%s.processed", in) }
 
 func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(32 << 20)
@@ -30,7 +25,7 @@ func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	screenshot, err := c.ProcessBytes(raw)
+	screenshot, err := c.ReadAndIndexBytes(raw)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("processing upload: %v", err), 500)
 		return
@@ -54,32 +49,25 @@ func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		for _, file := range files {
-			if procSuffixHas(file.Name()) {
-				continue
-			}
-
-			filePath := filepath.Join(c.ImportPath, file.Name())
-			bytes, err := ioutil.ReadFile(filePath)
+			raw, err := c.ReadRenameImportFile(file)
 			if err != nil {
-				log.Printf("error reading import: %v", err)
+				log.Printf("error processing imported file: %v", err)
 				continue
-
 			}
 
-			screenshot, err := c.ProcessBytes(bytes)
+			if raw == nil {
+				// file has likely already been imported
+				continue
+			}
+
+			screenshot, err := c.ReadAndIndexBytes(raw)
 			if err != nil {
-				log.Printf("error processing import: %v", err)
+				log.Printf("processing and indexing: %v", err)
 				continue
-
-			}
-
-			if err := os.Rename(filePath, procSuffixAdd(filePath)); err != nil {
-				log.Printf("error renaming processed import: %v", err)
-				continue
-
 			}
 
 			log.Printf("processed import: %s", screenshot.ID)
+
 		}
 	}()
 }
