@@ -18,6 +18,18 @@
         class="photo border border-gray-300 rounded-lg"
       />
     </div>
+    <button @click="sidebarOpen = !sidebarOpen">hello</button>
+    <transition name="slide">
+      <div
+        v-if="sidebarOpen"
+        class="bg-blue-200 opacity-75 fixed h-full top-0 right-0"
+      >
+        <h1>hello it's images in here are tthe he the iamges now</h1>
+        <h1>hello it's images in here are tthe he the iamges now</h1>
+        <h1>hello it's images in here are tthe he the iamges now</h1>
+        <h1>hello it's images in here are tthe he the iamges now</h1>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -37,6 +49,7 @@ export default {
         total_hits: 0,
         took: 0,
       },
+      sidebarOpen: false,
     };
   },
   components: {
@@ -74,7 +87,7 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 #photos {
   line-height: 0;
   column-count: 4;
@@ -95,4 +108,15 @@ export default {
 @media (max-width: 1000px) { #photos { column-count: 2; } }
 /* prettier-ignore */
 @media (max-width: 800px)  { #photos { column-count: 1; } }
+
+.slide-enter-active,
+.slide-leave-active {
+  transition: transform 0.2s ease;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+  transform: translateX(100%);
+  transition: all 150ms ease-in 0s;
+}
 </style>
