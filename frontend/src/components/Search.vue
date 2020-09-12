@@ -11,21 +11,26 @@
     </p>
     <hr class="my-3" />
     <div id="photos">
-      <Thumbnail
+      <router-link
         v-for="screenshot in response.hits"
         :key="screenshot.id"
-        :screenshot="screenshot"
-        class="photo border border-gray-300 rounded-lg"
-      />
+        :to="{ name: 'result', params: { id: screenshot.id } }"
+      >
+        <Thumbnail
+          :screenshot="screenshot"
+          class="photo border border-gray-300 rounded-lg"
+        />
+      </router-link>
     </div>
-    <router-link :to="{ name: 'result', params: { id: 'wow' } }"
-      >open</router-link
-    >
-    |
-    <router-link :to="{ name: 'search' }">close</router-link>
     <router-view v-slot="{ Component, route }">
-      <transition name="slide">
-        <component :is="Component" v-bind="route.params"></component>
+      <transition name="sidebar-slide">
+        <component
+          :is="Component"
+          :results="response.hits"
+          v-if="response.hits.length"
+          v-bind="route.params"
+        >
+        </component>
       </transition>
     </router-view>
   </div>
@@ -39,9 +44,11 @@ import { doSearch } from "../api";
 import Thumbnail from "./Thumbnail.vue";
 
 export default {
+  name: "Search",
   data() {
     return {
       query: "",
+      result: {},
       response: {
         hits: [],
         total_hits: 0,
@@ -106,13 +113,13 @@ export default {
 /* prettier-ignore */
 @media (max-width: 800px)  { #photos { column-count: 1; } }
 
-.slide-enter-active,
-.slide-leave-active {
+.sidebar-slide-enter-active,
+.sidebar-slide-leave-active {
   transition: transform 0.2s ease;
 }
 
-.slide-enter-from,
-.slide-leave-to {
+.sidebar-slide-enter-from,
+.sidebar-slide-leave-to {
   transform: translateX(100%);
   transition: all 150ms ease-in 0s;
 }

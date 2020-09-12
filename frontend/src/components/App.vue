@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto px-6 py-3">
+  <div class="container mx-auto p-6 py-3">
     <ul class="flex my-3">
       <li class="mr-6">
         <router-link

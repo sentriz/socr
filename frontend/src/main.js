@@ -4,7 +4,7 @@ import './main.css'
 import App from "./components/App.vue";
 import Search from "./components/Search.vue";
 import Settings from "./components/Settings.vue";
-import Screenshot from "./components/Screenshot.vue";
+import SearchSidebar from "./components/SearchSidebar.vue";
 
 import { createRouter, createWebHashHistory } from 'vue-router'
 
@@ -19,7 +19,7 @@ const router = createRouter({
         {
           "path": "result/:id",
           name: "result",
-          component: Screenshot
+          component: SearchSidebar
         },
       ]
     },

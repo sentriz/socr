@@ -38,6 +38,7 @@ import { ref, onMounted } from "vue";
 import { imageURL } from "../api/";
 
 export default {
+  name: "Thumbnail",
   props: {
     screenshot: Object,
   },
@@ -48,7 +49,7 @@ export default {
     onMounted(() => {
       var ctx = canvas.value.getContext("2d");
       for (const block of blocks) {
-        ctx.fillStyle = "rgba(236, 201, 75, 0.3)";
+        ctx.fillStyle = "rgba(236, 201, 75, 0.25)";
         ctx.fillRect(
           block.position.minX,
           block.position.minY,
@@ -64,5 +65,3 @@ export default {
   },
 };
 </script>
-
-
