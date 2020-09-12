@@ -18,18 +18,16 @@
         class="photo border border-gray-300 rounded-lg"
       />
     </div>
-    <button @click="sidebarOpen = !sidebarOpen">hello</button>
-    <transition name="slide">
-      <div
-        v-if="sidebarOpen"
-        class="bg-blue-200 opacity-75 fixed h-full top-0 right-0"
-      >
-        <h1>hello it's images in here are tthe he the iamges now</h1>
-        <h1>hello it's images in here are tthe he the iamges now</h1>
-        <h1>hello it's images in here are tthe he the iamges now</h1>
-        <h1>hello it's images in here are tthe he the iamges now</h1>
-      </div>
-    </transition>
+    <router-link :to="{ name: 'result', params: { id: 'wow' } }"
+      >open</router-link
+    >
+    |
+    <router-link :to="{ name: 'search' }">close</router-link>
+    <router-view v-slot="{ Component, route }">
+      <transition name="slide">
+        <component :is="Component" v-bind="route.params"></component>
+      </transition>
+    </router-view>
   </div>
 </template>
 
@@ -49,7 +47,6 @@ export default {
         total_hits: 0,
         took: 0,
       },
-      sidebarOpen: false,
     };
   },
   components: {

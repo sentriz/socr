@@ -4,6 +4,7 @@ import './main.css'
 import App from "./components/App.vue";
 import Search from "./components/Search.vue";
 import Settings from "./components/Settings.vue";
+import Screenshot from "./components/Screenshot.vue";
 
 import { createRouter, createWebHashHistory } from 'vue-router'
 
@@ -13,7 +14,14 @@ const router = createRouter({
     {
       "path": "/search",
       name: "search",
-      component: Search
+      component: Search,
+      children: [
+        {
+          "path": "result/:id",
+          name: "result",
+          component: Screenshot
+        },
+      ]
     },
     {
       "path": "/settings",
@@ -26,7 +34,6 @@ const router = createRouter({
     },
   ],
 })
-
 
 const app = createApp(App);
 app.use(router)
