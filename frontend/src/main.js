@@ -1,10 +1,9 @@
 import { createApp } from "vue";
 
+import './main.css'
 import App from "./components/App.vue";
 import Search from "./components/Search.vue";
 import Settings from "./components/Settings.vue";
-
-import "./main.css";
 
 import { createRouter, createWebHashHistory } from 'vue-router'
 

@@ -3,17 +3,19 @@
     <ul class="flex my-3">
       <li class="mr-6">
         <router-link
-          class="text-blue-500 hover:text-blue-800"
+          class="text-gray-500 hover:text-blue-300"
           :to="{ name: 'search' }"
         >
+          <i class="fas fa-search"></i>
           Search
         </router-link>
       </li>
       <li class="mr-6">
         <router-link
-          class="text-blue-500 hover:text-blue-800"
+          class="text-gray-500 hover:text-blue-300"
           :to="{ name: 'settings' }"
         >
+          <i class="fas fa-cogs"></i>
           Settings
         </router-link>
       </li>
@@ -33,6 +35,6 @@ export default {
 
 <style scoped>
 .router-link-active {
-  @apply font-bold;
+  @apply text-blue-500;
 }
 </style>
