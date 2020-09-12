@@ -1,21 +1,23 @@
 <template>
-  <input
-    class="bg-white focus:outline-none focus:shadow-outline border border-gray-300 rounded-lg py-2 px-4 block w-full appearance-none leading-normal"
-    type="email"
-    placeholder="enter screenshot text query"
-    v-model="query"
-  />
-  <p class="my-3 text-gray-500 text-right">
-    {{ response.total_hits }} results found in {{ tookMS }}ms
-  </p>
-  <hr class="my-3" />
-  <div id="photos">
-    <Thumbnail
-      v-for="screenshot in response.hits"
-      :key="screenshot.id"
-      :screenshot="screenshot"
-      class="photo border border-gray-300 rounded-lg"
+  <div class="container">
+    <input
+      class="bg-white focus:outline-none focus:shadow-outline border border-gray-300 rounded-lg py-2 px-4 block w-full appearance-none leading-normal"
+      type="email"
+      placeholder="enter screenshot text query"
+      v-model="query"
     />
+    <p class="my-3 text-gray-500 text-right">
+      {{ response.total_hits }} results found in {{ tookMS }}ms
+    </p>
+    <hr class="my-3" />
+    <div id="photos">
+      <Thumbnail
+        v-for="screenshot in response.hits"
+        :key="screenshot.id"
+        :screenshot="screenshot"
+        class="photo border border-gray-300 rounded-lg"
+      />
+    </div>
   </div>
 </template>
 
