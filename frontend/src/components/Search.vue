@@ -16,7 +16,7 @@
         :key="screenshot.id"
         :to="{ name: 'result', params: { id: screenshot.id } }"
       >
-        <Thumbnail
+        <ScreenshotHighlight
           :screenshot="screenshot"
           class="photo border border-gray-300 rounded-lg"
         />
@@ -41,7 +41,7 @@ import { ref } from "vue";
 import throttle from "lodash.debounce";
 
 import { doSearch } from "../api";
-import Thumbnail from "./Thumbnail.vue";
+import ScreenshotHighlight from "./ScreenshotHighlight.vue";
 
 export default {
   name: "Search",
@@ -57,7 +57,7 @@ export default {
     };
   },
   components: {
-    Thumbnail,
+    ScreenshotHighlight,
   },
   watch: {
     query(query, _) {

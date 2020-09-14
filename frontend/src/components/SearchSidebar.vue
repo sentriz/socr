@@ -4,7 +4,7 @@
   >
     <div class="mx-auto">
       <div class="bg-black shadow font-mono text-sm">
-        <img class="mx-auto" :src="imageURL(screenshot.id)" />
+        <ScreenshotHighlight class="mx-auto" :screenshot="screenshot" />
       </div>
       <hr class="my-6" />
       <div class="bg-gray-300 p-3 shadow font-mono text-sm">
@@ -18,12 +18,16 @@
 
 <script>
 import { imageURL } from "../api/";
+import ScreenshotHighlight from "./ScreenshotHighlight.vue";
 
 export default {
   name: "SearchSidebar",
   props: {
     id: String,
     results: Array,
+  },
+  components: {
+    ScreenshotHighlight,
   },
   computed: {
     // TODO: not pass all results to this component
