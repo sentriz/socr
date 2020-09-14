@@ -56,7 +56,6 @@ func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
 			}
 
 			if raw == nil {
-				// file has likely already been imported
 				continue
 			}
 

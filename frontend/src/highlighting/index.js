@@ -1,4 +1,4 @@
-import { fields } from '../api'
+import { fields } from "../api";
 
 export const zipBlocks = (screenshot) => {
   let flatText = screenshot.fields[fields.BLOCKS_TEXT];

@@ -12,7 +12,7 @@
 
 <script>
 import { ref, onMounted } from "vue";
-import { imageURL, fields } from "../api";
+import { urlImage, fields } from "../api";
 import { zipBlocks } from "../highlighting";
 
 const highlightCanvas = (ctx, blocks) => {
@@ -51,7 +51,7 @@ export default {
       return this.screenshot.fields[fields.DIMENSIONS_WIDTH];
     },
     scrotURL() {
-      return imageURL(this.screenshot.id);
+      return `${urlImage}/${this.screenshot.id}`
     },
   },
 };

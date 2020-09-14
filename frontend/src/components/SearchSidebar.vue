@@ -17,7 +17,7 @@
 </template>
 
 <script>
-import { imageURL, fields } from "../api/";
+import { fields } from "../api/";
 import ScreenshotHighlight from "./ScreenshotHighlight.vue";
 
 export default {
@@ -38,9 +38,6 @@ export default {
     text() {
       return this.screenshot.fields[fields.BLOCKS_TEXT];
     },
-  },
-  methods: {
-    imageURL,
   },
 };
 </script>
