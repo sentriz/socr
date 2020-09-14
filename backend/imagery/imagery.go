@@ -51,6 +51,10 @@ func ExtractText(img []byte, scale int) ([]gosseract.BoundingBox, error) {
 		return nil, fmt.Errorf("set image bytes: %w", err)
 	}
 
+	if err := client.SetPageSegMode(gosseract.PSM_AUTO_OSD); err != nil {
+		return nil, fmt.Errorf("set page setmentation mode: %w", err)
+	}
+
 	boxes, err := client.GetBoundingBoxes(gosseract.RIL_TEXTLINE)
 	if err != nil {
 		return nil, fmt.Errorf("get bounding boxes: %w", err)
