@@ -14,6 +14,7 @@ import (
 	"github.com/blevesearch/bleve/mapping"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	"go.senan.xyz/socr/controller"
 )
 
@@ -85,7 +86,15 @@ func main() {
 		ScreenshotsPath: confScreenshotsPath,
 		ImportPath:      confImportPath,
 		Index:           index,
+		SocketUpgrader: websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+		},
+		SocketClients: map[*websocket.Conn]struct{}{},
 	}
+
+	go ctrl.EchoSockets()
 
 	r := mux.NewRouter()
 	r.Use(handlers.CORS(
@@ -98,6 +107,7 @@ func main() {
 	r.HandleFunc("/api/upload", ctrl.ServeUpload)
 	r.HandleFunc("/api/image/{id}", ctrl.ServeImage)
 	r.HandleFunc("/api/start_import", ctrl.ServeStartImport)
+	r.HandleFunc("/api/ws", ctrl.ServeWebSocket)
 
 	bleveHTTP.RegisterIndexName(screenshotIndex, index)
 	r.Handle("/api/search", bleveHTTP.NewSearchHandler(screenshotIndex))

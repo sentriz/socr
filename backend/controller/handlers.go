@@ -71,3 +71,14 @@ func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 }
+
+func (c *Controller) ServeWebSocket(w http.ResponseWriter, r *http.Request) {
+	conn, err := c.SocketUpgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Printf("error upgrading socket connection: %v", err)
+		return
+	}
+
+	log.Printf("new socket client: %v", conn.RemoteAddr())
+	c.SocketClients[conn] = struct{}{}
+}

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -13,6 +14,7 @@ import (
 	"go.senan.xyz/socr/imagery"
 
 	"github.com/blevesearch/bleve"
+	"github.com/gorilla/websocket"
 )
 
 type Screenshot struct {
@@ -40,6 +42,8 @@ type Controller struct {
 	ScreenshotsPath string
 	ImportPath      string
 	Index           bleve.Index
+	SocketUpgrader  websocket.Upgrader
+	SocketClients   map[*websocket.Conn]struct{}
 }
 
 func (c *Controller) ReadAndIndexBytes(raw []byte) (*Screenshot, error) {
@@ -126,4 +130,18 @@ func (c *Controller) ReadRenameImportFile(file os.FileInfo) ([]byte, error) {
 	}
 
 	return bytes, nil
+}
+
+func (c *Controller) EchoSockets() error {
+	for {
+		for client := range c.SocketClients {
+			err := client.WriteMessage(websocket.TextMessage, []byte("hello"))
+			if err != nil {
+				log.Printf("error writing to socket client: %v", err)
+				client.Close()
+				delete(c.SocketClients, client)
+			}
+		}
+		time.Sleep(1 * time.Second)
+	}
 }
