@@ -40,7 +40,7 @@
 import { ref } from "vue";
 import throttle from "lodash.debounce";
 
-import { doSearch } from "../api";
+import { doSearch, fields } from "../api";
 import ScreenshotHighlight from "./ScreenshotHighlight.vue";
 
 export default {
@@ -74,13 +74,13 @@ export default {
       this.response = await doSearch({
         size: 40,
         fields: [
-          "blocks.text",
-          "blocks.position",
-          "dimensions.height",
-          "dimensions.width",
+          fields.BLOCKS_TEXT,
+          fields.BLOCKS_POSITION,
+          fields.DIMENSIONS_HEIGHT,
+          fields.DIMENSIONS_WIDTH,
         ],
         highlight: {
-          fields: ["blocks.text"],
+          fields: [fields.BLOCKS_TEXT],
         },
         query: {
           term: this.query,

@@ -1,10 +1,10 @@
 <template>
   <canvas
     ref="canvas"
-    :height="screenshot.fields['dimensions.height']"
-    :width="screenshot.fields['dimensions.width']"
+    :height="scrotHeight"
+    :width="scrotWidth"
     :style="{
-      background: `url(${imageURL(screenshot.id)})`,
+      background: `url(${scrotURL})`,
       backgroundSize: 'cover',
     }"
   />
@@ -12,7 +12,7 @@
 
 <script>
 import { ref, onMounted } from "vue";
-import { imageURL } from "../api";
+import { imageURL, fields } from "../api";
 import { zipBlocks } from "../highlighting";
 
 const highlightCanvas = (ctx, blocks) => {
@@ -43,8 +43,16 @@ export default {
     });
     return { canvas };
   },
-  methods: {
-    imageURL,
+  computed: {
+    scrotHeight() {
+      return this.screenshot.fields[fields.DIMENSIONS_HEIGHT];
+    },
+    scrotWidth() {
+      return this.screenshot.fields[fields.DIMENSIONS_WIDTH];
+    },
+    scrotURL() {
+      return imageURL(this.screenshot.id);
+    },
   },
 };
 </script>

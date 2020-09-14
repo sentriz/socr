@@ -9,3 +9,10 @@ export const doSearch = async (body) => {
   });
   return await response.json();
 };
+
+export const fields = {
+  BLOCKS_TEXT: "blocks.text",
+  BLOCKS_POSITION: "blocks.position",
+  DIMENSIONS_HEIGHT: "dimensions.height",
+  DIMENSIONS_WIDTH: "dimensions.width",
+}

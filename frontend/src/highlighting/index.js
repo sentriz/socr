@@ -1,13 +1,12 @@
-export const zipBlocks = (screenshot) => {
-  const textField = "blocks.text";
-  const positionField = "blocks.position";
+import { fields } from '../api'
 
-  let flatText = screenshot.fields[textField];
-  let flatPosition = screenshot.fields[positionField];
+export const zipBlocks = (screenshot) => {
+  let flatText = screenshot.fields[fields.BLOCKS_TEXT];
+  let flatPosition = screenshot.fields[fields.BLOCKS_POSITION];
   if (!Array.isArray(flatText)) flatText = [flatText];
   if (!Array.isArray(flatPosition)) flatPosition = [flatPosition];
 
-  const queriesMatches = screenshot.locations[textField];
+  const queriesMatches = screenshot.locations[fields.BLOCKS_TEXT];
   const queryMatches = Object.values(queriesMatches)[0];
   const matchIndexes = new Set(
     queryMatches.map((match) => match.array_positions).flat()
