@@ -2,24 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer components {
-    .btn {
-        @apply bg-blue-500 text-white text-center p-2 rounded;
-    }
-
-    .btn:hover {
-        @apply bg-blue-700;
-    }
-
-    .btn.disabled {
-        @apply opacity-50 cursor-not-allowed;
-    }
-
-    hr {
-        @apply my-6;
-    }
-}
-
 @import "@fortawesome/fontawesome-free/css/all";
 
 body {
@@ -31,4 +13,28 @@ body {
 
 button:focus {
     outline: none;
+}
+
+button {
+    @apply bg-blue-500 text-white text-center p-2 rounded;
+}
+
+button:hover {
+    @apply bg-blue-700;
+}
+
+button:disabled {
+    @apply opacity-50 cursor-not-allowed;
+}
+
+input[type=text] {
+      @apply bg-white border border-gray-300 rounded-lg py-2 px-4 block w-full appearance-none leading-normal;
+}
+
+input[type=text]:focus {
+    @apply shadow-outline outline-none;
+}
+
+hr {
+    @apply my-6;
 }
