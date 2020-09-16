@@ -85,6 +85,7 @@ func main() {
 	ctrl := &controller.Controller{
 		ScreenshotsPath: confScreenshotsPath,
 		ImportPath:      confImportPath,
+		ImportUpdates:   make(chan controller.ImportStatus),
 		Index:           index,
 		SocketUpgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
@@ -94,7 +95,7 @@ func main() {
 		SocketClients: map[*websocket.Conn]struct{}{},
 	}
 
-	go ctrl.EchoSockets()
+	go ctrl.EmitImportUpdates()
 
 	r := mux.NewRouter()
 	r.Use(handlers.CORS(

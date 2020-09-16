@@ -25,50 +25,27 @@ func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	screenshot, err := c.ReadAndIndexBytes(raw)
-	if err != nil {
+	if _, err := c.ReadAndIndexBytes(raw); err != nil {
 		http.Error(w, fmt.Sprintf("processing upload: %v", err), 500)
 		return
 	}
 
-	fmt.Fprintf(w, "%s\n", screenshot.ID)
+	fmt.Fprintf(w, "{}")
+}
+
+func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
+	if err := c.IndexImportDirectory(); err != nil {
+		http.Error(w, fmt.Sprintf("start import: %v", err), 500)
+		return
+	}
+
+	fmt.Fprintf(w, "{}")
 }
 
 func (c *Controller) ServeImage(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	filename := fmt.Sprintf("%s.png", vars["id"])
 	http.ServeFile(w, r, filepath.Join(c.ScreenshotsPath, filename))
-}
-
-func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
-	files, err := ioutil.ReadDir(c.ImportPath)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("listing import dir: %v", err), 500)
-		return
-	}
-
-	go func() {
-		for _, file := range files {
-			raw, err := c.ReadRenameImportFile(file)
-			if err != nil {
-				log.Printf("error processing imported file: %v", err)
-				continue
-			}
-
-			if raw == nil {
-				continue
-			}
-
-			screenshot, err := c.ReadAndIndexBytes(raw)
-			if err != nil {
-				log.Printf("processing and indexing: %v", err)
-				continue
-			}
-
-			log.Printf("processed import: %s", screenshot.ID)
-
-		}
-	}()
 }
 
 func (c *Controller) ServeWebSocket(w http.ResponseWriter, r *http.Request) {

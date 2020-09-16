@@ -2,6 +2,7 @@ package controller
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"go.senan.xyz/socr/imagery"
@@ -41,6 +43,8 @@ type Block struct {
 type Controller struct {
 	ScreenshotsPath string
 	ImportPath      string
+	ImportUpdates   chan ImportStatus
+	ImportRunning   bool
 	Index           bleve.Index
 	SocketUpgrader  websocket.Upgrader
 	SocketClients   map[*websocket.Conn]struct{}
@@ -114,11 +118,7 @@ func (c *Controller) ReadAndIndexBytes(raw []byte) (*Screenshot, error) {
 func procSuffixHas(in string) bool   { return strings.HasSuffix(in, ".processed") }
 func procSuffixAdd(in string) string { return fmt.Sprintf("%s.processed", in) }
 
-func (c *Controller) ReadRenameImportFile(file os.FileInfo) ([]byte, error) {
-	if procSuffixHas(file.Name()) {
-		return nil, nil
-	}
-
+func (c *Controller) IndexImportFile(file os.FileInfo) (*Screenshot, error) {
 	filePath := filepath.Join(c.ImportPath, file.Name())
 	bytes, err := ioutil.ReadFile(filePath)
 	if err != nil {
@@ -129,19 +129,84 @@ func (c *Controller) ReadRenameImportFile(file os.FileInfo) ([]byte, error) {
 		return nil, fmt.Errorf("renaming: %v", err)
 	}
 
-	return bytes, nil
+	screenshot, err := c.ReadAndIndexBytes(bytes)
+	if err != nil {
+		return nil, fmt.Errorf("processing and indexing: %v", err)
+	}
+
+	return screenshot, nil
 }
 
-func (c *Controller) EchoSockets() error {
-	for {
-		for client := range c.SocketClients {
-			err := client.WriteMessage(websocket.TextMessage, []byte("hello"))
+type ImportStatus struct {
+	Error          error  `json:"error"`
+	New            string `json:"new"`
+	CountProcessed int    `json:"count_processed"`
+	CountTotal     int    `json:"count_total"`
+	Finished       bool   `json:"finished"`
+}
+
+var isImporting int32
+
+func (c *Controller) IndexImportDirectory() error {
+	if atomic.LoadInt32(&isImporting) == 1 {
+		return fmt.Errorf("already importing")
+	}
+
+	files, err := ioutil.ReadDir(c.ImportPath)
+	if err != nil {
+		return fmt.Errorf("listing import dir: %w", err)
+	}
+
+	go func() {
+		atomic.StoreInt32(&isImporting, 1)
+		defer atomic.StoreInt32(&isImporting, 0)
+
+		var nonProcessed []os.FileInfo
+		for _, file := range files {
+			if !procSuffixHas(file.Name()) {
+				nonProcessed = append(nonProcessed, file)
+			}
+		}
+
+		for i, file := range nonProcessed {
+			screenshot, err := c.IndexImportFile(file)
 			if err != nil {
+				c.ImportUpdates <- ImportStatus{Error: err}
+				continue
+			}
+
+			c.ImportUpdates <- ImportStatus{
+				New:            screenshot.ID,
+				CountProcessed: i,
+				CountTotal:     len(nonProcessed),
+			}
+		}
+
+		c.ImportUpdates <- ImportStatus{
+			Finished: true,
+			New:      "no more files to import",
+		}
+	}()
+
+	return nil
+}
+
+func (c *Controller) EmitImportUpdates() error {
+	for update := range c.ImportUpdates {
+		updateJSON, err := json.Marshal(update)
+		if err != nil {
+			log.Printf("error marshaling update json: %v", err)
+			continue
+		}
+
+		for client := range c.SocketClients {
+			if err := client.WriteMessage(websocket.TextMessage, updateJSON); err != nil {
 				log.Printf("error writing to socket client: %v", err)
 				client.Close()
 				delete(c.SocketClients, client)
+				continue
 			}
 		}
-		time.Sleep(1 * time.Second)
 	}
+	return nil
 }

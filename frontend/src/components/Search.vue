@@ -9,7 +9,7 @@
     <p class="my-3 text-gray-500 text-right">
       {{ response.total_hits }} results found in {{ tookMS }}ms
     </p>
-    <hr class="my-3" />
+    <hr />
     <div id="photos">
       <router-link
         v-for="screenshot in response.hits"
@@ -40,7 +40,7 @@
 import { ref } from "vue";
 import throttle from "lodash.debounce";
 
-import { doSearch, fields } from "../api";
+import { reqSearch, fields } from "../api";
 import ScreenshotHighlight from "./ScreenshotHighlight.vue";
 
 export default {
@@ -71,7 +71,7 @@ export default {
   },
   methods: {
     fetchScreenshots: throttle(async function () {
-      this.response = await doSearch({
+      this.response = await reqSearch({
         size: 40,
         fields: [
           fields.BLOCKS_TEXT,

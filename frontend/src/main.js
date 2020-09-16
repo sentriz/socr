@@ -37,8 +37,8 @@ const router = createRouter({
 });
 
 const socket = new WebSocket(`wss://${window.location.host}${urlSocket}`);
-console.log(socket);
 
 const app = createApp(App);
 app.use(router);
+app.provide("socket", socket)
 app.mount("#app");

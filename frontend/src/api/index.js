@@ -1,14 +1,21 @@
 export const urlImage = "/api/image";
 export const urlSearch = "/api/search";
 export const urlSocket = "/api/ws";
+export const urlStartImport = "/api/start_import";
 
-export const doSearch = async (body) => {
-  const response = await fetch(urlSearch, {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
+const req = async (url, options) => {
+  const response = await fetch(url, options)
   return await response.json();
-};
+}
+
+export const reqSearch = async (body) => req(urlSearch, {
+  method: "POST",
+  body: JSON.stringify(body),
+})
+
+export const reqStartImport = async () => req(urlStartImport, {
+  method: "POST",
+})
 
 export const fields = {
   BLOCKS_TEXT: "blocks.text",

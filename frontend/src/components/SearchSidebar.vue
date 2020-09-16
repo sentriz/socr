@@ -6,7 +6,7 @@
       <div class="bg-black shadow font-mono text-sm">
         <ScreenshotHighlight class="mx-auto" :screenshot="screenshot" />
       </div>
-      <hr class="my-6" />
+      <hr />
       <div class="bg-gray-300 p-3 shadow font-mono text-sm">
         <p v-for="(line, i) in text" :key="i">
           {{ line }}
