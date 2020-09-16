@@ -10,17 +10,17 @@ func init() {
 }
 
 const (
-	IDLength = 32
-	IDPool   = "" +
+	idLength = 32
+	idPool   = "" +
 		"abcdefghijklmnopqrstuvwxyz" +
 		"ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
 		"012345679"
 )
 
 func IDNew() string {
-	bytes := make([]byte, IDLength)
+	bytes := make([]byte, idLength)
 	for i := 0; i < len(bytes); i++ {
-		bytes[i] = IDPool[rand.Intn(len(IDPool))]
+		bytes[i] = idPool[rand.Intn(len(idPool))]
 	}
 
 	return string(bytes)

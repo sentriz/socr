@@ -40,6 +40,14 @@ type Block struct {
 	Text     string `json:"text"`
 }
 
+type ImportStatus struct {
+	Error          error  `json:"error"`
+	New            string `json:"new"`
+	CountProcessed int    `json:"count_processed"`
+	CountTotal     int    `json:"count_total"`
+	Finished       bool   `json:"finished"`
+}
+
 type Controller struct {
 	ScreenshotsPath string
 	ImportPath      string
@@ -115,6 +123,8 @@ func (c *Controller) ReadAndIndexBytes(raw []byte) (*Screenshot, error) {
 	return screenshot, nil
 }
 
+var isImporting int32
+
 func procSuffixHas(in string) bool   { return strings.HasSuffix(in, ".processed") }
 func procSuffixAdd(in string) string { return fmt.Sprintf("%s.processed", in) }
 
@@ -136,16 +146,6 @@ func (c *Controller) IndexImportFile(file os.FileInfo) (*Screenshot, error) {
 
 	return screenshot, nil
 }
-
-type ImportStatus struct {
-	Error          error  `json:"error"`
-	New            string `json:"new"`
-	CountProcessed int    `json:"count_processed"`
-	CountTotal     int    `json:"count_total"`
-	Finished       bool   `json:"finished"`
-}
-
-var isImporting int32
 
 func (c *Controller) IndexImportDirectory() error {
 	if atomic.LoadInt32(&isImporting) == 1 {
