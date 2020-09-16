@@ -4,7 +4,7 @@
 
 @layer components {
     .btn {
-        @apply bg-blue-500 text-white text-center font-bold p-2 rounded;
+        @apply bg-blue-500 text-white text-center p-2 rounded;
     }
 
     .btn:hover {

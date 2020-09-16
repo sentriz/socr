@@ -40,8 +40,8 @@ type Block struct {
 	Text     string `json:"text"`
 }
 
-type ImportStatus struct {
-	Error          error  `json:"error"`
+type ImportUpdate struct {
+	Error          string `json:"error"`
 	New            string `json:"new"`
 	CountProcessed int    `json:"count_processed"`
 	CountTotal     int    `json:"count_total"`
@@ -51,7 +51,7 @@ type ImportStatus struct {
 type Controller struct {
 	ScreenshotsPath string
 	ImportPath      string
-	ImportUpdates   chan ImportStatus
+	ImportUpdates   chan ImportUpdate
 	ImportRunning   bool
 	Index           bleve.Index
 	SocketUpgrader  websocket.Upgrader
@@ -171,18 +171,18 @@ func (c *Controller) IndexImportDirectory() error {
 		for i, file := range nonProcessed {
 			screenshot, err := c.IndexImportFile(file)
 			if err != nil {
-				c.ImportUpdates <- ImportStatus{Error: err}
+				c.ImportUpdates <- ImportUpdate{Error: err.Error()}
 				continue
 			}
 
-			c.ImportUpdates <- ImportStatus{
+			c.ImportUpdates <- ImportUpdate{
 				New:            screenshot.ID,
 				CountProcessed: i,
 				CountTotal:     len(nonProcessed),
 			}
 		}
 
-		c.ImportUpdates <- ImportStatus{
+		c.ImportUpdates <- ImportUpdate{
 			Finished: true,
 			New:      "no more files to import",
 		}
