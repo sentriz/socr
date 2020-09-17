@@ -24,7 +24,7 @@
     </div>
   </div>
   <hr />
-  <p class="my-3 text-gray-700 text-lg font-bold">something else</p>
+  <p class="my-3 text-gray-700 text-lg font-bold">credentials</p>
   <button class="btn">hello?</button>
 </template>
 
