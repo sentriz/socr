@@ -16,7 +16,7 @@ button:focus {
 }
 
 button {
-    @apply bg-blue-500 text-white text-center p-2 rounded;
+    @apply bg-blue-500 text-white text-center py-1 px-4 rounded;
 }
 
 button:hover {
@@ -28,7 +28,7 @@ button:disabled {
 }
 
 input[type=text] {
-      @apply bg-white border border-gray-300 rounded-lg py-2 px-4 block w-full appearance-none leading-normal;
+      @apply bg-white border border-gray-300 rounded-lg py-1 px-4 block w-full appearance-none leading-normal;
 }
 
 input[type=text]:focus {
@@ -37,4 +37,8 @@ input[type=text]:focus {
 
 hr {
     @apply my-6;
+}
+
+.padded {
+    @apply py-1 px-4;
 }

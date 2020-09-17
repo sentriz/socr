@@ -9,16 +9,16 @@
       >
         start import
       </button>
-      <div class="flex-1 bg-blue-300 font-bold text-white p-2 rounded">
+      <div class="flex-1 bg-blue-200 font-mono padded rounded">
         {{ status.new }}
       </div>
-      <div v-show="!status.finished" class="bg-blue-300 text-white p-2 rounded">
+      <div v-show="!status.finished" class="bg-blue-200 padded rounded">
         processed {{ status.count_processed }} / {{ status.count_total }}
       </div>
     </div>
     <div
       v-show="errors.length"
-      class="flex-1 bg-red-100 border-solid border-2 border-red-200 p-2 rounded"
+      class="flex-1 bg-red-100 border-solid border-2 border-red-200 padded rounded"
     >
       <p v-for="error in errors" :key="error"><b>error:</b> {{ error }}</p>
     </div>

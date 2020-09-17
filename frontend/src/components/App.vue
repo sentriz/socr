@@ -20,7 +20,7 @@
         </router-link>
       </li>
     </ul>
-    <hr class="mt-0" />
+    <hr class="mt-0 mb-6" />
     <router-view />
   </div>
 </template>

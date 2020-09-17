@@ -176,7 +176,7 @@ func (c *Controller) IndexImportDirectory() error {
 			}
 
 			c.ImportUpdates <- ImportUpdate{
-				New:            screenshot.ID,
+				New:            fmt.Sprintf("new image %s", screenshot.ID),
 				CountProcessed: i,
 				CountTotal:     len(nonProcessed),
 			}
