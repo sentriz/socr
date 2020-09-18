@@ -35,59 +35,45 @@
   </div>
 </template>
 
-<script>
-import { ref } from "vue";
+<script setup>
+import { ref, reactive, watch, computed } from "vue";
 import throttle from "lodash.debounce";
 
-import ScreenshotHighlight from "./ScreenshotHighlight.vue";
+export { default as ScreenshotHighlight } from "./ScreenshotHighlight.vue";
 import { reqSearch, fields } from "../api";
 
-export default {
-  name: "Search",
-  data() {
-    return {
-      query: "",
-      result: {},
-      response: {
-        hits: [],
-        total_hits: 0,
-        took: 0,
-      },
-    };
-  },
-  components: {
-    ScreenshotHighlight,
-  },
-  watch: {
-    query(query, _) {
-      if (query) this.fetchScreenshots();
+export const query = ref("");
+watch(query, (query, _) => {
+  if (query) fetchScreenshots();
+});
+
+export const response = ref({
+  hits: [],
+  total_hits: 0,
+  took: 0,
+});
+
+export const fetchScreenshots = throttle(async () => {
+  response.value = await reqSearch({
+    size: 40,
+    fields: [
+      fields.BLOCKS_TEXT,
+      fields.BLOCKS_POSITION,
+      fields.SIZE_HEIGHT,
+      fields.SIZE_WIDTH,
+    ],
+    highlight: {
+      fields: [fields.BLOCKS_TEXT],
     },
-  },
-  computed: {
-    tookMS() {
-      return Math.round((this.response.took / 100000) * 100) / 100;
+    query: {
+      term: query.value,
     },
-  },
-  methods: {
-    fetchScreenshots: throttle(async function () {
-      this.response = await reqSearch({
-        size: 40,
-        fields: [
-          fields.BLOCKS_TEXT,
-          fields.BLOCKS_POSITION,
-          fields.SIZE_HEIGHT,
-          fields.SIZE_WIDTH,
-        ],
-        highlight: {
-          fields: [fields.BLOCKS_TEXT],
-        },
-        query: {
-          term: this.query,
-        },
-      });
-    }, 200),
-  },
-};
+  });
+}, 200);
+
+export const tookMS = computed(
+  () => Math.round((response.took / 100000) * 100) / 100
+);
 </script>
 
 <style scoped>
