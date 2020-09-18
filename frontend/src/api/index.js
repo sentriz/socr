@@ -20,6 +20,6 @@ export const reqStartImport = async () => req(urlStartImport, {
 export const fields = {
   BLOCKS_TEXT: "blocks.text",
   BLOCKS_POSITION: "blocks.position",
-  DIMENSIONS_HEIGHT: "dimensions.height",
-  DIMENSIONS_WIDTH: "dimensions.width",
+  SIZE_HEIGHT: "dimensions.height",
+  SIZE_WIDTH: "dimensions.width",
 };

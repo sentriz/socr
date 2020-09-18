@@ -10,10 +10,16 @@
   />
 </template>
 
-<script>
-import { ref, onMounted } from "vue";
-import { urlImage, fields } from "../api";
+<script setup="props">
+import { ref, toRefs, onMounted, computed } from "vue";
+import { urlImage, fields as afields } from "../api";
 import { zipBlocks } from "../highlighting";
+
+export default {
+  props: {
+    screenshot: Object,
+  },
+};
 
 const highlightCanvas = (ctx, blocks) => {
   for (const block of blocks) {
@@ -29,30 +35,15 @@ const highlightCanvas = (ctx, blocks) => {
   }
 };
 
-export default {
-  name: "ScreenshotHighlight",
-  props: {
-    screenshot: Object,
-  },
-  setup(props) {
-    const canvas = ref(null);
-    const blocks = zipBlocks(props.screenshot);
-    onMounted(() => {
-      var ctx = canvas.value.getContext("2d");
-      highlightCanvas(ctx, blocks);
-    });
-    return { canvas };
-  },
-  computed: {
-    scrotHeight() {
-      return this.screenshot.fields[fields.DIMENSIONS_HEIGHT];
-    },
-    scrotWidth() {
-      return this.screenshot.fields[fields.DIMENSIONS_WIDTH];
-    },
-    scrotURL() {
-      return `${urlImage}/${this.screenshot.id}`
-    },
-  },
-};
+export const canvas = ref(null);
+onMounted(() => {
+  const ctx = canvas.value.getContext("2d");
+  const blocks = zipBlocks(props.screenshot);
+  highlightCanvas(ctx, blocks);
+});
+
+const { fields, id } = toRefs(props.screenshot);
+export const scrotHeight = computed(() => fields.value[afields.SIZE_HEIGHT]);
+export const scrotWidth = computed(() => fields.value[afields.SIZE_WIDTH]);
+export const scrotURL = computed(() => `${urlImage}/${id.value}`);
 </script>

@@ -75,8 +75,8 @@ export default {
         fields: [
           fields.BLOCKS_TEXT,
           fields.BLOCKS_POSITION,
-          fields.DIMENSIONS_HEIGHT,
-          fields.DIMENSIONS_WIDTH,
+          fields.SIZE_HEIGHT,
+          fields.SIZE_WIDTH,
         ],
         highlight: {
           fields: [fields.BLOCKS_TEXT],
