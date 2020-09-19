@@ -72,7 +72,7 @@ export const fetchScreenshots = throttle(async () => {
 }, 200);
 
 export const tookMS = computed(
-  () => Math.round((response.took / 100000) * 100) / 100
+  () => Math.round((response.value.took / 100000) * 100) / 100
 );
 </script>
 

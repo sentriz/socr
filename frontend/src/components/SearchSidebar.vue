@@ -16,30 +16,24 @@
   </div>
 </template>
 
-<script>
+<script setup="props">
+import { computed } from "vue";
 import { fields } from "../api/";
-import ScreenshotHighlight from "./ScreenshotHighlight.vue";
+
+export { default as ScreenshotHighlight } from "./ScreenshotHighlight.vue";
 
 export default {
-  name: "SearchSidebar",
   props: {
     id: String,
     results: Array,
   },
-  components: {
-    ScreenshotHighlight,
-  },
-  computed: {
-    // TODO: not pass all results to this component
-    // perhaps use vuex
-    screenshot() {
-      return this.results.find((result) => result.id == this.id);
-    },
-    text() {
-      return this.screenshot.fields[fields.BLOCKS_TEXT];
-    },
-  },
 };
+// TODO: not pass all results to this component
+// perhaps use vuex
+export const screenshot = computed(() =>
+  props.results.find((result) => result.id == props.id)
+);
+export const text = computed(() => screenshot.value.fields[fields.BLOCKS_TEXT]);
 </script>
 
 <style scoped>
