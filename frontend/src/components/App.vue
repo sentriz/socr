@@ -25,12 +25,8 @@
   </div>
 </template>
 
-<script>
-import Search from "./Search.vue";
-
-export default {
-  name: "App",
-};
+<script setup>
+export { default as Search } from "./Search.vue";
 </script>
 
 <style scoped>

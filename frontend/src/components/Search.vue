@@ -36,10 +36,10 @@
 </template>
 
 <script setup>
+export { default as ScreenshotHighlight } from "./ScreenshotHighlight.vue";
+
 import { ref, reactive, watch, computed } from "vue";
 import throttle from "lodash.debounce";
-
-export { default as ScreenshotHighlight } from "./ScreenshotHighlight.vue";
 import { reqSearch, fields } from "../api";
 
 export const query = ref("");

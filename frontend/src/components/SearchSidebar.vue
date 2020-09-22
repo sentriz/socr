@@ -17,21 +17,21 @@
 </template>
 
 <script setup="props">
-import { computed } from "vue";
-import { fields } from "../api/";
-
 export { default as ScreenshotHighlight } from "./ScreenshotHighlight.vue";
-
 export default {
   props: {
     id: String,
     results: Array,
   },
 };
+
+import { computed } from "vue";
+import { fields } from "../api/";
+
 // TODO: not pass all results to this component
 // perhaps use vuex
 export const screenshot = computed(() =>
-  props.results.find((result) => result.id == props.id)
+  props.results.find((result) => result.id === props.id)
 );
 export const text = computed(() => screenshot.value.fields[fields.BLOCKS_TEXT]);
 </script>

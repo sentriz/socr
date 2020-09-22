@@ -5,7 +5,7 @@
       <button
         class="btn"
         :class="{ disabled: !status.finished }"
-        @click="startImport"
+        @click="reqStartImport"
       >
         start import
       </button>
@@ -28,36 +28,25 @@
   <button class="btn">hello?</button>
 </template>
 
-<script>
-import { reqStartImport } from "../api";
+<script setup>
+export { reqStartImport } from "../api";
 
-export default {
-  name: "Settings",
-  inject: ["socket"],
-  data() {
-    return {
-      errors: [],
-      status: {
-        error: null,
-        new: "import not started",
-        count_processed: 0,
-        count_total: 0,
-        finished: true,
-      },
-    };
-  },
-  created() {
-    this.socket.onmessage = (e) => {
-      this.status = JSON.parse(e.data);
-      if (this.status.error) {
-        this.errors.push(this.status.error);
-      }
-    };
-  },
-  methods: {
-    startImport() {
-      reqStartImport();
-    },
-  },
+import { ref, inject } from "vue";
+
+export const errors = ref([]);
+export const status = ref({
+  error: null,
+  new: "import not started",
+  count_processed: 0,
+  count_total: 0,
+  finished: true,
+});
+
+const socket = inject("socket");
+socket.onmessage = (e) => {
+  status.value = JSON.parse(e.data);
+  if (status.error) {
+    errors.value.push(this.status.error);
+  }
 };
 </script>
