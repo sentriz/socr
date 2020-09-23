@@ -11,15 +11,15 @@
 </template>
 
 <script setup="props">
-import { ref, toRefs, onMounted, computed } from "vue";
-import { urlImage, fields as afields } from "../api";
-import { zipBlocks } from "../highlighting";
-
 export default {
   props: {
     screenshot: Object,
   },
 };
+
+import { ref, toRefs, onMounted, computed, watch } from "vue";
+import { urlImage, fields } from "../api";
+import { zipBlocks } from "../highlighting";
 
 const highlightCanvas = (ctx, blocks) => {
   for (const block of blocks) {
@@ -36,14 +36,17 @@ const highlightCanvas = (ctx, blocks) => {
 };
 
 export const canvas = ref(null);
+const blocks = zipBlocks(props.screenshot);
 onMounted(() => {
   const ctx = canvas.value.getContext("2d");
-  const blocks = zipBlocks(props.screenshot);
   highlightCanvas(ctx, blocks);
 });
 
-const { fields, id } = toRefs(props.screenshot);
-export const scrotHeight = computed(() => fields.value[afields.SIZE_HEIGHT]);
-export const scrotWidth = computed(() => fields.value[afields.SIZE_WIDTH]);
-export const scrotURL = computed(() => `${urlImage}/${id.value}`);
+export const scrotHeight = computed(
+  () => props.screenshot.fields[fields.SIZE_HEIGHT]
+);
+export const scrotWidth = computed(
+  () => props.screenshot.fields[fields.SIZE_WIDTH]
+);
+export const scrotURL = computed(() => `${urlImage}/${props.screenshot.id}`);
 </script>
