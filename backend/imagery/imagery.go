@@ -26,8 +26,8 @@ type DecodeFunc func(io.Reader) (image.Image, error)
 
 type Format struct {
 	Filetype Filetype
-	Decode   func(io.Reader) (image.Image, error)
-	Encode   func(io.Writer, image.Image) error
+	Decode   DecodeFunc
+	Encode   EncodeFunc
 }
 
 func EncodeGIF(in io.Writer, i image.Image) error  { return gif.Encode(in, i, nil) }

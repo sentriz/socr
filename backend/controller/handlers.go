@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -8,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/gorilla/mux"
+	"go.senan.xyz/socr/controller/auth"
 )
 
 func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
@@ -30,7 +32,7 @@ func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "{}")
+	json.NewEncoder(w).Encode(struct{}{})
 }
 
 func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
@@ -39,7 +41,7 @@ func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "{}")
+	json.NewEncoder(w).Encode(struct{}{})
 }
 
 func (c *Controller) ServeImage(w http.ResponseWriter, r *http.Request) {
@@ -57,4 +59,32 @@ func (c *Controller) ServeWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("new socket client: %v", conn.RemoteAddr())
 	c.SocketClients[conn] = struct{}{}
+}
+
+func (c *Controller) ServeAuthenticate(w http.ResponseWriter, r *http.Request) {
+	var payload struct {
+		Password string `json:"password"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, fmt.Sprintf("parse payload: %v", err), 200)
+		return
+	}
+
+	if payload.Password != c.Password {
+		http.Error(w, "unauthorised", http.StatusUnauthorized)
+		return
+	}
+
+	token, err := auth.TokenNew(c.HMACSecret)
+	if err != nil {
+		http.Error(w, "generatinn token", 500)
+		return
+	}
+
+	json.NewEncoder(w).Encode(struct {
+		Token string `json:"token"`
+	}{
+		Token: token,
+	})
 }

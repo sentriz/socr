@@ -4,8 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/analysis/lang/en"
@@ -16,6 +18,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"go.senan.xyz/socr/controller"
+
+	_ "go.senan.xyz/socr/controller/auth"
 )
 
 const (
@@ -72,10 +76,15 @@ func getOrCreateIndex(path string) (bleve.Index, error) {
 }
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
+
 	confListenAddr := mustEnv("SOCR_LISTEN_ADDR")
 	confScreenshotsPath := mustEnv("SOCR_SCREENSHOTS_PATH")
 	confIndexPath := mustEnv("SOCR_INDEX_PATH")
 	confImportPath := mustEnv("SOCR_IMPORT_PATH")
+	confHMACSecret := mustEnv("SOCR_HMAC_SECRET")
+	confPassword := mustEnv("SOCR_PASSWORD")
+	confAPIKey := mustEnv("SOCR_API_KEY")
 
 	index, err := getOrCreateIndex(confIndexPath)
 	if err != nil {
@@ -93,6 +102,9 @@ func main() {
 			},
 		},
 		SocketClients: map[*websocket.Conn]struct{}{},
+		HMACSecret:    confHMACSecret,
+		Password:      confPassword,
+		APIKey:        confAPIKey,
 	}
 
 	go ctrl.EmitImportUpdates()
@@ -109,6 +121,7 @@ func main() {
 	r.HandleFunc("/api/image/{id}", ctrl.ServeImage)
 	r.HandleFunc("/api/start_import", ctrl.ServeStartImport)
 	r.HandleFunc("/api/ws", ctrl.ServeWebSocket)
+	r.HandleFunc("/api/authenticate", ctrl.ServeAuthenticate)
 
 	bleveHTTP.RegisterIndexName(screenshotIndex, index)
 	r.Handle("/api/search", bleveHTTP.NewSearchHandler(screenshotIndex))

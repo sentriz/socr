@@ -13,6 +13,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"go.senan.xyz/socr/controller/id"
 	"go.senan.xyz/socr/imagery"
 
 	"github.com/blevesearch/bleve"
@@ -56,6 +57,9 @@ type Controller struct {
 	Index           bleve.Index
 	SocketUpgrader  websocket.Upgrader
 	SocketClients   map[*websocket.Conn]struct{}
+	HMACSecret      string
+	Password        string
+	APIKey          string
 }
 
 func (c *Controller) ReadAndIndexBytes(raw []byte) (*Screenshot, error) {
@@ -96,7 +100,7 @@ func (c *Controller) ReadAndIndexBytes(raw []byte) (*Screenshot, error) {
 		return nil, fmt.Errorf("calculate blurhash: %w", err)
 	}
 
-	scrotID := IDNew()
+	scrotID := id.New()
 	scrotFilename := fmt.Sprintf("%s.%s", scrotID, format.Filetype)
 	scrotPath := filepath.Join(c.ScreenshotsPath, scrotFilename)
 	if err := ioutil.WriteFile(scrotPath, raw, 0644); err != nil {
