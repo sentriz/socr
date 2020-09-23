@@ -14,7 +14,6 @@ import (
 	"github.com/blevesearch/bleve/analysis/token/keyword"
 	bleveHTTP "github.com/blevesearch/bleve/http"
 	"github.com/blevesearch/bleve/mapping"
-	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"go.senan.xyz/socr/controller"
@@ -110,21 +109,20 @@ func main() {
 	go ctrl.EmitImportUpdates()
 
 	r := mux.NewRouter()
-	r.Use(handlers.CORS(
-		handlers.AllowedOrigins([]string{"*"}),
-		handlers.AllowedMethods([]string{"GET", "OPTIONS"}),
-		handlers.AllowedHeaders([]string{"DNT", "User-Agent", "X-Requested-With", "If-Modified-Since", "Cache-Control", "Content-Type", "Range"}),
-		handlers.MaxAge(1728000),
-	))
-
-	r.HandleFunc("/api/upload", ctrl.ServeUpload)
-	r.HandleFunc("/api/image/{id}", ctrl.ServeImage)
-	r.HandleFunc("/api/start_import", ctrl.ServeStartImport)
-	r.HandleFunc("/api/ws", ctrl.ServeWebSocket)
+	r.Use(ctrl.WithCORS())
+	r.Use(ctrl.WithLogging())
 	r.HandleFunc("/api/authenticate", ctrl.ServeAuthenticate)
+	r.HandleFunc("/api/image/{id}", ctrl.ServeImage)
+
+	// begin authenticated routes
+	rAuth := r.NewRoute().Subrouter()
+	rAuth.Use(ctrl.WithAuth())
+	rAuth.HandleFunc("/api/upload", ctrl.ServeUpload)
+	rAuth.HandleFunc("/api/start_import", ctrl.ServeStartImport)
+	rAuth.HandleFunc("/api/ws", ctrl.ServeWebSocket)
 
 	bleveHTTP.RegisterIndexName(screenshotIndex, index)
-	r.Handle("/api/search", bleveHTTP.NewSearchHandler(screenshotIndex))
+	rAuth.Handle("/api/search", bleveHTTP.NewSearchHandler(screenshotIndex))
 
 	server := http.Server{
 		Addr:    confListenAddr,

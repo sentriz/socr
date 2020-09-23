@@ -21,7 +21,7 @@ func TokenParse(secret, tokenStr string) error {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 
-		return secret, nil
+		return []byte(secret), nil
 	})
 	if err != nil {
 		return fmt.Errorf("parsing token: %w", err)

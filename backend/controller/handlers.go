@@ -78,7 +78,7 @@ func (c *Controller) ServeAuthenticate(w http.ResponseWriter, r *http.Request) {
 
 	token, err := auth.TokenNew(c.HMACSecret)
 	if err != nil {
-		http.Error(w, "generatinn token", 500)
+		http.Error(w, "generating token", 500)
 		return
 	}
 
