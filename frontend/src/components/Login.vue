@@ -43,12 +43,13 @@
 
 <script setup>
 import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import { reqAuthenticate, tokenSet } from "../api";
 
 export const username = ref("");
 export const password = ref("");
 
+const route = useRoute();
 const router = useRouter();
 export const login = async () => {
   try {
@@ -58,7 +59,7 @@ export const login = async () => {
     });
     if (resp.token) {
       tokenSet(resp.token);
-      router.push({ name: "home" });
+      router.replace(route.query.redirect || "/");
     }
   } catch (err) {}
 };

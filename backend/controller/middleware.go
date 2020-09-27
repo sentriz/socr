@@ -24,7 +24,6 @@ func (c *Controller) WithAuth() func(http.Handler) http.Handler {
 			authHeader := r.Header.Get("authorization")
 			authHeader = strings.TrimPrefix(authHeader, "bearer ")
 			authHeader = strings.TrimPrefix(authHeader, "Bearer ")
-
 			if err := auth.TokenParse(c.HMACSecret, authHeader); err != nil {
 				http.Error(w, "unauthorised", http.StatusUnauthorized)
 				return

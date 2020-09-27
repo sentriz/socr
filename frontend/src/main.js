@@ -8,7 +8,13 @@ import SearchSidebar from "./components/SearchSidebar.vue";
 import Login from "./components/Login.vue";
 import Home from "./components/Home.vue";
 
-import { urlSocket } from './api'
+import { urlSocket, tokenHas } from './api'
+
+const checkAuth = (to, from, next) => next(
+  tokenHas()
+    ? undefined
+    : {name: "login", query: { redirect: to.fullPath } }
+)
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -23,6 +29,7 @@ const router = createRouter({
       name: "home",
       component: Home,
       redirect: "search",
+      beforeEnter: checkAuth,
       children: [
         {
           path: "search",

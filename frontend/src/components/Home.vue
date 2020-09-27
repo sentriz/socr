@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto bg-white overflow-y-scroll h-screen p-5">
+  <div class="container mx-auto bg-white h-screen p-5">
     <ul class="flex my-3">
       <li class="mr-6">
         <router-link

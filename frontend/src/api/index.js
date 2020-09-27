@@ -36,3 +36,4 @@ export const fields = {
 const tokenKey = "token"
 export const tokenSet = (token) => localStorage.setItem(tokenKey, token)
 export const tokenGet = () => localStorage.getItem(tokenKey)
+export const tokenHas = () => !!localStorage.getItem(tokenKey)
