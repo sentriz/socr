@@ -58,7 +58,8 @@ type Controller struct {
 	SocketUpgrader  websocket.Upgrader
 	SocketClients   map[*websocket.Conn]struct{}
 	HMACSecret      string
-	Password        string
+	LoginUsername   string
+	LoginPassword   string
 	APIKey          string
 }
 

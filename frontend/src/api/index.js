@@ -2,6 +2,7 @@ export const urlImage = "/api/image";
 export const urlSearch = "/api/search";
 export const urlSocket = "/api/ws";
 export const urlStartImport = "/api/start_import";
+export const urlAuthenticate = "/api/authenticate";
 
 const req = async (url, options) => {
   const response = await fetch(url, options)
@@ -10,6 +11,11 @@ const req = async (url, options) => {
 
 export const reqSearch = async (body) => req(urlSearch, {
   method: "POST",
+  body: JSON.stringify(body),
+})
+
+export const reqAuthenticate = async (body) => req(urlAuthenticate, {
+  method: "PUT",
   body: JSON.stringify(body),
 })
 
@@ -23,3 +29,7 @@ export const fields = {
   SIZE_HEIGHT: "dimensions.height",
   SIZE_WIDTH: "dimensions.width",
 };
+
+const tokenKey = "token"
+export const tokenSet = (token) => localStorage.setItem(tokenKey, token)
+export const tokenGet = () => localStorage.getItem(tokenKey)

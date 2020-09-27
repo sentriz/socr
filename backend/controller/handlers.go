@@ -63,6 +63,7 @@ func (c *Controller) ServeWebSocket(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) ServeAuthenticate(w http.ResponseWriter, r *http.Request) {
 	var payload struct {
+		Username string `json:"username"`
 		Password string `json:"password"`
 	}
 
@@ -71,7 +72,10 @@ func (c *Controller) ServeAuthenticate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if payload.Password != c.Password {
+	hasUsername := (payload.Username == c.LoginUsername)
+	hasPassword := (payload.Password == c.LoginPassword)
+
+	if !(hasUsername && hasPassword) {
 		http.Error(w, "unauthorised", http.StatusUnauthorized)
 		return
 	}

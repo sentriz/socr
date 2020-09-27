@@ -82,7 +82,8 @@ func main() {
 	confIndexPath := mustEnv("SOCR_INDEX_PATH")
 	confImportPath := mustEnv("SOCR_IMPORT_PATH")
 	confHMACSecret := mustEnv("SOCR_HMAC_SECRET")
-	confPassword := mustEnv("SOCR_PASSWORD")
+	confLoginUsername := mustEnv("SOCR_LOGIN_USERNAME")
+	confLoginPassword := mustEnv("SOCR_LOGIN_PASSWORD")
 	confAPIKey := mustEnv("SOCR_API_KEY")
 
 	index, err := getOrCreateIndex(confIndexPath)
@@ -102,7 +103,8 @@ func main() {
 		},
 		SocketClients: map[*websocket.Conn]struct{}{},
 		HMACSecret:    confHMACSecret,
-		Password:      confPassword,
+		LoginUsername: confLoginUsername,
+		LoginPassword: confLoginPassword,
 		APIKey:        confAPIKey,
 	}
 
