@@ -10,7 +10,7 @@
             username
           </label>
           <input
-            class="inp"
+            class="inp w-full"
             id="username"
             type="text"
             placeholder="mark_e_smith"
@@ -25,20 +25,14 @@
             password
           </label>
           <input
-            class="inp"
+            class="inp w-full"
             id="password"
             type="password"
             placeholder="*******"
             v-model="password"
           />
         </div>
-        <button
-          class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-          type="button"
-          @click="login"
-        >
-          sign in
-        </button>
+        <button class="btn w-full" type="button" @click="login">sign in</button>
       </div>
       <p class="text-center text-gray-500 text-xs">
         <b>s</b>creenshot <b>ocr</b> server &mdash; Senan Kelly 2020

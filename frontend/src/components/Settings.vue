@@ -1,5 +1,5 @@
 <template>
-  <div class="container space-y-3">
+  <div class="space-y-3">
     <p class="my-3 text-gray-700 text-lg font-bold">importer</p>
     <div class="flex items-center space-x-3">
       <button
@@ -45,8 +45,8 @@ export const status = ref({
 const socket = inject("socket");
 socket.onmessage = (e) => {
   status.value = JSON.parse(e.data);
-  if (status.error) {
-    errors.value.push(this.status.error);
+  if (status.value.error) {
+    errors.value.push(status.value.error);
   }
 };
 </script>

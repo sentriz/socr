@@ -4,48 +4,15 @@
 
 @import "@fortawesome/fontawesome-free/css/all";
 
-/* button:focus { */
-/*     outline: none; */
-/* } */
+.padded { @apply py-1 px-4; }
 
-/* button { */
-/*     @apply bg-blue-500 text-white text-center py-1 px-4 rounded; */
-/* } */
+.inp       { @apply appearance-none shadow border rounded padded text-gray-700 leading-tight; }
+.inp:focus { @apply outline-none shadow-outline; }
+.inp-error { @apply border-red-500; }
 
-/* button:hover { */
-/*     @apply bg-blue-700; */
-/* } */
+.btn          { @apply bg-blue-500 text-white font-bold padded rounded; }
+.btn:focus    { @apply outline-none shadow-outline; }
+.btn:hover    { @apply bg-blue-700; }
+.btn:disabled { @apply opacity-50 cursor-not-allowed; }
 
-/* button:disabled { */
-/*     @apply opacity-50 cursor-not-allowed; */
-/* } */
-
-/* input[type=text], */
-/* input[type=password] { */
-/*       @apply bg-white border border-gray-300 rounded-lg py-1 px-4 block w-full appearance-none leading-normal; */
-/* } */
-
-/* input[type=text]:focus, */
-/* input[type=password]:focus { */
-/*     @apply shadow-outline outline-none; */
-/* } */
-
-.inp {
-    @apply shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight;
-}
-
-.inp:focus {
-    @apply outline-none shadow-outline;
-}
-
-.inp-error {
-    @apply border-red-500;
-}
-
-hr {
-    @apply my-6;
-}
-
-.padded {
-    @apply py-1 px-4;
-}
+hr { @apply my-6; }

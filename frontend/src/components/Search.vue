@@ -1,38 +1,37 @@
 <template>
-  <div class="container">
-    <input
-      type="text"
-      placeholder="enter screenshot text query"
-      v-model="query"
-    />
-    <p class="my-3 text-gray-500 text-right">
-      {{ response.total_hits }} results found in {{ tookMS }}ms
-    </p>
-    <hr class="my-0" />
-    <div id="photos">
-      <router-link
-        v-for="screenshot in response.hits"
-        :key="screenshot.id"
-        :to="{ name: 'result', params: { id: screenshot.id } }"
-      >
-        <ScreenshotHighlight
-          :screenshot="screenshot"
-          class="photo border border-gray-300 rounded-lg"
-        />
-      </router-link>
-    </div>
-    <router-view v-slot="{ Component, route }">
-      <transition name="sidebar-slide">
-        <component
-          :is="Component"
-          :results="response.hits"
-          v-if="response.hits.length"
-          v-bind="route.params"
-        >
-        </component>
-      </transition>
-    </router-view>
+  <input
+    class="inp w-full"
+    type="text"
+    placeholder="enter screenshot text query"
+    v-model="query"
+  />
+  <p class="my-3 text-gray-500 text-right">
+    {{ response.total_hits }} results found in {{ tookMS }}ms
+  </p>
+  <hr class="my-0" />
+  <div id="photos">
+    <router-link
+      v-for="screenshot in response.hits"
+      :key="screenshot.id"
+      :to="{ name: 'result', params: { id: screenshot.id } }"
+    >
+      <ScreenshotHighlight
+        :screenshot="screenshot"
+        class="photo border border-gray-300 rounded-lg"
+      />
+    </router-link>
   </div>
+  <router-view v-slot="{ Component, route }">
+    <transition name="sidebar-slide">
+      <component
+        :is="Component"
+        :results="response.hits"
+        v-if="response.hits.length"
+        v-bind="route.params"
+      >
+      </component>
+    </transition>
+  </router-view>
 </template>
 
 <script setup>

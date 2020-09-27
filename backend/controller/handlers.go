@@ -74,7 +74,6 @@ func (c *Controller) ServeAuthenticate(w http.ResponseWriter, r *http.Request) {
 
 	hasUsername := (payload.Username == c.LoginUsername)
 	hasPassword := (payload.Password == c.LoginPassword)
-
 	if !(hasUsername && hasPassword) {
 		http.Error(w, "unauthorised", http.StatusUnauthorized)
 		return

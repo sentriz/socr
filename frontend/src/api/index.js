@@ -5,7 +5,10 @@ export const urlStartImport = "/api/start_import";
 export const urlAuthenticate = "/api/authenticate";
 
 const req = async (url, options) => {
-  const response = await fetch(url, options)
+  const response = await fetch(url, {
+    ...options,
+    headers: { "authorization": `bearer ${tokenGet()}` }
+  })
   return await response.json();
 }
 

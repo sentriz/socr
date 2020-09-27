@@ -54,11 +54,7 @@ const router = createRouter({
   ],
 });
 
-const socket = new WebSocket(`wss://${window.location.host}${urlSocket}`);
-
 const app = createApp(RouterView);
 app.use(router);
-app.provide("socket", socket)
+app.provide("socket", new WebSocket(`wss://${window.location.host}${urlSocket}`));
 app.mount("#app");
-
-window.router = router
