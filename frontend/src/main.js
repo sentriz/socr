@@ -7,13 +7,15 @@ import Settings from "./components/Settings.vue";
 import SearchSidebar from "./components/SearchSidebar.vue";
 import Login from "./components/Login.vue";
 import Home from "./components/Home.vue";
+import Public from "./components/Public.vue";
+import NotFound from "./components/NotFound.vue";
 
 import { urlSocket, tokenHas } from './api'
 
 const checkAuth = (to, from, next) => next(
   tokenHas()
     ? undefined
-    : {name: "login", query: { redirect: to.fullPath } }
+    : { name: "login", query: { redirect: to.fullPath } }
 )
 
 const router = createRouter({
@@ -50,13 +52,18 @@ const router = createRouter({
         },
         {
           path: "",
-          redirect: "search",
+          redirect: { name: "search" },
         },
       ]
     },
     {
+      path: "/i/:id",
+      name: "public",
+      component: Public,
+    },
+    {
       path: "/:catchAll(.*)",
-      redirect: "home",
+      component: NotFound,
     },
   ],
 });

@@ -36,10 +36,12 @@ const highlightCanvas = (ctx, blocks) => {
 };
 
 export const canvas = ref(null);
-const blocks = zipBlocks(props.screenshot);
 onMounted(() => {
   const ctx = canvas.value.getContext("2d");
-  highlightCanvas(ctx, blocks);
+  if (props.screenshot.locations) {
+    const blocks = zipBlocks(props.screenshot);
+    highlightCanvas(ctx, blocks);
+  }
 });
 
 export const scrotHeight = computed(
