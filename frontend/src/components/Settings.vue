@@ -29,9 +29,12 @@
 </template>
 
 <script setup>
-export { reqStartImport } from "../api";
+export default {
+  props: {},
+};
 
 import { ref, inject } from "vue";
+export { reqStartImport } from "../api";
 
 export const errors = ref([]);
 export const status = ref({

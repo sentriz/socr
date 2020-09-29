@@ -36,6 +36,9 @@
 
 <script setup>
 export { default as ScreenshotHighlight } from "./ScreenshotHighlight.vue";
+export default {
+  props: {},
+};
 
 import { ref, reactive, watch, computed } from "vue";
 import throttle from "lodash.debounce";

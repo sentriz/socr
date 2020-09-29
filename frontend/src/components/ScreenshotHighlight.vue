@@ -7,6 +7,7 @@
       background: `url(${scrotURL})`,
       backgroundSize: 'cover',
     }"
+    class="w-full"
   />
 </template>
 

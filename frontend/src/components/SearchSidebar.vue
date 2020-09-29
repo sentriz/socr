@@ -1,6 +1,7 @@
 <template>
   <div
-    class="sidebar border-l-4 p-6 sidebar bg-white fixed h-full top-0 right-0"
+    v-if="screenshot"
+    class="fixed h-full top-0 right-0 w-9/12 border-l-4 p-6 bg-white"
   >
     <div class="mx-auto">
       <div class="bg-black shadow font-mono text-sm">
@@ -35,9 +36,3 @@ export const screenshot = computed(() =>
 );
 export const text = computed(() => screenshot.value.fields[fields.BLOCKS_TEXT]);
 </script>
-
-<style scoped>
-.sidebar {
-  width: 75vw;
-}
-</style>
