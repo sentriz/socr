@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"go.senan.xyz/socr/controller/auth"
+	"go.senan.xyz/socr/controller/id"
 )
 
 func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
@@ -29,13 +30,19 @@ func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	screenshot, err := c.ReadAndIndexBytes(raw)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("processing upload: %v", err), 500)
-		return
-	}
+	screenshotID := id.New()
+	go func() {
+		if _, err := c.ReadAndIndexBytesWithID(raw, screenshotID); err != nil {
+			http.Error(w, fmt.Sprintf("processing upload: %v", err), 500)
+			return
+		}
+	}()
 
-	json.NewEncoder(w).Encode(screenshot)
+	json.NewEncoder(w).Encode(struct {
+		ID string `json:"id"`
+	}{
+		ID: screenshotID,
+	})
 }
 
 func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {

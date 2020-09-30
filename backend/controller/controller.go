@@ -21,13 +21,13 @@ import (
 )
 
 type Screenshot struct {
-	ID         string    `json:"id"`
-	Timestamp  time.Time `json:"timestamp"`
-	Filetype   imagery.Filetype
-	Tags       []string   `json:"tags"`
-	Dimensions Dimensions `json:"dimensions"`
-	Blocks     []*Block   `json:"blocks"`
-	Blurhash   string     `json:"blurhash"`
+	ID         string           `json:"id"`
+	Timestamp  time.Time        `json:"timestamp"`
+	Filetype   imagery.Filetype `json:"filetype"`
+	Tags       []string         `json:"tags"`
+	Dimensions Dimensions       `json:"dimensions"`
+	Blocks     []*Block         `json:"blocks"`
+	Blurhash   string           `json:"blurhash"`
 }
 
 type Dimensions struct {
@@ -52,12 +52,13 @@ type ImportUpdate struct {
 type Controller struct {
 	ScreenshotsPath         string
 	ImportPath              string
-	ImportUpdates           chan ImportUpdate
 	ImportRunning           bool
 	Index                   bleve.Index
 	SocketUpgrader          websocket.Upgrader
 	SocketClientsSettings   map[*websocket.Conn]struct{}
 	SocketClientsScreenshot map[string]map[*websocket.Conn]struct{}
+	SocketUpdatesSettings   chan ImportUpdate
+	SocketUpdatesScreenshot chan *Screenshot
 	HMACSecret              string
 	LoginUsername           string
 	LoginPassword           string
@@ -65,11 +66,23 @@ type Controller struct {
 }
 
 func (c *Controller) ReadAndIndexBytes(raw []byte) (*Screenshot, error) {
+	return c.ReadAndIndexBytesWithID(raw, id.New())
+}
+
+func (c *Controller) ReadAndIndexBytesWithID(raw []byte, scrotID string) (*Screenshot, error) {
 	mime := http.DetectContentType(raw)
 	format, ok := imagery.FormatFromMIME(mime)
 	if !ok {
 		return nil, fmt.Errorf("unrecognised format: %s", mime)
 	}
+
+	scrotFilename := fmt.Sprintf("%s.%s", scrotID, format.Filetype)
+	scrotPath := filepath.Join(c.ScreenshotsPath, scrotFilename)
+	if err := ioutil.WriteFile(scrotPath, raw, 0644); err != nil {
+		return nil, fmt.Errorf("write processed bytes: %w", err)
+	}
+
+	time.Sleep(5 * time.Second)
 
 	rawReader := bytes.NewReader(raw)
 	image, err := format.Decode(rawReader)
@@ -102,13 +115,6 @@ func (c *Controller) ReadAndIndexBytes(raw []byte) (*Screenshot, error) {
 		return nil, fmt.Errorf("calculate blurhash: %w", err)
 	}
 
-	scrotID := id.New()
-	scrotFilename := fmt.Sprintf("%s.%s", scrotID, format.Filetype)
-	scrotPath := filepath.Join(c.ScreenshotsPath, scrotFilename)
-	if err := ioutil.WriteFile(scrotPath, raw, 0644); err != nil {
-		return nil, fmt.Errorf("write processed bytes: %w", err)
-	}
-
 	screenshot := &Screenshot{
 		ID:       scrotID,
 		Filetype: format.Filetype,
@@ -125,6 +131,8 @@ func (c *Controller) ReadAndIndexBytes(raw []byte) (*Screenshot, error) {
 	if err := c.Index.Index(screenshot.ID, screenshot); err != nil {
 		return nil, fmt.Errorf("indexing screenshot: %w", err)
 	}
+
+	c.SocketUpdatesScreenshot <- screenshot
 
 	return screenshot, nil
 }
@@ -163,42 +171,44 @@ func (c *Controller) IndexImportDirectory() error {
 		return fmt.Errorf("listing import dir: %w", err)
 	}
 
-	go func() {
-		atomic.StoreInt32(&isImporting, 1)
-		defer atomic.StoreInt32(&isImporting, 0)
-
-		var nonProcessed []os.FileInfo
-		for _, file := range files {
-			if !procSuffixHas(file.Name()) {
-				nonProcessed = append(nonProcessed, file)
-			}
-		}
-
-		for i, file := range nonProcessed {
-			screenshot, err := c.IndexImportFile(file)
-			if err != nil {
-				c.ImportUpdates <- ImportUpdate{Error: err.Error()}
-				continue
-			}
-
-			c.ImportUpdates <- ImportUpdate{
-				New:            fmt.Sprintf("new image %s", screenshot.ID),
-				CountProcessed: i,
-				CountTotal:     len(nonProcessed),
-			}
-		}
-
-		c.ImportUpdates <- ImportUpdate{
-			Finished: true,
-			New:      "no more files to import",
-		}
-	}()
+	go c.IndexImportDirectoryProcess(files)
 
 	return nil
 }
 
-func (c *Controller) EmitImportUpdates() error {
-	for update := range c.ImportUpdates {
+func (c *Controller) IndexImportDirectoryProcess(files []os.FileInfo) {
+	atomic.StoreInt32(&isImporting, 1)
+	defer atomic.StoreInt32(&isImporting, 0)
+
+	var nonProcessed []os.FileInfo
+	for _, file := range files {
+		if !procSuffixHas(file.Name()) {
+			nonProcessed = append(nonProcessed, file)
+		}
+	}
+
+	for i, file := range nonProcessed {
+		screenshot, err := c.IndexImportFile(file)
+		if err != nil {
+			c.SocketUpdatesSettings <- ImportUpdate{Error: err.Error()}
+			continue
+		}
+
+		c.SocketUpdatesSettings <- ImportUpdate{
+			New:            fmt.Sprintf("new image %s", screenshot.ID),
+			CountProcessed: i,
+			CountTotal:     len(nonProcessed),
+		}
+	}
+
+	c.SocketUpdatesSettings <- ImportUpdate{
+		Finished: true,
+		New:      "no more files to import",
+	}
+}
+
+func (c *Controller) EmitUpdatesSettings() error {
+	for update := range c.SocketUpdatesSettings {
 		updateJSON, err := json.Marshal(update)
 		if err != nil {
 			log.Printf("error marshaling update json: %v", err)
@@ -210,6 +220,26 @@ func (c *Controller) EmitImportUpdates() error {
 				log.Printf("error writing to socket client: %v", err)
 				client.Close()
 				delete(c.SocketClientsSettings, client)
+				continue
+			}
+		}
+	}
+	return nil
+}
+
+func (c *Controller) EmitUpdatesScreenshot() error {
+	for screenshot := range c.SocketUpdatesScreenshot {
+		updateJSON, err := json.Marshal(screenshot)
+		if err != nil {
+			log.Printf("error marshaling update json: %v", err)
+			continue
+		}
+
+		for client := range c.SocketClientsScreenshot[screenshot.ID] {
+			if err := client.WriteMessage(websocket.TextMessage, updateJSON); err != nil {
+				log.Printf("error writing to socket client: %v", err)
+				client.Close()
+				delete(c.SocketClientsScreenshot[screenshot.ID], client)
 				continue
 			}
 		}

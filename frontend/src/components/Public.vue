@@ -33,22 +33,23 @@ const screenshotID = route.params.id;
 export const screenshot = ref(null);
 export const text = ref([]);
 export const url = ref("");
+
+const setStateFromScreenshot = (scrot, x) => {
+  console.log(x, "/", scrot);
+  screenshot.value = scrot;
+  text.value = scrot.fields[fields.BLOCKS_TEXT];
+  url.value = `${urlImage}/${scrot.id}/raw`;
+};
+
+// screenshot data from xhr
 onMounted(async () => {
   const resp = await reqImage(screenshotID);
-
-  if (resp.hits.length > 0) {
-    const hit = resp.hits[0];
-    screenshot.value = hit;
-    text.value = hit.fields[fields.BLOCKS_TEXT];
-    url.value = `${urlImage}/${hit.id}/raw`;
-  }
+  if (resp.hits.length > 0) setStateFromScreenshot(resp.hits[0], "a");
 });
 
+// screenshot data from socket
 const socket = newSocket({ want_screenshot_id: screenshotID });
 socket.onmessage = (e) => {
-  status.value = JSON.parse(e.data);
-  if (status.value.error) {
-    errors.value.push(status.value.error);
-  }
+  setStateFromScreenshot(JSON.parse(e.data), "b");
 };
 </script>
