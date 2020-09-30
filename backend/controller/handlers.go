@@ -10,6 +10,7 @@ import (
 
 	"github.com/blevesearch/bleve"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	"go.senan.xyz/socr/controller/auth"
 )
 
@@ -79,14 +80,30 @@ func (c *Controller) ServeImage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) ServeWebSocket(w http.ResponseWriter, r *http.Request) {
+	params := r.URL.Query()
+	token := params.Get("token")
+	tokenValid := auth.TokenParse(c.HMACSecret, token) == nil
+
 	conn, err := c.SocketUpgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Printf("error upgrading socket connection: %v", err)
 		return
 	}
 
+	if w := params.Get("want_screenshot_id"); w != "" {
+		if _, ok := c.SocketClientsScreenshot[w]; !ok {
+			c.SocketClientsScreenshot[w] = map[*websocket.Conn]struct{}{}
+		}
+		c.SocketClientsScreenshot[w][conn] = struct{}{}
+	}
+
+	if w := params.Get("want_settings"); tokenValid && w != "" {
+		c.SocketClientsSettings[conn] = struct{}{}
+	}
+
 	log.Printf("new socket client: %v", conn.RemoteAddr())
-	c.SocketClients[conn] = struct{}{}
+	log.Printf("` clients settings: %v", c.SocketClientsSettings)
+	log.Printf("` clients screenshot: %v", c.SocketClientsScreenshot)
 }
 
 func (c *Controller) ServeAuthenticate(w http.ResponseWriter, r *http.Request) {

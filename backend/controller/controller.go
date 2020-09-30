@@ -50,17 +50,18 @@ type ImportUpdate struct {
 }
 
 type Controller struct {
-	ScreenshotsPath string
-	ImportPath      string
-	ImportUpdates   chan ImportUpdate
-	ImportRunning   bool
-	Index           bleve.Index
-	SocketUpgrader  websocket.Upgrader
-	SocketClients   map[*websocket.Conn]struct{}
-	HMACSecret      string
-	LoginUsername   string
-	LoginPassword   string
-	APIKey          string
+	ScreenshotsPath         string
+	ImportPath              string
+	ImportUpdates           chan ImportUpdate
+	ImportRunning           bool
+	Index                   bleve.Index
+	SocketUpgrader          websocket.Upgrader
+	SocketClientsSettings   map[*websocket.Conn]struct{}
+	SocketClientsScreenshot map[string]map[*websocket.Conn]struct{}
+	HMACSecret              string
+	LoginUsername           string
+	LoginPassword           string
+	APIKey                  string
 }
 
 func (c *Controller) ReadAndIndexBytes(raw []byte) (*Screenshot, error) {
@@ -204,11 +205,11 @@ func (c *Controller) EmitImportUpdates() error {
 			continue
 		}
 
-		for client := range c.SocketClients {
+		for client := range c.SocketClientsSettings {
 			if err := client.WriteMessage(websocket.TextMessage, updateJSON); err != nil {
 				log.Printf("error writing to socket client: %v", err)
 				client.Close()
-				delete(c.SocketClients, client)
+				delete(c.SocketClientsSettings, client)
 				continue
 			}
 		}

@@ -101,11 +101,12 @@ func main() {
 				return true
 			},
 		},
-		SocketClients: map[*websocket.Conn]struct{}{},
-		HMACSecret:    confHMACSecret,
-		LoginUsername: confLoginUsername,
-		LoginPassword: confLoginPassword,
-		APIKey:        confAPIKey,
+		SocketClientsSettings:   map[*websocket.Conn]struct{}{},
+		SocketClientsScreenshot: map[string]map[*websocket.Conn]struct{}{},
+		HMACSecret:              confHMACSecret,
+		LoginUsername:           confLoginUsername,
+		LoginPassword:           confLoginPassword,
+		APIKey:                  confAPIKey,
 	}
 
 	go ctrl.EmitImportUpdates()
@@ -116,14 +117,13 @@ func main() {
 	r.HandleFunc("/api/authenticate", ctrl.ServeAuthenticate)
 	r.HandleFunc("/api/image/{id}/raw", ctrl.ServeImageRaw)
 	r.HandleFunc("/api/image/{id}", ctrl.ServeImage)
-	r.HandleFunc("/api/websocket_pub", ctrl.ServeWebSocket)
+	r.HandleFunc("/api/websocket", ctrl.ServeWebSocket)
 
 	// begin authenticated routes
 	rAuth := r.NewRoute().Subrouter()
 	rAuth.Use(ctrl.WithAuth())
 	rAuth.HandleFunc("/api/upload", ctrl.ServeUpload)
 	rAuth.HandleFunc("/api/start_import", ctrl.ServeStartImport)
-	rAuth.HandleFunc("/api/websocket", ctrl.ServeWebSocket)
 
 	bleveHTTP.RegisterIndexName(screenshotIndex, index)
 	rAuth.Handle("/api/search", bleveHTTP.NewSearchHandler(screenshotIndex))

@@ -3,7 +3,6 @@ export const urlSearch = "/api/search";
 export const urlStartImport = "/api/start_import";
 export const urlAuthenticate = "/api/authenticate";
 export const urlSocket = "/api/websocket";
-export const urlSocketPub = "/api/websocket_pub";
 
 const req = async (url, options) => {
   const token = tokenGet()
@@ -50,10 +49,12 @@ const socketGuesses = {
   "https:": "wss:",
   "http:": "ws:",
 }
+
 const socketProtocol = socketGuesses[window.location.protocol]
 const socketHost = window.location.host
 
-export const newSocket = () => new WebSocket(
-  `${socketProtocol}//${socketHost}${urlSocket}?token=${tokenGet()}`)
-export const newSocketPub = () => new WebSocket(
-  `${socketProtocol}//${socketHost}${urlSocketPub}`)
+export const newSocketAuth = (params) => newSocket({ ...params, token: tokenGet() })
+export const newSocket = (params) => {
+  const paramsEnc = new URLSearchParams(params)
+  return new WebSocket(`${socketProtocol}//${socketHost}${urlSocket}?${paramsEnc}`)
+}

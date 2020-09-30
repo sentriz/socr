@@ -34,7 +34,7 @@ export default {
 };
 
 import { ref, inject } from "vue";
-export { reqStartImport, newSocket } from "../api";
+export { reqStartImport, newSocketAuth } from "../api";
 
 export const errors = ref([]);
 export const status = ref({
@@ -45,7 +45,7 @@ export const status = ref({
   finished: true,
 });
 
-const socket = newSocket()
+const socket = newSocketAuth({ want_settings: 1 });
 socket.onmessage = (e) => {
   status.value = JSON.parse(e.data);
   if (status.value.error) {

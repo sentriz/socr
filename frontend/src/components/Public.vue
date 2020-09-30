@@ -25,7 +25,7 @@ export default {
 
 import { ref, reactive, watch, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import { reqImage, fields, urlImage } from "../api";
+import { reqImage, fields, urlImage, newSocket } from "../api";
 
 const route = useRoute();
 const screenshotID = route.params.id;
@@ -43,4 +43,12 @@ onMounted(async () => {
     url.value = `${urlImage}/${hit.id}/raw`;
   }
 });
+
+const socket = newSocket({ want_screenshot_id: screenshotID });
+socket.onmessage = (e) => {
+  status.value = JSON.parse(e.data);
+  if (status.value.error) {
+    errors.value.push(status.value.error);
+  }
+};
 </script>
