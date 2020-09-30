@@ -51,5 +51,7 @@ export const scrotHeight = computed(
 export const scrotWidth = computed(
   () => props.screenshot.fields[fields.SIZE_WIDTH]
 );
-export const scrotURL = computed(() => `${urlImage}/${props.screenshot.id}`);
+export const scrotURL = computed(
+  () => `${urlImage}/${props.screenshot.id}/raw`
+);
 </script>

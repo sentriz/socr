@@ -4,7 +4,7 @@
     <div class="container mx-auto p-8 space-y-4">
       <img
         class="border-2 border-solid border-white shadow mx-auto"
-        src="/api/image/1MzJAZZA7d5blOeOKV6jQzyeM4qECfjw"
+        :src="url"
       />
       <div
         class="border-2 border-solid border-white shadow bg-gray-300 padded font-mono text-sm"
@@ -25,32 +25,22 @@ export default {
 
 import { ref, reactive, watch, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import { reqSearch, fields } from "../api";
+import { reqImage, fields, urlImage } from "../api";
 
 const route = useRoute();
 const screenshotID = route.params.id;
 
 export const screenshot = ref(null);
 export const text = ref([]);
+export const url = ref("");
 onMounted(async () => {
-  const resp = await reqSearch({
-    fields: [
-      fields.BLOCKS_TEXT,
-      fields.BLOCKS_POSITION,
-      fields.SIZE_HEIGHT,
-      fields.SIZE_WIDTH,
-    ],
-    highlight: {
-      fields: [fields.BLOCKS_TEXT],
-    },
-    query: {
-      ids: [screenshotID],
-    },
-  });
+  const resp = await reqImage(screenshotID);
 
   if (resp.hits.length > 0) {
-    screenshot.value = resp.hits[0];
-    text.value = resp.hits[0].fields[fields.BLOCKS_TEXT];
+    const hit = resp.hits[0];
+    screenshot.value = hit;
+    text.value = hit.fields[fields.BLOCKS_TEXT];
+    url.value = `${urlImage}/${hit.id}/raw`;
   }
 });
 </script>

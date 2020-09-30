@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"path/filepath"
 
+	"github.com/blevesearch/bleve"
 	"github.com/gorilla/mux"
 	"go.senan.xyz/socr/controller/auth"
 )
@@ -27,12 +28,13 @@ func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := c.ReadAndIndexBytes(raw); err != nil {
+	screenshot, err := c.ReadAndIndexBytes(raw)
+	if err != nil {
 		http.Error(w, fmt.Sprintf("processing upload: %v", err), 500)
 		return
 	}
 
-	json.NewEncoder(w).Encode(struct{}{})
+	json.NewEncoder(w).Encode(screenshot)
 }
 
 func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
@@ -44,10 +46,36 @@ func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(struct{}{})
 }
 
-func (c *Controller) ServeImage(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) ServeImageRaw(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	filename := fmt.Sprintf("%s.png", vars["id"])
 	http.ServeFile(w, r, filepath.Join(c.ScreenshotsPath, filename))
+}
+
+func (c *Controller) ServeImage(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	query := bleve.NewDocIDQuery([]string{vars["id"]})
+	request := bleve.NewSearchRequest(query)
+	highlight := bleve.NewHighlight()
+	highlight.Fields = []string{
+		"blocks.text",
+	}
+	request.Highlight = highlight
+	request.Fields = []string{
+		"blocks.text",
+		"blocks.position",
+		"dimensions.height",
+		"dimensions.width",
+	}
+
+	resp, err := c.Index.Search(request)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("searching index: %v", err), 500)
+		return
+	}
+
+	json.NewEncoder(w).Encode(resp)
 }
 
 func (c *Controller) ServeWebSocket(w http.ResponseWriter, r *http.Request) {

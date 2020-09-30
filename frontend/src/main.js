@@ -10,7 +10,7 @@ import Home from "./components/Home.vue";
 import Public from "./components/Public.vue";
 import NotFound from "./components/NotFound.vue";
 
-import { urlSocket, tokenHas } from './api'
+import { tokenHas } from './api'
 
 const checkAuth = (to, from, next) => next(
   tokenHas()
@@ -70,5 +70,4 @@ const router = createRouter({
 
 const app = createApp(RouterView);
 app.use(router);
-app.provide("socket", new WebSocket(`wss://${window.location.host}${urlSocket}`));
 app.mount("#app");
