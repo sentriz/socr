@@ -229,14 +229,8 @@ func (c *Controller) EmitUpdatesSettings() error {
 
 func (c *Controller) EmitUpdatesScreenshot() error {
 	for screenshot := range c.SocketUpdatesScreenshot {
-		updateJSON, err := json.Marshal(screenshot)
-		if err != nil {
-			log.Printf("error marshaling update json: %v", err)
-			continue
-		}
-
 		for client := range c.SocketClientsScreenshot[screenshot.ID] {
-			if err := client.WriteMessage(websocket.TextMessage, updateJSON); err != nil {
+			if err := client.WriteMessage(websocket.TextMessage, []byte(nil)); err != nil {
 				log.Printf("error writing to socket client: %v", err)
 				client.Close()
 				delete(c.SocketClientsScreenshot[screenshot.ID], client)

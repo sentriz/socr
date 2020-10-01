@@ -1,4 +1,4 @@
-import { createApp } from "vue";
+import { createApp, reactive } from "vue";
 import { createRouter, createWebHashHistory, RouterView } from "vue-router";
 
 import "./main.css";
@@ -68,6 +68,12 @@ const router = createRouter({
   ],
 });
 
+const store = reactive({
+  // map screenshot id -> screenshot
+  screenshots: {}
+})
+
 const app = createApp(RouterView);
 app.use(router);
+app.provide("store", store);
 app.mount("#app");

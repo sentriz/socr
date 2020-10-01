@@ -6,30 +6,24 @@
     v-model="query"
   />
   <p class="my-3 text-gray-500 text-right">
-    {{ response.total_hits }} results found in {{ tookMS }}ms
+    {{ reqTotalHits }} results found in {{ reqTookMs }}ms
   </p>
   <hr class="my-0" />
   <div id="photos">
     <router-link
-      v-for="screenshot in response.hits"
+      v-for="screenshot in store.screenshots"
       :key="screenshot.id"
       :to="{ name: 'result', params: { id: screenshot.id } }"
     >
       <ScreenshotHighlight
-        :screenshot="screenshot"
+        :id="screenshot.id"
         class="photo border border-gray-300 rounded-lg"
       />
     </router-link>
   </div>
   <router-view v-slot="{ Component, route }">
     <transition name="sidebar-slide">
-      <component
-        :is="Component"
-        :results="response.hits"
-        v-if="response.hits.length"
-        v-bind="route.params"
-      >
-      </component>
+      <component :is="Component" v-if="reqTotalHits" v-bind="route.params"> </component>
     </transition>
   </router-view>
 </template>
@@ -40,7 +34,7 @@ export default {
   props: {},
 };
 
-import { ref, reactive, watch, computed } from "vue";
+import { inject, ref, reactive, watch, computed } from "vue";
 import throttle from "lodash.debounce";
 import { reqSearch, fields } from "../api";
 
@@ -49,33 +43,34 @@ watch(query, (query, _) => {
   if (query) fetchScreenshots();
 });
 
-export const response = ref({
-  hits: [],
-  total_hits: 0,
-  took: 0,
-});
+const searchParams = {
+  size: 40,
+  fields: [
+    fields.BLOCKS_TEXT,
+    fields.BLOCKS_POSITION,
+    fields.SIZE_HEIGHT,
+    fields.SIZE_WIDTH,
+  ],
+  highlight: {
+    fields: [fields.BLOCKS_TEXT],
+  },
+};
 
+export const store = inject("store");
+export const reqTotalHits = ref(0);
+export const reqTookMs = ref(0);
 export const fetchScreenshots = throttle(async () => {
-  response.value = await reqSearch({
-    size: 40,
-    fields: [
-      fields.BLOCKS_TEXT,
-      fields.BLOCKS_POSITION,
-      fields.SIZE_HEIGHT,
-      fields.SIZE_WIDTH,
-    ],
-    highlight: {
-      fields: [fields.BLOCKS_TEXT],
-    },
-    query: {
-      term: query.value,
-    },
+  const resp = await reqSearch({
+    ...searchParams,
+    query: { term: query.value },
   });
-}, 200);
 
-export const tookMS = computed(
-  () => Math.round((response.value.took / 100000) * 100) / 100
-);
+  reqTotalHits.value = resp.total_hits;
+  reqTookMs.value = Math.round((resp.took / 100000) * 100) / 100;
+  for (const hit of resp.hits) {
+    store.screenshots[hit.id] = hit;
+  }
+}, 200);
 </script>
 
 <style scoped>

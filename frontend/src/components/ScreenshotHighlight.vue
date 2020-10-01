@@ -14,44 +14,45 @@
 <script setup="props">
 export default {
   props: {
-    screenshot: Object,
+    id: String,
+    x: Boolean,
   },
 };
 
-import { ref, toRefs, onMounted, computed, watch } from "vue";
-import { urlImage, fields } from "../api";
+import { inject, ref, computed, watch, onMounted } from "vue";
+import { urlScreenshot, fields } from "../api";
 import { zipBlocks } from "../highlighting";
 
-const highlightCanvas = (ctx, blocks) => {
-  for (const block of blocks) {
-    if (!block.match) continue;
+export const store = inject("store");
+const screenshot = computed(() => store.screenshots[props.id]);
+const blocks = computed(() => zipBlocks(screenshot.value));
+
+export const scrotHeight = computed(() => screenshot.value.fields[fields.SIZE_HEIGHT]);
+export const scrotWidth = computed(() => screenshot.value.fields[fields.SIZE_WIDTH]);
+export const scrotURL = computed(() => `${urlScreenshot}/${screenshot.value.id}/raw`);
+
+export const canvas = ref(null);
+const highlightCanvas = (canvas) => {
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (const block of blocks.value) {
+    // if (!block.match) continue;
 
     ctx.fillStyle = "rgba(236, 201, 75, 0.75)";
     ctx.fillRect(
       block.position.minX,
       block.position.minY,
       block.position.maxX - block.position.minX,
-      block.position.maxY - block.position.minY
+      block.position.maxY - block.position.minY,
     );
   }
 };
 
-export const canvas = ref(null);
 onMounted(() => {
-  const ctx = canvas.value.getContext("2d");
-  if (props.screenshot.locations) {
-    const blocks = zipBlocks(props.screenshot);
-    highlightCanvas(ctx, blocks);
-  }
+  highlightCanvas(canvas.value);
 });
-
-export const scrotHeight = computed(
-  () => props.screenshot.fields[fields.SIZE_HEIGHT]
-);
-export const scrotWidth = computed(
-  () => props.screenshot.fields[fields.SIZE_WIDTH]
-);
-export const scrotURL = computed(
-  () => `${urlImage}/${props.screenshot.id}/raw`
-);
+watch(props, (props, _) => {
+  highlightCanvas(canvas.value);
+});
 </script>

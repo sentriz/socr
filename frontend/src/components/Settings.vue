@@ -2,11 +2,7 @@
   <div class="space-y-3">
     <p class="my-3 text-gray-700 text-lg font-bold">importer</p>
     <div class="flex items-center space-x-3">
-      <button
-        class="btn"
-        :class="{ disabled: !status.finished }"
-        @click="reqStartImport"
-      >
+      <button class="btn" :class="{ disabled: !status.finished }" @click="reqStartImport">
         start import
       </button>
       <div class="flex-1 bg-blue-200 font-mono padded rounded">

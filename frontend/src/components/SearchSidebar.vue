@@ -5,7 +5,7 @@
   >
     <div class="mx-auto">
       <div class="bg-black shadow font-mono text-sm">
-        <ScreenshotHighlight class="mx-auto" :screenshot="screenshot" />
+        <ScreenshotHighlight x class="mx-auto" :id="screenshot.id" />
       </div>
       <hr />
       <div class="bg-gray-300 padded shadow font-mono text-sm">
@@ -22,17 +22,13 @@ export { default as ScreenshotHighlight } from "./ScreenshotHighlight.vue";
 export default {
   props: {
     id: String,
-    results: Array,
   },
 };
 
-import { computed } from "vue";
+import { inject, computed, watch } from "vue";
 import { fields } from "../api/";
 
-// TODO: not pass all results to this component
-// perhaps use vuex
-export const screenshot = computed(() =>
-  props.results.find((result) => result.id === props.id)
-);
+export const store = inject("store");
+export const screenshot = computed(() => store.screenshots[props.id]);
 export const text = computed(() => screenshot.value.fields[fields.BLOCKS_TEXT]);
 </script>

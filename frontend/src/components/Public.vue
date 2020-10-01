@@ -1,14 +1,16 @@
 <!-- <ScreenshotHighlight v-if="screenshot" :screenshot="screenshot" /> -->
 <template>
-  <div class="bg-gray-200 h-full">
+  <div class="bg-gray-200 min-h-screen">
     <div class="container mx-auto p-8 space-y-4">
-      <img
-        class="border-2 border-solid border-white shadow mx-auto"
-        :src="url"
-      />
+      <img class="border-2 border-solid border-white shadow mx-auto" :src="url" />
       <div
         class="border-2 border-solid border-white shadow bg-gray-300 padded font-mono text-sm"
       >
+        <div v-show="text.length == 0">
+          <p>hell</p>
+          <i class="animate-spin fas fa-search"></i>
+          <i class="fas fa-cog"></i>
+        </div>
         <p v-for="(line, i) in text" :key="i">
           {{ line }}
         </p>
@@ -25,31 +27,29 @@ export default {
 
 import { ref, reactive, watch, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import { reqImage, fields, urlImage, newSocket } from "../api";
+import { reqScreenshot, fields, urlScreenshot, newSocket } from "../api";
 
 const route = useRoute();
 const screenshotID = route.params.id;
 
+export const url = `${urlScreenshot}/${screenshotID}/raw`;
 export const screenshot = ref(null);
 export const text = ref([]);
-export const url = ref("");
 
-const setStateFromScreenshot = (scrot, x) => {
-  console.log(x, "/", scrot);
-  screenshot.value = scrot;
-  text.value = scrot.fields[fields.BLOCKS_TEXT];
-  url.value = `${urlImage}/${scrot.id}/raw`;
+const requestScreenshot = async () => {
+  return;
+  const resp = await reqScreenshot(screenshotID);
+  if (resp.hits.length == 0) return;
+
+  const hit = resp.hits[0];
+  screenshot.value = hit;
+  text.value = hit.fields[fields.BLOCKS_TEXT];
 };
 
-// screenshot data from xhr
-onMounted(async () => {
-  const resp = await reqImage(screenshotID);
-  if (resp.hits.length > 0) setStateFromScreenshot(resp.hits[0], "a");
-});
+// fetch image on mount
+onMounted(requestScreenshot);
 
-// screenshot data from socket
+// fetch image on socket message
 const socket = newSocket({ want_screenshot_id: screenshotID });
-socket.onmessage = (e) => {
-  setStateFromScreenshot(JSON.parse(e.data), "b");
-};
+socket.onmessage = requestScreenshot;
 </script>

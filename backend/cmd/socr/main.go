@@ -117,8 +117,8 @@ func main() {
 	r.Use(ctrl.WithCORS())
 	r.Use(ctrl.WithLogging())
 	r.HandleFunc("/api/authenticate", ctrl.ServeAuthenticate)
-	r.HandleFunc("/api/image/{id}/raw", ctrl.ServeImageRaw)
-	r.HandleFunc("/api/image/{id}", ctrl.ServeImage)
+	r.HandleFunc("/api/screenshot/{id}/raw", ctrl.ServeScreenshotRaw)
+	r.HandleFunc("/api/screenshot/{id}", ctrl.ServeScreenshot)
 	r.HandleFunc("/api/websocket", ctrl.ServeWebSocket)
 
 	// begin authenticated routes

@@ -3,10 +3,7 @@
     <div class="w-full max-w-xs">
       <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
         <div class="mb-4">
-          <label
-            class="block text-gray-700 text-sm font-bold mb-2"
-            for="username"
-          >
+          <label class="block text-gray-700 text-sm font-bold mb-2" for="username">
             username
           </label>
           <input
@@ -18,10 +15,7 @@
           />
         </div>
         <div class="mb-6">
-          <label
-            class="block text-gray-700 text-sm font-bold mb-2"
-            for="password"
-          >
+          <label class="block text-gray-700 text-sm font-bold mb-2" for="password">
             password
           </label>
           <input

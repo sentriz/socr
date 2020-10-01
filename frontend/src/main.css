@@ -1,11 +1,11 @@
+@import "@fortawesome/fontawesome-free/css/all.css";
+
 @tailwind base;
+
+body, #app { @apply min-h-screen; }
+hr         { @apply my-6; }
+
 @tailwind components;
-@tailwind utilities;
-
-@import "@fortawesome/fontawesome-free/css/all";
-
-body, #app { @apply h-screen; }
-hr { @apply my-6; }
 
 .padded { @apply py-1 px-4; }
 
@@ -17,3 +17,5 @@ hr { @apply my-6; }
 .btn:focus    { @apply outline-none shadow-outline; }
 .btn:hover    { @apply bg-blue-700; }
 .btn:disabled { @apply opacity-50 cursor-not-allowed; }
+
+@tailwind utilities;

@@ -1,4 +1,4 @@
-export const urlImage = "/api/image";
+export const urlScreenshot = "/api/screenshot";
 export const urlSearch = "/api/search";
 export const urlStartImport = "/api/start_import";
 export const urlAuthenticate = "/api/authenticate";
@@ -29,7 +29,7 @@ export const reqStartImport = async () => req(urlStartImport, {
   method: "POST"
 })
 
-export const reqImage = async (id) => req(`${urlImage}/${id}`, {
+export const reqScreenshot = async (id) => req(`${urlScreenshot}/${id}`, {
   method: "GET"
 })
 

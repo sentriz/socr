@@ -54,13 +54,13 @@ func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(struct{}{})
 }
 
-func (c *Controller) ServeImageRaw(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) ServeScreenshotRaw(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	filename := fmt.Sprintf("%s.png", vars["id"])
 	http.ServeFile(w, r, filepath.Join(c.ScreenshotsPath, filename))
 }
 
-func (c *Controller) ServeImage(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) ServeScreenshot(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	query := bleve.NewDocIDQuery([]string{vars["id"]})
