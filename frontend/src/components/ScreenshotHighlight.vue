@@ -15,11 +15,10 @@
 export default {
   props: {
     id: String,
-    x: Boolean,
   },
 };
 
-import { inject, ref, computed, watch, onMounted } from "vue";
+import { inject, ref, computed, onMounted, onUpdated } from "vue";
 import { urlScreenshot, fields } from "../api";
 import { zipBlocks } from "../highlighting";
 
@@ -27,17 +26,12 @@ export const store = inject("store");
 const screenshot = computed(() => store.screenshots[props.id]);
 const blocks = computed(() => zipBlocks(screenshot.value));
 
-export const scrotHeight = computed(() => screenshot.value.fields[fields.SIZE_HEIGHT]);
-export const scrotWidth = computed(() => screenshot.value.fields[fields.SIZE_WIDTH]);
-export const scrotURL = computed(() => `${urlScreenshot}/${screenshot.value.id}/raw`);
-
-export const canvas = ref(null);
 const highlightCanvas = (canvas) => {
   const ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   for (const block of blocks.value) {
-    // if (!block.match) continue;
+    if (!block.match) continue;
 
     ctx.fillStyle = "rgba(236, 201, 75, 0.75)";
     ctx.fillRect(
@@ -49,10 +43,11 @@ const highlightCanvas = (canvas) => {
   }
 };
 
-onMounted(() => {
-  highlightCanvas(canvas.value);
-});
-watch(props, (props, _) => {
-  highlightCanvas(canvas.value);
-});
+export const canvas = ref(null);
+onMounted(() => highlightCanvas(canvas.value));
+onUpdated(() => highlightCanvas(canvas.value));
+
+export const scrotHeight = computed(() => screenshot.value.fields[fields.SIZE_HEIGHT]);
+export const scrotWidth = computed(() => screenshot.value.fields[fields.SIZE_WIDTH]);
+export const scrotURL = computed(() => `${urlScreenshot}/${screenshot.value.id}/raw`);
 </script>

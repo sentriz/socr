@@ -5,7 +5,7 @@
   >
     <div class="mx-auto">
       <div class="bg-black shadow font-mono text-sm">
-        <ScreenshotHighlight x class="mx-auto" :id="screenshot.id" />
+        <ScreenshotHighlight class="mx-auto" :id="screenshot.id" />
       </div>
       <hr />
       <div class="bg-gray-300 padded shadow font-mono text-sm">
