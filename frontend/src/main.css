@@ -2,6 +2,7 @@
 
 @tailwind base;
 
+#app       { @apply overflow-y-scroll; }
 body, #app { @apply min-h-screen; }
 hr         { @apply my-6; }
 
