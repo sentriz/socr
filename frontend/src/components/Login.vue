@@ -3,11 +3,9 @@
     <div class="w-full max-w-xs">
       <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
         <div class="mb-4">
-          <label class="block text-gray-700 text-sm font-bold mb-2" for="username">
-            username
-          </label>
+          <label class="inp-label" for="username"> username </label>
           <input
-            class="inp w-full"
+            class="inp shadow w-full"
             id="username"
             type="text"
             placeholder="mark_e_smith"
@@ -15,11 +13,9 @@
           />
         </div>
         <div class="mb-6">
-          <label class="block text-gray-700 text-sm font-bold mb-2" for="password">
-            password
-          </label>
+          <label class="inp-label" for="password"> password </label>
           <input
-            class="inp w-full"
+            class="inp shadow w-full"
             id="password"
             type="password"
             placeholder="*******"

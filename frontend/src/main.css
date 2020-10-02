@@ -11,9 +11,10 @@ hr         { @apply my-6; }
 .padded { @apply py-1 px-4; }
 .box    { @apply border-2 border-solid border-white shadow; }
 
-.inp       { @apply appearance-none shadow border rounded padded text-gray-700 leading-tight; }
+.inp       { @apply appearance-none border rounded padded text-gray-700 leading-tight; }
 .inp:focus { @apply outline-none shadow-outline; }
 .inp-error { @apply border-red-500; }
+.inp-label { @apply block text-gray-700 text-sm font-bold mb-2; }
 
 .btn          { @apply bg-blue-500 text-white font-bold padded rounded; }
 .btn:focus    { @apply outline-none shadow-outline; }
