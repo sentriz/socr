@@ -9,6 +9,7 @@ hr         { @apply my-6; }
 @tailwind components;
 
 .padded { @apply py-1 px-4; }
+.box    { @apply border-2 border-solid border-white shadow; }
 
 .inp       { @apply appearance-none shadow border rounded padded text-gray-700 leading-tight; }
 .inp:focus { @apply outline-none shadow-outline; }
