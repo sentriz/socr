@@ -10,13 +10,17 @@ import Home from "./components/Home.vue";
 import Public from "./components/Public.vue";
 import NotFound from "./components/NotFound.vue";
 
-import { tokenHas } from './api'
+import { tokenHas, tokenSet, tokenGet } from './api'
 
-const checkAuth = (to, from, next) => next(
-  tokenHas()
-    ? undefined
-    : { name: "login", query: { redirect: to.fullPath } }
-)
+const beforeCheckAuth = (to, from, next) => {
+  if (tokenHas()) return next()
+  next({ name: "login", query: { redirect: to.fullPath } })
+}
+
+const beforeLogout = (to, from, next) => {
+  tokenSet("")
+  next({ name: "login" })
+}
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -27,11 +31,16 @@ const router = createRouter({
       component: Login,
     },
     {
+      path: "/logout",
+      name: "logout",
+      beforeEnter: beforeLogout,
+    },
+    {
       path: "/",
       name: "home",
       component: Home,
       redirect: "search",
-      beforeEnter: checkAuth,
+      beforeEnter: beforeCheckAuth,
       children: [
         {
           path: "search",
@@ -68,7 +77,7 @@ const router = createRouter({
     },
     {
       path: "/:catchAll(.*)",
-      redirect: { name: "not found" },
+      redirect: { name: "not_found" },
     },
   ],
 });
