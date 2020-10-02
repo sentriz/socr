@@ -1,14 +1,14 @@
 <template>
+  <h2>importer</h2>
   <div class="space-y-3">
-    <p class="my-3 text-gray-700 text-lg font-bold">importer</p>
     <div class="flex items-center space-x-3">
-      <button class="btn" :class="{ disabled: !status.finished }" @click="reqStartImport">
+      <button class="btn" :disabled="!status.finished" @click="reqStartImport">
         start import
       </button>
-      <div class="flex-1 bg-blue-200 font-mono padded rounded">
+      <div class="flex-1 bg-blue-100 font-mono padded rounded">
         {{ status.new }}
       </div>
-      <div v-show="!status.finished" class="bg-blue-200 padded rounded">
+      <div v-show="!status.finished" class="bg-blue-100 padded rounded">
         processed {{ status.count_processed }} / {{ status.count_total }}
       </div>
     </div>
@@ -20,8 +20,29 @@
     </div>
   </div>
   <hr />
-  <p class="my-3 text-gray-700 text-lg font-bold">credentials</p>
-  <button class="btn">hello?</button>
+  <h2>about</h2>
+  <table class="table-auto">
+    <tr>
+      <td class="border padded">version</td>
+      <td class="border padded">{{ about.version || "..." }}</td>
+    </tr>
+    <tr class="bg-gray-100">
+      <td class="border padded">screenshots indexed</td>
+      <td class="border padded">{{ about.screenshots_indexed || "..." }}</td>
+    </tr>
+    <tr>
+      <td class="border padded">api key</td>
+      <td class="border padded">{{ about.api_key || "..." }}</td>
+    </tr>
+    <tr class="bg-gray-100">
+      <td class="border padded">import path</td>
+      <td class="border padded">{{ about.import_path || "..." }}</td>
+    </tr>
+    <tr>
+      <td class="border padded">screenshots path</td>
+      <td class="border padded">{{ about.screenshots_path || "..." }}</td>
+    </tr>
+  </table>
 </template>
 
 <script setup>
@@ -29,8 +50,8 @@ export default {
   props: {},
 };
 
-import { ref, inject } from "vue";
-export { reqStartImport, newSocketAuth } from "../api";
+import { ref, inject, onMounted } from "vue";
+export { reqStartImport, reqAbout, newSocketAuth } from "../api";
 
 export const errors = ref([]);
 export const status = ref({
@@ -48,4 +69,9 @@ socket.onmessage = (e) => {
     errors.value.push(status.value.error);
   }
 };
+
+export const about = ref({});
+onMounted(async () => {
+  about.value = await reqAbout();
+});
 </script>

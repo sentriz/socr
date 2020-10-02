@@ -126,6 +126,7 @@ func main() {
 	rAuth.Use(ctrl.WithAuth())
 	rAuth.HandleFunc("/api/upload", ctrl.ServeUpload)
 	rAuth.HandleFunc("/api/start_import", ctrl.ServeStartImport)
+	rAuth.HandleFunc("/api/about", ctrl.ServeAbout)
 
 	bleveHTTP.RegisterIndexName(screenshotIndex, index)
 	rAuth.Handle("/api/search", bleveHTTP.NewSearchHandler(screenshotIndex))

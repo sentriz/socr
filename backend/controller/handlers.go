@@ -54,6 +54,30 @@ func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(struct{}{})
 }
 
+func (c *Controller) ServeAbout(w http.ResponseWriter, r *http.Request) {
+	screenshotsIndexed, err := c.Index.DocCount()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("counting screenshots indexed: %v", err), 500)
+		return
+	}
+
+	json.NewEncoder(w).Encode(struct {
+		Version            string `json:"version"`
+		ScreenshotsIndexed uint64 `json:"screenshots_indexed"`
+		APIKey             string `json:"api_key"`
+		SocketClients      int    `json:"socket_clients"`
+		ImportPath         string `json:"import_path"`
+		ScreenshotsPath    string `json:"screenshots_path"`
+	}{
+		Version:            "development",
+		ScreenshotsIndexed: screenshotsIndexed,
+		APIKey:             c.APIKey,
+		SocketClients:      len(c.SocketClientsSettings),
+		ImportPath:         c.ImportPath,
+		ScreenshotsPath:    c.ScreenshotsPath,
+	})
+}
+
 func (c *Controller) ServeScreenshotRaw(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	filename := fmt.Sprintf("%s.png", vars["id"])
@@ -107,10 +131,6 @@ func (c *Controller) ServeWebSocket(w http.ResponseWriter, r *http.Request) {
 	if w := params.Get("want_settings"); tokenValid && w != "" {
 		c.SocketClientsSettings[conn] = struct{}{}
 	}
-
-	log.Printf("new socket client: %v", conn.RemoteAddr())
-	log.Printf("` clients settings: %v", c.SocketClientsSettings)
-	log.Printf("` clients screenshot: %v", c.SocketClientsScreenshot)
 }
 
 func (c *Controller) ServeAuthenticate(w http.ResponseWriter, r *http.Request) {

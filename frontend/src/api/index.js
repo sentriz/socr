@@ -3,6 +3,7 @@ export const urlSearch = "/api/search";
 export const urlStartImport = "/api/start_import";
 export const urlAuthenticate = "/api/authenticate";
 export const urlSocket = "/api/websocket";
+export const urlAbout = "/api/about";
 
 const req = async (url, options) => {
   const token = tokenGet()
@@ -30,6 +31,10 @@ export const reqStartImport = async () => req(urlStartImport, {
 })
 
 export const reqScreenshot = async (id) => req(`${urlScreenshot}/${id}`, {
+  method: "GET"
+})
+
+export const reqAbout = async () => req(urlAbout, {
   method: "GET"
 })
 
