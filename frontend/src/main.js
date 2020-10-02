@@ -62,8 +62,13 @@ const router = createRouter({
       component: Public,
     },
     {
-      path: "/:catchAll(.*)",
+      path: "/not_found",
+      name: "not_found",
       component: NotFound,
+    },
+    {
+      path: "/:catchAll(.*)",
+      redirect: { name: "not found" },
     },
   ],
 });
