@@ -43,7 +43,7 @@ type Block struct {
 
 type ImportUpdate struct {
 	Error          string `json:"error"`
-	New            string `json:"new"`
+	ID             string `json:"id"`
 	CountProcessed int    `json:"count_processed"`
 	CountTotal     int    `json:"count_total"`
 	Finished       bool   `json:"finished"`
@@ -195,7 +195,7 @@ func (c *Controller) IndexImportDirectoryProcess(files []os.FileInfo) {
 		}
 
 		c.SocketUpdatesSettings <- ImportUpdate{
-			New:            fmt.Sprintf("new image %s", screenshot.ID),
+			ID:             screenshot.ID,
 			CountProcessed: i,
 			CountTotal:     len(nonProcessed),
 		}
@@ -203,7 +203,6 @@ func (c *Controller) IndexImportDirectoryProcess(files []os.FileInfo) {
 
 	c.SocketUpdatesSettings <- ImportUpdate{
 		Finished: true,
-		New:      "no more files to import",
 	}
 }
 
