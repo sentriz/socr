@@ -41,12 +41,19 @@ type Block struct {
 	Text     string `json:"text"`
 }
 
+type ImportUpdateStatus string
+
+const (
+	ImportUpdateStarted  ImportUpdateStatus = "started"
+	ImportUpdateFinished ImportUpdateStatus = "finished"
+)
+
 type ImportUpdate struct {
-	Error          string `json:"error"`
-	ID             string `json:"id"`
-	CountProcessed int    `json:"count_processed"`
-	CountTotal     int    `json:"count_total"`
-	Finished       bool   `json:"finished"`
+	Status         ImportUpdateStatus `json:"status,omitempty"`
+	Error          string             `json:"error,omitempty"`
+	ID             string             `json:"id,omitempty"`
+	CountProcessed int                `json:"count_processed,omitempty"`
+	CountTotal     int                `json:"count_total,omitempty"`
 }
 
 type Controller struct {
@@ -187,6 +194,12 @@ func (c *Controller) IndexImportDirectoryProcess(files []os.FileInfo) {
 		}
 	}
 
+	c.SocketUpdatesSettings <- ImportUpdate{Status: ImportUpdateStarted}
+	defer func() {
+		time.Sleep(500 * time.Millisecond)
+		c.SocketUpdatesSettings <- ImportUpdate{Status: ImportUpdateFinished}
+	}()
+
 	for i, file := range nonProcessed {
 		screenshot, err := c.IndexImportFile(file)
 		if err != nil {
@@ -196,13 +209,9 @@ func (c *Controller) IndexImportDirectoryProcess(files []os.FileInfo) {
 
 		c.SocketUpdatesSettings <- ImportUpdate{
 			ID:             screenshot.ID,
-			CountProcessed: i,
+			CountProcessed: i + 1,
 			CountTotal:     len(nonProcessed),
 		}
-	}
-
-	c.SocketUpdatesSettings <- ImportUpdate{
-		Finished: true,
 	}
 }
 

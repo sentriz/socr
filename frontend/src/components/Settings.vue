@@ -1,16 +1,17 @@
 <template>
   <h2>importer</h2>
   <div class="space-y-4">
-    <button class="btn" :disabled="!status.finished" @click="reqStartImport">
-      start import
-    </button>
+    <button class="btn" :disabled="isStarted" @click="startImport">start import</button>
     <table>
       <tr>
         <td class="border padded">status</td>
-        <td v-if="status.id" class="border padded">
-          added <span class="font-mono bg-gray-300 px-2 rounded">{{ status.id }}</span>
+        <td class="border padded">
+          <span v-if="status.id && !isFinished">
+            added
+            <span class="font-mono bg-gray-300 px-2 rounded">{{ status.id }}</span>
+          </span>
+          <span v-else>{{ status.status }}</span>
         </td>
-        <td v-else class="border padded">import not started</td>
         <td
           v-show="url"
           class="hidden lg:table-cell w-64"
@@ -76,33 +77,47 @@ export default {
 };
 
 import { ref, inject, onMounted, computed } from "vue";
-export { reqStartImport, reqAbout, newSocketAuth, urlScreenshot } from "../api";
+import { reqStartImport, reqAbout, newSocketAuth, urlScreenshot } from "../api";
 
-export const progress = ref("100%");
-export const url = ref("");
-export const errors = ref([]);
-export const status = ref({
+const statusInit = {
+  status: "not started",
   error: null,
   id: "",
   count_processed: 0,
   count_total: 0,
-  finished: true,
+};
+
+export const status = ref(statusInit);
+export const errors = ref([]);
+
+export const isStarted = computed(() => status.value.status === "started");
+export const isFinished = computed(() => status.value.status === "finished");
+
+export const url = computed(() => {
+  if (!status.value.id) return null;
+
+  return `${urlScreenshot}/${status.value.id}/raw`;
 });
+
+export const progress = computed(() => {
+  if (!status.value.count_total) return `0%`;
+
+  const perc = (100 * status.value.count_processed) / status.value.count_total;
+  return `${Math.round(perc)}%`;
+});
+
+export const startImport = () => {
+  status.value = statusInit;
+  reqStartImport();
+};
 
 const socket = newSocketAuth({ want_settings: 1 });
 socket.onmessage = (e) => {
   try {
-    status.value = JSON.parse(e.data);
+    status.value = { ...status.value, ...JSON.parse(e.data) };
   } catch (_) {
     return;
   }
-
-  if (status.value.error) errors.value.push(status.value.error);
-  if (status.value.id) url.value = `${urlScreenshot}/${status.value.id}/raw`;
-  if (status.value.count_total)
-    progress.value = `${Math.round(
-      (100 * status.value.count_processed) / status.value.count_total,
-    )}%`;
 };
 
 export const about = ref({});
