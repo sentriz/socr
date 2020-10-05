@@ -8,15 +8,12 @@
   <p class="my-3 text-gray-500 text-right">
     {{ reqTotalHits }} results found in {{ reqTookMs }}ms
   </p>
-  <hr class="my-0" />
-  <div class="col-resp gap-3">
-    <router-link
-      v-for="screenshot in store.screenshots"
-      :key="screenshot.id"
-      :to="{ name: 'result', params: { id: screenshot.id } }"
-    >
-      <ScreenshotHighlight :id="screenshot.id" class="border border-gray-300 rounded" />
-    </router-link>
+  <div class="col-resp gap-x-3 space-y-3">
+    <div v-for="screenshot in store.screenshots" :key="screenshot.id">
+      <router-link :to="{ name: 'result', params: { id: screenshot.id } }">
+        <ScreenshotHighlight :id="screenshot.id" class="border border-gray-300 rounded" />
+      </router-link>
+    </div>
   </div>
   <teleport to="body">
     <router-view v-slot="{ Component, route }">

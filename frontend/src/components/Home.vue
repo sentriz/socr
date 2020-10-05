@@ -16,7 +16,7 @@
         <span>logout</span>
       </router-link>
     </ul>
-    <hr class="mt-0 mb-6" />
+    <hr class="mt-0" />
     <router-view />
   </div>
 </template>

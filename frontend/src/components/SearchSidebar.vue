@@ -4,11 +4,11 @@
     class="fixed h-full top-0 right-0 w-9/12 border-l-4 p-6 bg-white overflow-y-auto"
   >
     <div class="mx-auto">
-      <div class="bg-black shadow font-mono text-sm">
+      <div class="my-2 bg-black shadow">
         <ScreenshotHighlight class="mx-auto" :id="screenshot.id" />
       </div>
       <hr />
-      <div class="bg-gray-300 padded shadow font-mono text-sm">
+      <div class="my-2 bg-gray-300 shadow font-mono text-sm padded">
         <p v-for="(line, i) in text" :key="i">
           {{ line }}
         </p>
