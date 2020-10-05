@@ -24,4 +24,9 @@ h2 { @apply my-3 text-gray-700 text-lg font-bold; }
 .btn:hover    { @apply bg-blue-700; }
 .btn:disabled { @apply opacity-50 cursor-not-allowed; }
 
+@screen sm { .col-resp { column-count: 1; } }
+@screen md { .col-resp { column-count: 2; } }
+@screen lg { .col-resp { column-count: 3; } }
+@screen xl { .col-resp { column-count: 4; } }
+
 @tailwind utilities;

@@ -9,23 +9,27 @@
     {{ reqTotalHits }} results found in {{ reqTookMs }}ms
   </p>
   <hr class="my-0" />
-  <div id="photos">
+  <div class="col-resp gap-3">
     <router-link
       v-for="screenshot in store.screenshots"
       :key="screenshot.id"
       :to="{ name: 'result', params: { id: screenshot.id } }"
     >
-      <ScreenshotHighlight
-        :id="screenshot.id"
-        class="photo border border-gray-300 rounded-lg"
-      />
+      <ScreenshotHighlight :id="screenshot.id" class="border border-gray-300 rounded" />
     </router-link>
   </div>
   <teleport to="body">
     <router-view v-slot="{ Component, route }">
-      <transition name="sidebar-slide">
+      <Transition
+        enterFromClass="translate-x-full"
+        enterActiveClass="transform transition ease-in-out duration-200"
+        enterToClass="translate-x-0"
+        leaveFromClass="translate-x-0"
+        leaveActiveClass="transform transition ease-in-out duration-200"
+        leaveToClass="translate-x-full"
+      >
         <component :is="Component" v-if="reqTotalHits" v-bind="route.params"></component>
-      </transition>
+      </Transition>
     </router-view>
   </teleport>
 </template>
@@ -76,37 +80,3 @@ export const fetchScreenshots = throttle(async () => {
   }
 }, 200);
 </script>
-
-<style scoped>
-#photos {
-  line-height: 0;
-  column-count: 4;
-  column-gap: 5px;
-}
-
-#photos .photo {
-  width: 100%;
-  height: auto;
-  margin: 5px 0;
-  display: flex;
-  justify-content: center;
-}
-
-/* prettier-ignore */
-@media (max-width: 1200px) { #photos { column-count: 3; } }
-/* prettier-ignore */
-@media (max-width: 1000px) { #photos { column-count: 2; } }
-/* prettier-ignore */
-@media (max-width: 800px)  { #photos { column-count: 1; } }
-
-.sidebar-slide-enter-active,
-.sidebar-slide-leave-active {
-  transition: transform 0.2s ease;
-}
-
-.sidebar-slide-enter-from,
-.sidebar-slide-leave-to {
-  transform: translateX(100%);
-  transition: all 150ms ease-in 0s;
-}
-</style>
