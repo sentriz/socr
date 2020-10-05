@@ -18,12 +18,12 @@
   <teleport to="body">
     <router-view v-slot="{ Component, route }">
       <Transition
-        enterFromClass="translate-x-full"
+        enterFromClass="translate-x-full opacity-0"
         enterActiveClass="transform transition ease-in-out duration-200"
-        enterToClass="translate-x-0"
-        leaveFromClass="translate-x-0"
+        enterToClass="translate-x-0 opacity-100"
+        leaveFromClass="translate-x-0 opacity-100"
         leaveActiveClass="transform transition ease-in-out duration-200"
-        leaveToClass="translate-x-full"
+        leaveToClass="translate-x-full opacity-0"
       >
         <component :is="Component" v-if="reqTotalHits" v-bind="route.params"></component>
       </Transition>
