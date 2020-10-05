@@ -38,12 +38,14 @@ export default {
 };
 
 import { inject, ref, reactive, watch, computed } from "vue";
-import throttle from "lodash.debounce";
+import { useThrottle } from "@vueuse/core";
 import { reqSearch, fields } from "../api";
 
 export const query = ref("");
-watch(query, (query, _) => {
-  if (query) fetchScreenshots();
+export const queryThrottled = useThrottle(query, 250);
+watch(queryThrottled, (v, _) => {
+  store.screenshots = {};
+  if (v) fetchScreenshots();
 });
 
 const searchParams = {
@@ -62,7 +64,7 @@ const searchParams = {
 export const store = inject("store");
 export const reqTotalHits = ref(0);
 export const reqTookMs = ref(0);
-export const fetchScreenshots = throttle(async () => {
+export const fetchScreenshots = async () => {
   const resp = await reqSearch({
     ...searchParams,
     query: {
@@ -75,10 +77,8 @@ export const fetchScreenshots = throttle(async () => {
 
   reqTotalHits.value = resp.total_hits;
   reqTookMs.value = Math.round((resp.took / 100000) * 100) / 100;
-
-  store.screenshots = {};
   for (const hit of resp.hits) {
     store.screenshots[hit.id] = hit;
   }
-}, 200);
+};
 </script>
