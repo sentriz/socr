@@ -65,7 +65,12 @@ export const reqTookMs = ref(0);
 export const fetchScreenshots = throttle(async () => {
   const resp = await reqSearch({
     ...searchParams,
-    query: { term: query.value },
+    query: {
+      match: query.value,
+      fuzziness: 1,
+      field: fields.BLOCKS_TEXT,
+      prefix_length: 0,
+    },
   });
 
   reqTotalHits.value = resp.total_hits;
