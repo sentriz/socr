@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto bg-white h-screen p-5 m-5">
+  <div class="container mx-auto bg-white h-screen p-5 mx-5">
     <ul class="flex my-3">
       <div class="flex-1 space-x-6">
         <router-link class="text-gray-500 hover:text-blue-300" :to="{ name: 'search' }">

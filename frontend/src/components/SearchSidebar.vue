@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="screenshot"
-    class="fixed h-full top-0 right-0 w-9/12 border-l-4 p-6 bg-white"
+    class="fixed h-full top-0 right-0 w-9/12 border-l-4 p-6 bg-white overflow-y-auto"
   >
     <div class="mx-auto">
       <div class="bg-black shadow font-mono text-sm">

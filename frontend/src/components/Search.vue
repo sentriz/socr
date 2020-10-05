@@ -21,11 +21,13 @@
       />
     </router-link>
   </div>
-  <router-view v-slot="{ Component, route }">
-    <transition name="sidebar-slide">
-      <component :is="Component" v-if="reqTotalHits" v-bind="route.params"> </component>
-    </transition>
-  </router-view>
+  <teleport to="body">
+    <router-view v-slot="{ Component, route }">
+      <transition name="sidebar-slide">
+        <component :is="Component" v-if="reqTotalHits" v-bind="route.params"></component>
+      </transition>
+    </router-view>
+  </teleport>
 </template>
 
 <script setup>
@@ -67,6 +69,8 @@ export const fetchScreenshots = throttle(async () => {
 
   reqTotalHits.value = resp.total_hits;
   reqTookMs.value = Math.round((resp.took / 100000) * 100) / 100;
+
+  store.screenshots = {};
   for (const hit of resp.hits) {
     store.screenshots[hit.id] = hit;
   }
