@@ -1,13 +1,16 @@
 @import "@fortawesome/fontawesome-free/css/all.css";
 
+::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
 @tailwind base;
 
-body       { @apply min-h-screen; overflow-y: overlay; }
-#app       { @apply w-full; }
+body       { @apply min-h-screen w-full; }
 hr         { @apply my-6; }
-
-h1 { @apply my-3 text-gray-700 text-xl font-bold; }
-h2 { @apply my-3 text-gray-700 text-lg font-bold; }
+h1         { @apply my-3 text-gray-700 text-xl font-bold; }
+h2         { @apply my-3 text-gray-700 text-lg font-bold; }
 
 @tailwind components;
 

@@ -16,6 +16,26 @@ const req = async (url, options) => {
   return await response.json();
 }
 
+
+export const reqSearchParams = (match) => ({
+  size: 40,
+  fields: [
+    fields.BLOCKS_TEXT,
+    fields.BLOCKS_POSITION,
+    fields.SIZE_HEIGHT,
+    fields.SIZE_WIDTH,
+  ],
+  highlight: {
+    fields: [fields.BLOCKS_TEXT],
+  },
+  query: {
+    match,
+    fuzziness: 1,
+    field: fields.BLOCKS_TEXT,
+    prefix_length: 0,
+  },
+});
+
 export const reqSearch = async (body) => req(urlSearch, {
   method: "POST",
   body: JSON.stringify(body)

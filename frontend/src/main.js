@@ -4,7 +4,6 @@ import { createRouter, createWebHashHistory, RouterView } from "vue-router";
 import "./main.css";
 import Search from "./components/Search.vue";
 import Settings from "./components/Settings.vue";
-import SearchSidebar from "./components/SearchSidebar.vue";
 import Login from "./components/Login.vue";
 import Home from "./components/Home.vue";
 import Public from "./components/Public.vue";
@@ -43,16 +42,9 @@ const router = createRouter({
       beforeEnter: beforeCheckAuth,
       children: [
         {
-          path: "search",
+          path: "search/:id?",
           name: "search",
           component: Search,
-          children: [
-            {
-              path: "result/:id",
-              name: "result",
-              component: SearchSidebar,
-            },
-          ],
         },
         {
           path: "settings",
@@ -90,4 +82,4 @@ const store = reactive({
 const app = createApp(RouterView);
 app.use(router);
 app.provide("store", store);
-app.mount("#app");
+app.mount("body");
