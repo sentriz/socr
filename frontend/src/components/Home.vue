@@ -2,17 +2,17 @@
   <div class="container mx-auto bg-white h-screen p-5 mx-5">
     <ul class="flex my-3">
       <div class="flex-1 space-x-6">
-        <router-link class="text-gray-500 hover:text-blue-300" :to="{ name: 'search' }">
-          <i class="fas fa-search mr-2"></i>
+        <router-link class="nav" :to="{ name: 'search' }">
+          <i class="nav-icon fas fa-search"></i>
           <span>search</span>
         </router-link>
-        <router-link class="text-gray-500 hover:text-blue-300" :to="{ name: 'settings' }">
-          <i class="fas fa-cogs mr-2"></i>
+        <router-link class="nav" :to="{ name: 'settings' }">
+          <i class="nav-icon fas fa-cogs"></i>
           <span>settings</span>
         </router-link>
       </div>
-      <router-link class="text-gray-500 hover:text-blue-300" :to="{ name: 'logout' }">
-        <i class="fas fa-sign-out-alt mr-2"></i>
+      <router-link class="nav" :to="{ name: 'logout' }">
+        <i class="nav-icon fas fa-sign-out-alt"></i>
         <span>logout</span>
       </router-link>
     </ul>
