@@ -17,9 +17,10 @@
   </div>
 </template>
 
-<script setup>
-export { default as ScreenshotHighlight } from "./ScreenshotHighlight.vue";
+<script setup="props">
+import ScreenshotHighlight from "./ScreenshotHighlight.vue";
 export default {
+  components: { ScreenshotHighlight },
   props: {},
 };
 

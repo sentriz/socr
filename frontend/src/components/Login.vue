@@ -31,7 +31,12 @@
   </div>
 </template>
 
-<script setup>
+<script setup="props">
+export default {
+  components: {},
+  props: {},
+};
+
 import { ref } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { reqAuthenticate, tokenSet } from "../api";

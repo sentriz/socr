@@ -21,8 +21,12 @@
   </div>
 </template>
 
-<script setup>
-export { default as Search } from "./Search.vue";
+<script setup="props">
+import Search from "./Search.vue";
+export default {
+  components: { Search },
+  props: {},
+};
 </script>
 
 <style scoped>

@@ -71,8 +71,9 @@
   </table>
 </template>
 
-<script setup>
+<script setup="props">
 export default {
+  components: {},
   props: {},
 };
 
@@ -89,27 +90,24 @@ const statusInit = {
 
 export const status = ref(statusInit);
 export const errors = ref([]);
+export const startImport = () => {
+  status.value = statusInit;
+  reqStartImport();
+};
 
 export const isStarted = computed(() => status.value.status === "started");
 export const isFinished = computed(() => status.value.status === "finished");
 
 export const url = computed(() => {
   if (!status.value.id) return null;
-
   return `${urlScreenshot}/${status.value.id}/raw`;
 });
 
 export const progress = computed(() => {
   if (!status.value.count_total) return `0%`;
-
   const perc = (100 * status.value.count_processed) / status.value.count_total;
   return `${Math.round(perc)}%`;
 });
-
-export const startImport = () => {
-  status.value = statusInit;
-  reqStartImport();
-};
 
 const socket = newSocketAuth({ want_settings: 1 });
 socket.onmessage = (e) => {

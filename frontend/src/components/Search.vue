@@ -18,15 +18,12 @@
   <SearchSidebar :id="sidebarID" />
 </template>
 
-<script setup>
+<script setup="props">
 import ScreenshotHighlight from "./ScreenshotHighlight.vue";
 import SearchSidebar from "./SearchSidebar.vue";
 export default {
+  components: { ScreenshotHighlight, SearchSidebar },
   props: {},
-  components: {
-    ScreenshotHighlight,
-    SearchSidebar,
-  },
 };
 
 import { inject, ref, reactive, watch, computed } from "vue";

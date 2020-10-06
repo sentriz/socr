@@ -13,9 +13,8 @@
 
 <script setup="props">
 export default {
-  props: {
-    id: String,
-  },
+  components: {},
+  props: { id: String },
 };
 
 import { inject, ref, computed, onMounted, onUpdated } from "vue";

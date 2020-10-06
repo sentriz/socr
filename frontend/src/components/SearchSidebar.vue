@@ -41,12 +41,8 @@
 <script setup="props">
 import ScreenshotHighlight from "./ScreenshotHighlight.vue";
 export default {
-  props: {
-    id: String,
-  },
-  components: {
-    ScreenshotHighlight,
-  },
+  components: { ScreenshotHighlight },
+  props: { id: String },
 };
 
 import { inject, computed, watch } from "vue";
