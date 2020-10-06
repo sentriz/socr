@@ -36,9 +36,9 @@ import { reqSearch, reqSearchParams } from "../api";
 
 export const query = ref("");
 export const queryThrottled = useThrottle(query, 250);
-watch(queryThrottled, (v, _) => {
+watch(queryThrottled, () => {
   store.screenshots = {};
-  if (v) fetchScreenshots();
+  fetchScreenshots();
 });
 
 const route = useRoute();
