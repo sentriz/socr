@@ -2,7 +2,6 @@ package controller
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -42,11 +41,11 @@ type Block struct {
 }
 
 type ImportStatus struct {
-	Running        int32   `json:"running"`
-	Errors         []error `json:"errors,omitempty"`
-	LastID         string  `json:"last_id,omitempty"`
-	CountProcessed int     `json:"count_processed"`
-	CountTotal     int     `json:"count_total"`
+	Running        int32    `json:"running"`
+	Errors         []string `json:"errors,omitempty"`
+	LastID         string   `json:"last_id,omitempty"`
+	CountProcessed int      `json:"count_processed"`
+	CountTotal     int      `json:"count_total"`
 }
 
 func (s *ImportStatus) IsRunning() bool { return atomic.LoadInt32(&s.Running) == 1 }
@@ -188,7 +187,7 @@ func (c *Controller) IndexImportDirectoryProcess(files []os.FileInfo) {
 
 	if len(nonProcessed) == 0 {
 		c.ImportStatus.Errors = append(c.ImportStatus.Errors,
-			errors.New("no more file left to process in import dir"))
+			"no more file left to process in import dir")
 		c.SocketUpdatesSettings <- struct{}{}
 		return
 	}
@@ -196,7 +195,7 @@ func (c *Controller) IndexImportDirectoryProcess(files []os.FileInfo) {
 	for i, file := range nonProcessed {
 		screenshot, err := c.IndexImportFile(file)
 		if err != nil {
-			c.ImportStatus.Errors = append(c.ImportStatus.Errors, err)
+			c.ImportStatus.Errors = append(c.ImportStatus.Errors, err.Error())
 			c.SocketUpdatesSettings <- struct{}{}
 			continue
 		}
