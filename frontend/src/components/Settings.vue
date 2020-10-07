@@ -1,16 +1,19 @@
 <template>
   <h2>importer</h2>
   <div class="space-y-4">
-    <button class="btn" :disabled="isStarted" @click="startImport">start import</button>
+    <button class="btn" :disabled="status.running" @click="reqStartImport">
+      start import
+    </button>
     <table>
       <tr>
         <td class="border padded">status</td>
         <td class="border padded">
-          <span v-if="status.id && !isFinished">
+          <span v-if="status.running && status.last_id">
             added
-            <span class="font-mono bg-gray-300 px-2 rounded">{{ status.id }}</span>
+            <span class="font-mono bg-gray-300 px-2 rounded">{{ status.last_id }}</span>
           </span>
-          <span v-else>{{ status.status }}</span>
+          <span v-else-if="status.running">running</span>
+          <span v-else>finished</span>
         </td>
         <td
           v-show="url"
@@ -39,9 +42,9 @@
         <td class="border padded">total</td>
         <td class="border padded">{{ status.count_total }}</td>
       </tr>
-      <tr v-show="errors.length">
+      <tr v-show="status.errors?.length">
         <td class="border padded">errors</td>
-        <td class="border padded">{{ errors.length }}</td>
+        <td class="border padded">{{ status.errors?.length }}</td>
       </tr>
     </table>
   </div>
@@ -78,29 +81,20 @@ export default {
 };
 
 import { ref, inject, onMounted, computed } from "vue";
-import { reqStartImport, reqAbout, newSocketAuth, urlScreenshot } from "../api";
+import {  newSocketAuth, urlScreenshot } from "../api";
+export { reqStartImport, reqImportStatus, reqAbout } from "../api"
 
-const statusInit = {
-  status: "not started",
-  error: null,
-  id: "",
+export const status = ref({
+  running: false,
+  errors: [],
+  last_id: "",
   count_processed: 0,
   count_total: 0,
-};
-
-export const status = ref(statusInit);
-export const errors = ref([]);
-export const startImport = () => {
-  status.value = statusInit;
-  reqStartImport();
-};
-
-export const isStarted = computed(() => status.value.status === "started");
-export const isFinished = computed(() => status.value.status === "finished");
+});
 
 export const url = computed(() => {
-  if (!status.value.id) return null;
-  return `${urlScreenshot}/${status.value.id}/raw`;
+  if (!status.value.last_id) return null;
+  return `${urlScreenshot}/${status.value.last_id}/raw`;
 });
 
 export const progress = computed(() => {
@@ -109,17 +103,16 @@ export const progress = computed(() => {
   return `${Math.round(perc)}%`;
 });
 
-const socket = newSocketAuth({ want_settings: 1 });
-socket.onmessage = (e) => {
-  try {
-    status.value = { ...status.value, ...JSON.parse(e.data) };
-  } catch (_) {
-    return;
-  }
-};
-
+// fetch import status and about on mount
 export const about = ref({});
 onMounted(async () => {
+  status.value = await reqImportStatus();
   about.value = await reqAbout();
 });
+
+// fetch import status on socket message
+const socket = newSocketAuth({ want_settings: 1 });
+socket.onmessage = async () => {
+  status.value = await reqImportStatus();
+};
 </script>

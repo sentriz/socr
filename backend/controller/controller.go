@@ -2,7 +2,7 @@ package controller
 
 import (
 	"bytes"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -41,30 +41,27 @@ type Block struct {
 	Text     string `json:"text"`
 }
 
-type ImportUpdateStatus string
-
-const (
-	ImportUpdateStarted  ImportUpdateStatus = "started"
-	ImportUpdateFinished ImportUpdateStatus = "finished"
-)
-
-type ImportUpdate struct {
-	Status         ImportUpdateStatus `json:"status,omitempty"`
-	Error          string             `json:"error,omitempty"`
-	ID             string             `json:"id,omitempty"`
-	CountProcessed int                `json:"count_processed,omitempty"`
-	CountTotal     int                `json:"count_total,omitempty"`
+type ImportStatus struct {
+	Running        int32   `json:"running"`
+	Errors         []error `json:"errors,omitempty"`
+	LastID         string  `json:"last_id,omitempty"`
+	CountProcessed int     `json:"count_processed"`
+	CountTotal     int     `json:"count_total"`
 }
+
+func (s *ImportStatus) IsRunning() bool { return atomic.LoadInt32(&s.Running) == 1 }
+func (s *ImportStatus) SetRunning()     { atomic.StoreInt32(&s.Running, 1) }
+func (s *ImportStatus) SetFinished()    { atomic.StoreInt32(&s.Running, 0) }
 
 type Controller struct {
 	ScreenshotsPath         string
 	ImportPath              string
-	ImportRunning           bool
+	ImportStatus            ImportStatus
 	Index                   bleve.Index
 	SocketUpgrader          websocket.Upgrader
 	SocketClientsSettings   map[*websocket.Conn]struct{}
 	SocketClientsScreenshot map[string]map[*websocket.Conn]struct{}
-	SocketUpdatesSettings   chan ImportUpdate
+	SocketUpdatesSettings   chan struct{}
 	SocketUpdatesScreenshot chan *Screenshot
 	HMACSecret              string
 	LoginUsername           string
@@ -88,8 +85,6 @@ func (c *Controller) ReadAndIndexBytesWithID(raw []byte, scrotID string) (*Scree
 	if err := ioutil.WriteFile(scrotPath, raw, 0644); err != nil {
 		return nil, fmt.Errorf("write processed bytes: %w", err)
 	}
-
-	time.Sleep(5 * time.Second)
 
 	rawReader := bytes.NewReader(raw)
 	image, err := format.Decode(rawReader)
@@ -139,12 +134,8 @@ func (c *Controller) ReadAndIndexBytesWithID(raw []byte, scrotID string) (*Scree
 		return nil, fmt.Errorf("indexing screenshot: %w", err)
 	}
 
-	c.SocketUpdatesScreenshot <- screenshot
-
 	return screenshot, nil
 }
-
-var isImporting int32
 
 func procSuffixHas(in string) bool   { return strings.HasSuffix(in, ".processed") }
 func procSuffixAdd(in string) string { return fmt.Sprintf("%s.processed", in) }
@@ -169,7 +160,7 @@ func (c *Controller) IndexImportFile(file os.FileInfo) (*Screenshot, error) {
 }
 
 func (c *Controller) IndexImportDirectory() error {
-	if atomic.LoadInt32(&isImporting) == 1 {
+	if c.ImportStatus.IsRunning() {
 		return fmt.Errorf("already importing")
 	}
 
@@ -184,8 +175,9 @@ func (c *Controller) IndexImportDirectory() error {
 }
 
 func (c *Controller) IndexImportDirectoryProcess(files []os.FileInfo) {
-	atomic.StoreInt32(&isImporting, 1)
-	defer atomic.StoreInt32(&isImporting, 0)
+	c.ImportStatus = ImportStatus{}
+	c.ImportStatus.SetRunning()
+	defer c.ImportStatus.SetFinished()
 
 	var nonProcessed []os.FileInfo
 	for _, file := range files {
@@ -194,37 +186,32 @@ func (c *Controller) IndexImportDirectoryProcess(files []os.FileInfo) {
 		}
 	}
 
-	c.SocketUpdatesSettings <- ImportUpdate{Status: ImportUpdateStarted}
-	defer func() {
-		time.Sleep(500 * time.Millisecond)
-		c.SocketUpdatesSettings <- ImportUpdate{Status: ImportUpdateFinished}
-	}()
+	if len(nonProcessed) == 0 {
+		c.ImportStatus.Errors = append(c.ImportStatus.Errors,
+			errors.New("no more file left to process in import dir"))
+		c.SocketUpdatesSettings <- struct{}{}
+		return
+	}
 
 	for i, file := range nonProcessed {
 		screenshot, err := c.IndexImportFile(file)
 		if err != nil {
-			c.SocketUpdatesSettings <- ImportUpdate{Error: err.Error()}
+			c.ImportStatus.Errors = append(c.ImportStatus.Errors, err)
+			c.SocketUpdatesSettings <- struct{}{}
 			continue
 		}
 
-		c.SocketUpdatesSettings <- ImportUpdate{
-			ID:             screenshot.ID,
-			CountProcessed: i + 1,
-			CountTotal:     len(nonProcessed),
-		}
+		c.ImportStatus.LastID = screenshot.ID
+		c.ImportStatus.CountProcessed = i + 1
+		c.ImportStatus.CountTotal = len(nonProcessed)
+		c.SocketUpdatesSettings <- struct{}{}
 	}
 }
 
 func (c *Controller) EmitUpdatesSettings() error {
-	for update := range c.SocketUpdatesSettings {
-		updateJSON, err := json.Marshal(update)
-		if err != nil {
-			log.Printf("error marshaling update json: %v", err)
-			continue
-		}
-
+	for range c.SocketUpdatesSettings {
 		for client := range c.SocketClientsSettings {
-			if err := client.WriteMessage(websocket.TextMessage, updateJSON); err != nil {
+			if err := client.WriteMessage(websocket.TextMessage, []byte(nil)); err != nil {
 				log.Printf("error writing to socket client: %v", err)
 				client.Close()
 				delete(c.SocketClientsSettings, client)

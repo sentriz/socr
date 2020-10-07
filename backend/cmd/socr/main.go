@@ -103,7 +103,7 @@ func main() {
 		},
 		SocketClientsSettings:   map[*websocket.Conn]struct{}{},
 		SocketClientsScreenshot: map[string]map[*websocket.Conn]struct{}{},
-		SocketUpdatesSettings:   make(chan controller.ImportUpdate),
+		SocketUpdatesSettings:   make(chan struct{}),
 		SocketUpdatesScreenshot: make(chan *controller.Screenshot),
 		HMACSecret:              confHMACSecret,
 		LoginUsername:           confLoginUsername,
@@ -129,6 +129,7 @@ func main() {
 	rAuth.HandleFunc("/api/upload", ctrl.ServeUpload)
 	rAuth.HandleFunc("/api/start_import", ctrl.ServeStartImport)
 	rAuth.HandleFunc("/api/about", ctrl.ServeAbout)
+	rAuth.HandleFunc("/api/import_status", ctrl.ServeImportStatus)
 
 	bleveHTTP.RegisterIndexName(screenshotIndex, index)
 	rAuth.Handle("/api/search", bleveHTTP.NewSearchHandler(screenshotIndex))

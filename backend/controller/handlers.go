@@ -32,10 +32,13 @@ func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 
 	screenshotID := id.New()
 	go func() {
-		if _, err := c.ReadAndIndexBytesWithID(raw, screenshotID); err != nil {
+		screenshot, err := c.ReadAndIndexBytesWithID(raw, screenshotID)
+		if err != nil {
 			http.Error(w, fmt.Sprintf("processing upload: %v", err), 500)
 			return
 		}
+
+		c.SocketUpdatesScreenshot <- screenshot
 	}()
 
 	json.NewEncoder(w).Encode(struct {
@@ -161,4 +164,8 @@ func (c *Controller) ServeAuthenticate(w http.ResponseWriter, r *http.Request) {
 	}{
 		Token: token,
 	})
+}
+
+func (c *Controller) ServeImportStatus(w http.ResponseWriter, r *http.Request) {
+	json.NewEncoder(w).Encode(c.ImportStatus)
 }
