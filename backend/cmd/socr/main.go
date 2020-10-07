@@ -17,6 +17,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"go.senan.xyz/socr/controller"
+	"go.senan.xyz/socr/imagery"
 
 	_ "go.senan.xyz/socr/controller/auth"
 )
@@ -108,6 +109,7 @@ func main() {
 		LoginUsername:           confLoginUsername,
 		LoginPassword:           confLoginPassword,
 		APIKey:                  confAPIKey,
+		DefaultFormat:           imagery.FormatPNG,
 	}
 
 	go ctrl.EmitUpdatesSettings()

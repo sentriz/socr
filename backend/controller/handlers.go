@@ -80,8 +80,7 @@ func (c *Controller) ServeAbout(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) ServeScreenshotRaw(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	filename := fmt.Sprintf("%s.png", vars["id"])
-	http.ServeFile(w, r, filepath.Join(c.ScreenshotsPath, filename))
+	http.ServeFile(w, r, filepath.Join(c.ScreenshotsPath, vars["id"]))
 }
 
 func (c *Controller) ServeScreenshot(w http.ResponseWriter, r *http.Request) {

@@ -34,11 +34,17 @@ func EncodeGIF(in io.Writer, i image.Image) error  { return gif.Encode(in, i, ni
 func EncodePNG(in io.Writer, i image.Image) error  { return png.Encode(in, i) }
 func EncodeJPEG(in io.Writer, i image.Image) error { return jpeg.Encode(in, i, nil) }
 
+var (
+	FormatGIF  = Format{FiletypeGIF, gif.Decode, EncodeGIF}
+	FormatPNG  = Format{FiletypePNG, png.Decode, EncodePNG}
+	FormatJPEG = Format{FiletypeJPEG, jpeg.Decode, EncodeJPEG}
+)
+
 func FormatFromMIME(in string) (Format, bool) {
 	data := map[string]Format{
-		"image/gif":  {FiletypeGIF, gif.Decode, EncodeGIF},
-		"image/png":  {FiletypePNG, png.Decode, EncodePNG},
-		"image/jpeg": {FiletypeJPEG, jpeg.Decode, EncodeJPEG},
+		"image/gif":  FormatGIF,
+		"image/png":  FormatPNG,
+		"image/jpeg": FormatJPEG,
 	}
 	f, ok := data[in]
 	return f, ok

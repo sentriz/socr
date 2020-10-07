@@ -70,6 +70,7 @@ type Controller struct {
 	LoginUsername           string
 	LoginPassword           string
 	APIKey                  string
+	DefaultFormat           imagery.Format
 }
 
 func (c *Controller) ReadAndIndexBytes(raw []byte) (*Screenshot, error) {
@@ -83,8 +84,7 @@ func (c *Controller) ReadAndIndexBytesWithID(raw []byte, scrotID string) (*Scree
 		return nil, fmt.Errorf("unrecognised format: %s", mime)
 	}
 
-	scrotFilename := fmt.Sprintf("%s.%s", scrotID, format.Filetype)
-	scrotPath := filepath.Join(c.ScreenshotsPath, scrotFilename)
+	scrotPath := filepath.Join(c.ScreenshotsPath, scrotID)
 	if err := ioutil.WriteFile(scrotPath, raw, 0644); err != nil {
 		return nil, fmt.Errorf("write processed bytes: %w", err)
 	}
@@ -99,12 +99,12 @@ func (c *Controller) ReadAndIndexBytesWithID(raw []byte, scrotID string) (*Scree
 
 	imageGrey := imagery.GreyScale(image)
 	imageBig := imagery.Resize(imageGrey, imagery.ScaleFactor)
-	imagePNG := &bytes.Buffer{}
-	if err := imagery.EncodePNG(imagePNG, imageBig); err != nil {
+	imageEncoded := &bytes.Buffer{}
+	if err := c.DefaultFormat.Encode(imageEncoded, imageBig); err != nil {
 		return nil, fmt.Errorf("encode scaled and greyed image: %w", err)
 	}
 
-	scrotBlocksOrig, err := imagery.ExtractText(imagePNG.Bytes(), imagery.ScaleFactor)
+	scrotBlocksOrig, err := imagery.ExtractText(imageEncoded.Bytes(), imagery.ScaleFactor)
 	if err != nil {
 		return nil, fmt.Errorf("extract image text: %w", err)
 	}
