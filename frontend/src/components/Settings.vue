@@ -1,37 +1,11 @@
-        <!-- <tr> -->
-        <!--   <td class="border padded">status</td> -->
-        <!--   <td class="border padded"> -->
-        <!--     <span v-if="true"> -->
-        <!--       added -->
-        <!--       <span class="font-mono bg-gray-300 px-2 rounded">
-                {{ status.last_id }}
-</span> -->
-        <!--     </span> -->
-        <!--     <span v-else-if="status.running">running</span> -->
-        <!--     <span v-else>finished</span> -->
-        <!--   </td> -->
-        <!-- </tr> -->
-
-          <!-- <td -->
-          <!--   v-show="url" -->
-          <!--   class="hidden md:table-cell w-64" -->
-          <!--   rowspan="0" -->
-          <!--   :style="{ -->
-          <!--     background: `url(https://socr-dev.senan.xyz/api/screenshot/uiT9G64SLpDdO7KYQLZ6xvyxzgxGfmZr/raw)`, -->
-          <!--     backgroundSize: 'contain', -->
-          <!--     backgroundRepeat: 'no-repeat', -->
-          <!--     backgroundPosition: 'left', -->
-          <!--   }" -->
-          <!-- ></td> -->
-
 <template>
   <h2>importer</h2>
   <div class="space-y-4">
-    <div class="grid grid-cols-3 gap-4">
-      <table>
+    <div class="import">
+      <table class="import-status">
         <colgroup>
-          <col />
-          <col class="w-1/2" />
+          <col class="w-3/12" />
+          <col class="w-9/12" />
         </colgroup>
         <tr>
           <td colspan="2" class="border padded">
@@ -62,15 +36,20 @@
         </tr>
       </table>
       <div
+        class="import-preview"
         v-show="url"
         :style="{
           background: `url(${url})`,
           backgroundSize: 'contain',
           backgroundRepeat: 'no-repeat',
           backgroundPosition: 'left',
+          backgroundColor: 'rgb(247, 250, 252)',
         }"
       />
-      <div v-if="status.errors" class="bg-red-100 padded border border-red-200">
+      <div
+        v-if="status.errors"
+        class="import-errors bg-red-100 padded border border-red-200"
+      >
         <ol v-for="error in status.errors">
           <li>
             {{ localTime(error.time) }}
@@ -154,3 +133,27 @@ socket.onmessage = async () => {
 
 export const localTime = (iso) => new Date(iso).toLocaleTimeString();
 </script>
+
+<style scoped>
+.import         { @apply grid gap-4; }
+.import-status  { grid-area: status; }
+.import-preview { grid-area: preview; }
+.import-errors  { grid-area: errors; }
+
+.import {
+  @apply grid-rows-3 grid-cols-1;
+  grid-template-areas:
+    "status "
+    "preview"
+    "errors ";
+}
+
+@screen md {
+  .import {
+    @apply grid-rows-2 grid-cols-3;
+    grid-template-areas:
+      "status status preview"
+      "errors errors errors";
+  }
+}
+</style>
