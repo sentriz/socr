@@ -22,7 +22,7 @@ h2         { @apply my-3 text-gray-700 text-lg font-bold; }
 .inp-error { @apply border-red-500; }
 .inp-label { @apply block text-gray-700 text-sm font-bold mb-2; }
 
-.btn          { @apply bg-blue-500 text-white font-bold padded rounded; }
+.btn          { @apply block bg-blue-500 text-white font-bold padded rounded; }
 .btn:focus    { @apply outline-none shadow-outline; }
 .btn:hover    { @apply bg-blue-700; }
 .btn:disabled { @apply opacity-50 cursor-not-allowed; }
