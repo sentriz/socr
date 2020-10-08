@@ -1,52 +1,88 @@
+        <!-- <tr> -->
+        <!--   <td class="border padded">status</td> -->
+        <!--   <td class="border padded"> -->
+        <!--     <span v-if="true"> -->
+        <!--       added -->
+        <!--       <span class="font-mono bg-gray-300 px-2 rounded">
+                {{ status.last_id }}
+</span> -->
+        <!--     </span> -->
+        <!--     <span v-else-if="status.running">running</span> -->
+        <!--     <span v-else>finished</span> -->
+        <!--   </td> -->
+        <!-- </tr> -->
+
+          <!-- <td -->
+          <!--   v-show="url" -->
+          <!--   class="hidden md:table-cell w-64" -->
+          <!--   rowspan="0" -->
+          <!--   :style="{ -->
+          <!--     background: `url(https://socr-dev.senan.xyz/api/screenshot/uiT9G64SLpDdO7KYQLZ6xvyxzgxGfmZr/raw)`, -->
+          <!--     backgroundSize: 'contain', -->
+          <!--     backgroundRepeat: 'no-repeat', -->
+          <!--     backgroundPosition: 'left', -->
+          <!--   }" -->
+          <!-- ></td> -->
+
 <template>
   <h2>importer</h2>
   <div class="space-y-4">
+    <div class="grid grid-cols-3 gap-4">
+      <table>
+        <colgroup>
+          <col />
+          <col class="w-1/2" />
+        </colgroup>
+        <tr>
+          <td colspan="2" class="border padded">
+            <span v-if="status.running && status.last_id">
+              added
+              <span class="text-xs font-mono bg-gray-300 px-2 rounded">
+                {{ status.last_id }}
+              </span>
+            </span>
+            <span v-else-if="status.running">running</span>
+            <span v-else>finished</span>
+          </td>
+        </tr>
+        <tr class="bg-gray-100">
+          <td class="border padded">progress</td>
+          <td class="border relative">
+            <div class="z-10 absolute inset-0 bg-blue-300" :style="{ width: progress }" />
+            <div class="z-20 absolute inset-0 padded text-black">{{ progress }}</div>
+          </td>
+        </tr>
+        <tr>
+          <td class="border padded">processed</td>
+          <td class="border padded">{{ status.count_processed }}</td>
+        </tr>
+        <tr class="bg-gray-100">
+          <td class="border padded">total</td>
+          <td class="border padded">{{ status.count_total }}</td>
+        </tr>
+      </table>
+      <div
+        v-show="url"
+        :style="{
+          background: `url(${url})`,
+          backgroundSize: 'contain',
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'left',
+        }"
+      />
+      <div v-if="status.errors" class="bg-red-100 padded border border-red-200">
+        <ol v-for="error in status.errors">
+          <li>
+            {{ localTime(error.time) }}
+            <span class="text-red-300">&gt;</span>
+            {{ error.error }}
+          </li>
+        </ol>
+      </div>
+    </div>
     <button class="btn" :disabled="status.running" @click="reqStartImport">
       start import
     </button>
-    <table>
-      <tr>
-        <td class="border padded">status</td>
-        <td class="border padded">
-          <span v-if="status.running && status.last_id">
-            added
-            <span class="font-mono bg-gray-300 px-2 rounded">{{ status.last_id }}</span>
-          </span>
-          <span v-else-if="status.running">running</span>
-          <span v-else>finished</span>
-        </td>
-        <td
-          v-show="url"
-          class="hidden lg:table-cell w-64"
-          rowspan="0"
-          :style="{
-            background: `url(${url})`,
-            backgroundSize: 'contain',
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'left',
-          }"
-        ></td>
-      </tr>
-      <tr class="bg-gray-100">
-        <td class="border padded">progress</td>
-        <td class="border relative">
-          <div class="z-10 absolute inset-0 bg-blue-300" :style="{ width: progress }" />
-          <div class="z-20 absolute inset-0 padded text-black">{{ progress }}</div>
-        </td>
-      </tr>
-      <tr>
-        <td class="border padded">processed</td>
-        <td class="border padded">{{ status.count_processed }}</td>
-      </tr>
-      <tr class="bg-gray-100">
-        <td class="border padded">total</td>
-        <td class="border padded">{{ status.count_total }}</td>
-      </tr>
-      <tr v-show="status.errors?.length">
-        <td class="border padded">errors</td>
-        <td class="border padded">{{ status.errors?.length }}</td>
-      </tr>
-    </table>
   </div>
   <hr />
   <h2>about</h2>
@@ -81,8 +117,8 @@ export default {
 };
 
 import { ref, inject, onMounted, computed } from "vue";
-import {  newSocketAuth, urlScreenshot } from "../api";
-export { reqStartImport, reqImportStatus, reqAbout } from "../api"
+import { newSocketAuth, urlScreenshot } from "../api";
+export { reqStartImport, reqImportStatus, reqAbout } from "../api";
 
 export const status = ref({
   running: false,
@@ -115,4 +151,6 @@ const socket = newSocketAuth({ want_settings: 1 });
 socket.onmessage = async () => {
   status.value = await reqImportStatus();
 };
+
+export const localTime = (iso) => new Date(iso).toLocaleTimeString();
 </script>

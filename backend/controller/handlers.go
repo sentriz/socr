@@ -167,5 +167,11 @@ func (c *Controller) ServeAuthenticate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) ServeImportStatus(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode(c.ImportStatus)
+	json.NewEncoder(w).Encode(struct {
+		ImportStatus
+		Running bool `json:"running"`
+	}{
+		ImportStatus: c.ImportStatus,
+		Running:      c.ImportIsRunning(),
+	})
 }

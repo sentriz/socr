@@ -95,6 +95,7 @@ func main() {
 	ctrl := &controller.Controller{
 		ScreenshotsPath: confScreenshotsPath,
 		ImportPath:      confImportPath,
+		ImportRunning:   new(int32),
 		Index:           index,
 		SocketUpgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {

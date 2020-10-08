@@ -2,6 +2,7 @@ package controller
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -40,21 +41,29 @@ type Block struct {
 	Text     string `json:"text"`
 }
 
-type ImportStatus struct {
-	Running        int32    `json:"running"`
-	Errors         []string `json:"errors,omitempty"`
-	LastID         string   `json:"last_id,omitempty"`
-	CountProcessed int      `json:"count_processed"`
-	CountTotal     int      `json:"count_total"`
+type ImportStatusError struct {
+	Time  time.Time `json:"time"`
+	Error string    `json:"error"`
 }
 
-func (s *ImportStatus) IsRunning() bool { return atomic.LoadInt32(&s.Running) == 1 }
-func (s *ImportStatus) SetRunning()     { atomic.StoreInt32(&s.Running, 1) }
-func (s *ImportStatus) SetFinished()    { atomic.StoreInt32(&s.Running, 0) }
+type ImportStatus struct {
+	Errors         []ImportStatusError `json:"errors,omitempty"`
+	LastID         string              `json:"last_id,omitempty"`
+	CountProcessed int                 `json:"count_processed"`
+	CountTotal     int                 `json:"count_total"`
+}
+
+func (s *ImportStatus) AddError(err error) {
+	s.Errors = append(s.Errors, ImportStatusError{
+		Time:  time.Now(),
+		Error: err.Error(),
+	})
+}
 
 type Controller struct {
 	ScreenshotsPath         string
 	ImportPath              string
+	ImportRunning           *int32
 	ImportStatus            ImportStatus
 	Index                   bleve.Index
 	SocketUpgrader          websocket.Upgrader
@@ -68,6 +77,10 @@ type Controller struct {
 	APIKey                  string
 	DefaultFormat           imagery.Format
 }
+
+func (c *Controller) ImportIsRunning() bool { return atomic.LoadInt32(c.ImportRunning) == 1 }
+func (c *Controller) ImportSetRunning()     { atomic.StoreInt32(c.ImportRunning, 1) }
+func (c *Controller) ImportSetFinished()    { atomic.StoreInt32(c.ImportRunning, 0) }
 
 func (c *Controller) ReadAndIndexBytes(raw []byte) (*Screenshot, error) {
 	return c.ReadAndIndexBytesWithID(raw, id.New())
@@ -159,7 +172,7 @@ func (c *Controller) IndexImportFile(file os.FileInfo) (*Screenshot, error) {
 }
 
 func (c *Controller) IndexImportDirectory() error {
-	if c.ImportStatus.IsRunning() {
+	if c.ImportIsRunning() {
 		return fmt.Errorf("already importing")
 	}
 
@@ -174,9 +187,11 @@ func (c *Controller) IndexImportDirectory() error {
 }
 
 func (c *Controller) IndexImportDirectoryProcess(files []os.FileInfo) {
+	c.ImportSetRunning()
+	defer c.ImportSetFinished()
+
 	c.ImportStatus = ImportStatus{}
-	c.ImportStatus.SetRunning()
-	defer c.ImportStatus.SetFinished()
+	c.SocketUpdatesSettings <- struct{}{}
 
 	var nonProcessed []os.FileInfo
 	for _, file := range files {
@@ -186,8 +201,7 @@ func (c *Controller) IndexImportDirectoryProcess(files []os.FileInfo) {
 	}
 
 	if len(nonProcessed) == 0 {
-		c.ImportStatus.Errors = append(c.ImportStatus.Errors,
-			"no more file left to process in import dir")
+		c.ImportStatus.AddError(errors.New("no more file left in import dir"))
 		c.SocketUpdatesSettings <- struct{}{}
 		return
 	}
@@ -195,7 +209,7 @@ func (c *Controller) IndexImportDirectoryProcess(files []os.FileInfo) {
 	for i, file := range nonProcessed {
 		screenshot, err := c.IndexImportFile(file)
 		if err != nil {
-			c.ImportStatus.Errors = append(c.ImportStatus.Errors, err.Error())
+			c.ImportStatus.AddError(err)
 			c.SocketUpdatesSettings <- struct{}{}
 			continue
 		}
