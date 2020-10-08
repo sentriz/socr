@@ -21,8 +21,9 @@ const req = async (method, url, body, options = {}) => {
   return await response.json();
 };
 
-export const reqSearchParams = (match) => ({
-  size: 40,
+export const reqSearchParams = (size, from, match) => ({
+  size,
+  from,
   fields: [
     fields.BLOCKS_TEXT,
     fields.BLOCKS_POSITION,
