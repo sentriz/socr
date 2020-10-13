@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/blevesearch/bleve"
+	"github.com/blevesearch/bleve/search/query"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"go.senan.xyz/socr/controller/auth"
@@ -91,16 +92,58 @@ func (c *Controller) ServeScreenshot(w http.ResponseWriter, r *http.Request) {
 
 	query := bleve.NewDocIDQuery([]string{vars["id"]})
 	request := bleve.NewSearchRequest(query)
-	highlight := bleve.NewHighlight()
-	highlight.Fields = []string{
-		"blocks.text",
-	}
-	request.Highlight = highlight
 	request.Fields = []string{
+		"timestamp",
 		"blocks.text",
 		"blocks.position",
 		"dimensions.height",
 		"dimensions.width",
+	}
+
+	resp, err := c.Index.Search(request)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("searching index: %v", err), 500)
+		return
+	}
+
+	json.NewEncoder(w).Encode(resp)
+}
+
+type ServeSearchPayload struct {
+	Size int      `json:"size"`
+	From int      `json:"from"`
+	Sort []string `json:"sort"`
+	Term string   `json:"term"`
+}
+
+func (c *Controller) ServeSearch(w http.ResponseWriter, r *http.Request) {
+	var payload ServeSearchPayload
+	json.NewDecoder(r.Body).Decode(&payload)
+	defer r.Body.Close()
+
+	var query query.Query = bleve.NewMatchAllQuery()
+	if payload.Term != "" {
+		query = bleve.NewFuzzyQuery(payload.Term)
+	}
+
+	request := bleve.NewSearchRequest(query)
+	request.SortBy(payload.Sort)
+	request.Size = payload.Size
+	request.From = payload.From
+	request.Fields = []string{
+		"timestamp",
+		"blocks.text",
+		"blocks.position",
+		"dimensions.height",
+		"dimensions.width",
+	}
+
+	if payload.Term != "" {
+		highlight := bleve.NewHighlight()
+		highlight.Fields = []string{
+			"blocks.text",
+		}
+		request.Highlight = highlight
 	}
 
 	resp, err := c.Index.Search(request)

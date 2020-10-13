@@ -16,6 +16,7 @@ import (
 	"go.senan.xyz/socr/controller/id"
 	"go.senan.xyz/socr/imagery"
 
+	"github.com/araddon/dateparse"
 	"github.com/blevesearch/bleve"
 	"github.com/gorilla/websocket"
 )
@@ -83,10 +84,18 @@ func (c *Controller) ImportSetRunning()     { atomic.StoreInt32(c.ImportRunning,
 func (c *Controller) ImportSetFinished()    { atomic.StoreInt32(c.ImportRunning, 0) }
 
 func (c *Controller) ReadAndIndexBytes(raw []byte) (*Screenshot, error) {
-	return c.ReadAndIndexBytesWithID(raw, id.New())
+	return c.ReadAndIndexBytesWithIDTime(raw, id.New(), time.Now())
 }
 
 func (c *Controller) ReadAndIndexBytesWithID(raw []byte, scrotID string) (*Screenshot, error) {
+	return c.ReadAndIndexBytesWithIDTime(raw, scrotID, time.Now())
+}
+
+func (c *Controller) ReadAndIndexBytesWithTime(raw []byte, timestamp time.Time) (*Screenshot, error) {
+	return c.ReadAndIndexBytesWithIDTime(raw, id.New(), timestamp)
+}
+
+func (c *Controller) ReadAndIndexBytesWithIDTime(raw []byte, scrotID string, timestamp time.Time) (*Screenshot, error) {
 	mime := http.DetectContentType(raw)
 	format, ok := imagery.FormatFromMIME(mime)
 	if !ok {
@@ -138,7 +147,7 @@ func (c *Controller) ReadAndIndexBytesWithID(raw []byte, scrotID string) (*Scree
 		},
 		Blurhash:  scrotBlurhash,
 		Blocks:    scrotBlocks,
-		Timestamp: time.Now(),
+		Timestamp: timestamp,
 		Tags:      []string{},
 	}
 
@@ -163,7 +172,8 @@ func (c *Controller) IndexImportFile(file os.FileInfo) (*Screenshot, error) {
 		return nil, fmt.Errorf("renaming: %v", err)
 	}
 
-	screenshot, err := c.ReadAndIndexBytes(bytes)
+	screenshotTimestamp := guessFileCreated(file)
+	screenshot, err := c.ReadAndIndexBytesWithTime(bytes, screenshotTimestamp)
 	if err != nil {
 		return nil, fmt.Errorf("processing and indexing: %v", err)
 	}
@@ -247,4 +257,18 @@ func (c *Controller) EmitUpdatesScreenshot() error {
 		}
 	}
 	return nil
+}
+
+func guessFileCreated(file os.FileInfo) time.Time {
+	filename := file.Name()
+	filename = strings.TrimSuffix(filename, filepath.Ext(filename))
+	filename = strings.ReplaceAll(filename, "_", "")
+
+	guessed, err := dateparse.ParseLocal(filename)
+	if err != nil {
+		log.Printf("couldn't guess timestamp of %q, using mod time", file.Name())
+		return file.ModTime()
+	}
+
+	return guessed
 }

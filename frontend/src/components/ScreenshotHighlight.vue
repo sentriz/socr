@@ -17,14 +17,14 @@ export default {
   props: { id: String },
 };
 
-import { inject, ref, computed, onMounted, onUpdated } from "vue";
+import { inject, ref, toRefs, computed, onMounted, onUpdated } from "vue";
 import { urlScreenshot, fields } from "../api";
-import { zipBlocks } from "../highlighting";
+import { useStore } from "../store";
 
-export const store = inject("store");
-const screenshot = computed(() => store.screenshots[props.id]);
+const store = useStore();
+const screenshot = computed(() => store.screenshotByID(props.id));
+
 const blocks = computed(() => zipBlocks(screenshot.value));
-
 const highlightCanvas = (canvas) => {
   const ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -49,4 +49,26 @@ onUpdated(() => highlightCanvas(canvas.value));
 export const scrotHeight = computed(() => screenshot.value.fields[fields.SIZE_HEIGHT]);
 export const scrotWidth = computed(() => screenshot.value.fields[fields.SIZE_WIDTH]);
 export const scrotURL = computed(() => `${urlScreenshot}/${screenshot.value.id}/raw`);
+
+const zipBlocks = (screenshot) => {
+  if (!screenshot.locations?.[fields.BLOCKS_TEXT]) return [];
+
+  let flatText = screenshot.fields[fields.BLOCKS_TEXT];
+  let flatPosition = screenshot.fields[fields.BLOCKS_POSITION];
+  if (!Array.isArray(flatText)) flatText = [flatText];
+  if (!Array.isArray(flatPosition)) flatPosition = [flatPosition];
+
+  const queriesMatches = screenshot.locations[fields.BLOCKS_TEXT];
+  const queryMatches = Object.values(queriesMatches)[0];
+  const matchIndexes = new Set(queryMatches.map((match) => match.array_positions).flat());
+
+  return flatText.map((block, i) => {
+    const [minX, minY, maxX, maxY] = flatPosition.slice(4 * i, 4 * i + 4);
+    return {
+      text: block,
+      position: { minX, minY, maxX, maxY },
+      match: matchIndexes.has(i),
+    };
+  });
+};
 </script>

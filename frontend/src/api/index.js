@@ -21,26 +21,6 @@ const req = async (method, url, body, options = {}) => {
   return await response.json();
 };
 
-export const reqSearchParams = (size, from, match) => ({
-  size,
-  from,
-  fields: [
-    fields.BLOCKS_TEXT,
-    fields.BLOCKS_POSITION,
-    fields.SIZE_HEIGHT,
-    fields.SIZE_WIDTH,
-  ],
-  highlight: {
-    fields: [fields.BLOCKS_TEXT],
-  },
-  query: {
-    match,
-    fuzziness: 1,
-    field: fields.BLOCKS_TEXT,
-    prefix_length: 0,
-  },
-});
-
 export const reqSearch = (body) => req("POST", urlSearch, body);
 export const reqAuthenticate = (body) => req("PUT", urlAuthenticate, body);
 export const reqStartImport = () => req("POST", urlStartImport);
@@ -49,6 +29,7 @@ export const reqAbout = () => req("GET", urlAbout);
 export const reqImportStatus = () => req("GET", urlImportStatus);
 
 export const fields = {
+  TIMESTAMP: "timestamp",
   BLOCKS_TEXT: "blocks.text",
   BLOCKS_POSITION: "blocks.position",
   SIZE_HEIGHT: "dimensions.height",

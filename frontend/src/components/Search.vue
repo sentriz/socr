@@ -1,21 +1,34 @@
 <template>
   <input
+    v-model="reqQuery"
     class="inp w-full"
     type="text"
     placeholder="enter screenshot text query"
-    v-model="query"
   />
   <p class="my-3 text-gray-500 text-right">
     {{ reqTotalHits }} results found in {{ reqTookMs }}ms
   </p>
-  <div class="col-resp gap-x-3 space-y-3">
-    <div v-for="screenshot in store.screenshots" :key="screenshot.id">
-      <router-link :to="{ name: 'search', params: { id: screenshot.id } }">
-        <ScreenshotHighlight :id="screenshot.id" class="border border-gray-300 rounded" />
-      </router-link>
+  <div ref="scroller">
+    <div v-for="(page, i) in pages">
+      <div v-show="i !== 0" class="my-6">
+        <span class="text-gray-500"> page {{ i + 1 }}</span>
+        <hr class="m-0" />
+      </div>
+      <div class="col-resp gap-x-3 space-y-3">
+        <div v-for="screenshotID in page">
+          <router-link :to="{ name: 'search', params: { id: screenshotID } }">
+            <ScreenshotHighlight
+              :id="screenshotID"
+              class="border border-gray-300 rounded"
+            />
+          </router-link>
+        </div>
+      </div>
     </div>
   </div>
-  <div ref="intersectionTrigger"></div>
+  <div v-if="isLoading" class="bg-gray-300 text-gray-600 text-center rounded p-3 my-6">
+    <i class="animate-spin fas fa-circle-notch"></i> loading more
+  </div>
   <SearchSidebar :id="sidebarID" />
 </template>
 
@@ -27,46 +40,59 @@ export default {
   props: {},
 };
 
-import { inject, ref, reactive, watch, computed } from "vue";
+import { inject, ref, reactive, watch, computed, onMounted, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
 import { useThrottle } from "@vueuse/core";
-import { makeUseInfiniteScroll } from "vue-use-infinite-scroll";
-import { reqSearch, reqSearchParams } from "../api";
+import { fields } from "../api";
+import { useStore } from "../store";
+import useInfiniteScroll from "../composables/useInfiniteScroll";
 
-const useInfiniteScroll = makeUseInfiniteScroll({});
-export const intersectionTrigger = ref(null);
+export const store = useStore();
+export const route = useRoute();
 
-const pageSize = 25;
-const pageNum = useInfiniteScroll(intersectionTrigger);
-
-watch(pageNum, () => {
-  console.log("new page %d", pageNum.value);
-  fetchScreenshots();
-});
-
-export const query = ref("");
-export const queryThrottled = useThrottle(query, 250);
-watch(queryThrottled, () => {
-  pageNum.value = 0;
-  store.screenshots = {};
-  fetchScreenshots();
-});
-
-const route = useRoute();
 export const sidebarID = computed(() => route.params.id);
 
-export const store = inject("store");
+const pageSize = 25;
+export const pages = ref([]);
+
+export const reqQuery = ref("");
+
+const reqParamSortingMode = "timestamp_desc";
+const reqParamSorting = {
+  timestamp_desc: [`-${fields.TIMESTAMP}`],
+  timestamp_asc: [`${fields.TIMESTAMP}`],
+};
+
 export const reqTotalHits = ref(0);
 export const reqTookMs = ref(0);
-export const fetchScreenshots = async () => {
-  const resp = await reqSearch(
-    reqSearchParams(pageSize, pageSize * pageNum.value, query.value),
-  );
+export const fetchScreenshots = async (pageNum) => {
+  console.log("loading page #%d", pageNum);
+
+  const from = pageSize * pageNum;
+  const sort = reqParamSorting[reqParamSortingMode];
+  const resp = reqQuery.value
+    ? await store.screenshotsLoadTerm(pageSize, from, sort, reqQuery.value)
+    : await store.screenshotsLoadRecent(pageSize, from, sort);
+
+  pages.value.push([]);
+  for (const hit of resp.hits) {
+    pages.value[pages.value.length - 1].push(hit.id);
+  }
 
   reqTotalHits.value = resp.total_hits;
   reqTookMs.value = Math.round((resp.took / 100000) * 100) / 100;
-  for (const hit of resp.hits) {
-    store.screenshots[hit.id] = hit;
-  }
 };
+
+export const { scroller, pageNum, isLoading } = useInfiniteScroll(fetchScreenshots);
+
+export const reqQueryThrottled = useThrottle(reqQuery, 250);
+watch(
+  reqQueryThrottled,
+  () => {
+    pages.value = [];
+    fetchScreenshots(0);
+    pageNum.value = 1;
+  },
+  { immediate: true },
+);
 </script>

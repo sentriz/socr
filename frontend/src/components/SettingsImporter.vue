@@ -40,7 +40,7 @@
           background: `url(${url})`,
           backgroundSize: 'contain',
           backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'left',
+          backgroundPosition: 'center',
           backgroundColor: 'rgb(247, 250, 252)',
         }"
       >

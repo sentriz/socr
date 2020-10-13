@@ -9,7 +9,8 @@ import Home from "./components/Home.vue";
 import Public from "./components/Public.vue";
 import NotFound from "./components/NotFound.vue";
 
-import { tokenHas, tokenSet, tokenGet } from './api'
+import { tokenHas, tokenSet } from './api'
+import { storeSymbol, createStore } from './store'
 
 const beforeCheckAuth = (to, from, next) => {
   if (tokenHas()) return next()
@@ -74,12 +75,11 @@ const router = createRouter({
   ],
 });
 
-const store = reactive({
-  // map screenshot id -> screenshot
-  screenshots: {}
-})
+window.onbeforeunload = () => {
+  window.scrollTo(0, 0);
+}
 
 const app = createApp(RouterView);
 app.use(router);
-app.provide("store", store);
+app.provide(storeSymbol, createStore());
 app.mount("body");

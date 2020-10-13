@@ -12,7 +12,6 @@ import (
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/analysis/lang/en"
 	"github.com/blevesearch/bleve/analysis/token/keyword"
-	bleveHTTP "github.com/blevesearch/bleve/http"
 	"github.com/blevesearch/bleve/mapping"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -131,9 +130,7 @@ func main() {
 	rAuth.HandleFunc("/api/start_import", ctrl.ServeStartImport)
 	rAuth.HandleFunc("/api/about", ctrl.ServeAbout)
 	rAuth.HandleFunc("/api/import_status", ctrl.ServeImportStatus)
-
-	bleveHTTP.RegisterIndexName(screenshotIndex, index)
-	rAuth.Handle("/api/search", bleveHTTP.NewSearchHandler(screenshotIndex))
+	rAuth.HandleFunc("/api/search", ctrl.ServeSearch)
 
 	server := http.Server{
 		Addr:    confListenAddr,

@@ -1,5 +1,3 @@
 module.exports = {
-  optimizeDeps: {
-    include: ['lodash.debounce']
-  }
+  optimizeDeps: {}
 }

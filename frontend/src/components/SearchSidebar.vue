@@ -47,8 +47,9 @@ export default {
 
 import { inject, computed, watch } from "vue";
 import { fields } from "../api/";
+import { useStore } from "../store/";
 
-export const store = inject("store");
-export const screenshot = computed(() => store.screenshots[props.id]);
+export const store = useStore()
+export const screenshot = computed(() => store.state.screenshots[props.id]);
 export const text = computed(() => screenshot.value.fields[fields.BLOCKS_TEXT]);
 </script>
