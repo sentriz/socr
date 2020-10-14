@@ -1,24 +1,17 @@
 package main
 
 import (
-	"errors"
-	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
 	"os"
 	"time"
 
-	"github.com/blevesearch/bleve"
-	"github.com/blevesearch/bleve/analysis/lang/en"
-	"github.com/blevesearch/bleve/analysis/token/keyword"
-	"github.com/blevesearch/bleve/mapping"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"go.senan.xyz/socr/controller"
 	"go.senan.xyz/socr/imagery"
-
-	_ "go.senan.xyz/socr/controller/auth"
+	"go.senan.xyz/socr/index"
 )
 
 const (
@@ -33,47 +26,6 @@ func mustEnv(key string) string {
 	return ""
 }
 
-func createIndexMapping() *mapping.IndexMappingImpl {
-	fieldMapNumeric := bleve.NewNumericFieldMapping()
-
-	fieldMapEnglish := bleve.NewTextFieldMapping()
-	fieldMapEnglish.Analyzer = en.AnalyzerName
-
-	// TODO: use this field mapping for tags
-	fieldMapKeyword := bleve.NewTextFieldMapping()
-	fieldMapKeyword.Analyzer = keyword.Name
-
-	fieldMapTime := bleve.NewDateTimeFieldMapping()
-
-	mappingBlocks := bleve.NewDocumentMapping()
-	mappingBlocks.AddFieldMappingsAt("text", fieldMapEnglish)
-	mappingBlocks.AddFieldMappingsAt("position", fieldMapNumeric)
-
-	mappingScreenshot := bleve.NewDocumentMapping()
-	mappingScreenshot.AddFieldMappingsAt("timestamp", fieldMapTime)
-	mappingScreenshot.AddSubDocumentMapping("blocks", mappingBlocks)
-
-	mappingIndex := bleve.NewIndexMapping()
-	mappingIndex.DefaultMapping = mappingScreenshot
-
-	return mappingIndex
-}
-
-func getOrCreateIndex(path string) (bleve.Index, error) {
-	index, err := bleve.Open(path)
-	switch {
-	case
-		errors.Is(err, bleve.ErrorIndexMetaMissing),
-		errors.Is(err, bleve.ErrorIndexPathDoesNotExist):
-		indexMapping := createIndexMapping()
-		return bleve.New(path, indexMapping)
-	case err != nil:
-		return nil, fmt.Errorf("open index: %w", err)
-	default:
-		return index, nil
-	}
-}
-
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
@@ -86,7 +38,7 @@ func main() {
 	confLoginPassword := mustEnv("SOCR_LOGIN_PASSWORD")
 	confAPIKey := mustEnv("SOCR_API_KEY")
 
-	index, err := getOrCreateIndex(confIndexPath)
+	index, err := index.GetOrCreateIndex(confIndexPath)
 	if err != nil {
 		log.Fatalf("error getting index: %v", err)
 	}

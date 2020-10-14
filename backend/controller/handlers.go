@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/websocket"
 	"go.senan.xyz/socr/controller/auth"
 	"go.senan.xyz/socr/controller/id"
+	"go.senan.xyz/socr/index"
 )
 
 func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
@@ -92,13 +93,7 @@ func (c *Controller) ServeScreenshot(w http.ResponseWriter, r *http.Request) {
 
 	query := bleve.NewDocIDQuery([]string{vars["id"]})
 	request := bleve.NewSearchRequest(query)
-	request.Fields = []string{
-		"timestamp",
-		"blocks.text",
-		"blocks.position",
-		"dimensions.height",
-		"dimensions.width",
-	}
+	request.Fields = index.BaseSearchFields
 
 	resp, err := c.Index.Search(request)
 	if err != nil {
@@ -130,19 +125,11 @@ func (c *Controller) ServeSearch(w http.ResponseWriter, r *http.Request) {
 	request.SortBy(payload.Sort)
 	request.Size = payload.Size
 	request.From = payload.From
-	request.Fields = []string{
-		"timestamp",
-		"blocks.text",
-		"blocks.position",
-		"dimensions.height",
-		"dimensions.width",
-	}
+	request.Fields = index.BaseSearchFields
 
 	if payload.Term != "" {
 		highlight := bleve.NewHighlight()
-		highlight.Fields = []string{
-			"blocks.text",
-		}
+		highlight.Fields = index.BaseHighlightFields
 		request.Highlight = highlight
 	}
 
