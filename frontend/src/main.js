@@ -9,18 +9,18 @@ import Home from "./components/Home.vue";
 import Public from "./components/Public.vue";
 import NotFound from "./components/NotFound.vue";
 
-import { tokenHas, tokenSet } from './api'
-import { storeSymbol, createStore } from './store'
+import { tokenHas, tokenSet } from "./api";
+import { storeSymbol, createStore } from "./store";
 
 const beforeCheckAuth = (to, from, next) => {
-  if (tokenHas()) return next()
-  next({ name: "login", query: { redirect: to.fullPath } })
-}
+  if (tokenHas()) return next();
+  next({ name: "login", query: { redirect: to.fullPath } });
+};
 
 const beforeLogout = (to, from, next) => {
-  tokenSet("")
-  next({ name: "login" })
-}
+  tokenSet("");
+  next({ name: "login" });
+};
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -56,7 +56,7 @@ const router = createRouter({
           path: "",
           redirect: { name: "search" },
         },
-      ]
+      ],
     },
     {
       path: "/i/:id",
@@ -77,7 +77,7 @@ const router = createRouter({
 
 window.onbeforeunload = () => {
   window.scrollTo(0, 0);
-}
+};
 
 const app = createApp(RouterView);
 app.use(router);

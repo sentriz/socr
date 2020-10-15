@@ -53,9 +53,8 @@ export const route = useRoute();
 export const sidebarID = computed(() => route.params.id);
 
 const pageSize = 25;
+const pageNum = ref(0);
 export const pages = ref([]);
-
-export const reqQuery = ref("");
 
 const reqParamSortingMode = "timestamp_desc";
 const reqParamSorting = {
@@ -63,16 +62,15 @@ const reqParamSorting = {
   timestamp_asc: [`${fields.TIMESTAMP}`],
 };
 
+export const reqQuery = ref("");
 export const reqTotalHits = ref(0);
 export const reqTookMs = ref(0);
-export const fetchScreenshots = async (pageNum) => {
-  console.log("loading page #%d", pageNum);
+export const fetchScreenshots = async () => {
+  console.log("loading page #%d", pageNum.value);
 
-  const from = pageSize * pageNum;
+  const from = pageSize * pageNum.value;
   const sort = reqParamSorting[reqParamSortingMode];
-  const resp = reqQuery.value
-    ? await store.screenshotsLoadTerm(pageSize, from, sort, reqQuery.value)
-    : await store.screenshotsLoadRecent(pageSize, from, sort);
+  const resp = await store.screenshotsLoad(pageSize, from, sort, reqQuery.value);
 
   pages.value.push([]);
   for (const hit of resp.hits) {
@@ -81,18 +79,21 @@ export const fetchScreenshots = async (pageNum) => {
 
   reqTotalHits.value = resp.total_hits;
   reqTookMs.value = Math.round((resp.took / 100000) * 100) / 100;
+  pageNum.value++;
 };
 
-export const { scroller, pageNum, isLoading } = useInfiniteScroll(fetchScreenshots);
-
+// fetch screenshots when we type in search bar
 export const reqQueryThrottled = useThrottle(reqQuery, 250);
 watch(
   reqQueryThrottled,
   () => {
+    pageNum.value = 0;
     pages.value = [];
-    fetchScreenshots(0);
-    pageNum.value = 1;
+    fetchScreenshots();
   },
   { immediate: true },
 );
+
+// fetch screenshots when we reach the bottom of the page
+export const { scroller, isLoading } = useInfiniteScroll(fetchScreenshots);
 </script>

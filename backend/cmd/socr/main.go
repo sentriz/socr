@@ -50,6 +50,7 @@ func main() {
 		Index:           index,
 		SocketUpgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
+				// TODO: this?
 				return true
 			},
 		},

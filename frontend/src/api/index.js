@@ -14,8 +14,8 @@ const req = async (method, url, body, options = {}) => {
     ...options,
     headers: token
       ? {
-        authorization: `bearer ${token}`,
-      }
+          authorization: `bearer ${token}`,
+        }
       : {},
   });
   return await response.json();
