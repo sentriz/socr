@@ -1,7 +1,7 @@
 <template>
   <div class="bg-gray-200 h-screen flex items-center justify-center">
-    <div class="w-full max-w-xs">
-      <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+    <div class="w-full max-w-xs space-y-4">
+      <div class="bg-white shadow-md rounded px-8 py-6">
         <div class="mb-4">
           <label class="inp-label" for="username"> username </label>
           <input
