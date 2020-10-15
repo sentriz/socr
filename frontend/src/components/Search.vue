@@ -1,10 +1,13 @@
 <template>
-  <input
-    v-model="reqQuery"
-    class="inp w-full"
-    type="text"
-    placeholder="enter screenshot text query"
-  />
+  <div class="block space-y-2 sm:flex sm:space-y-0 sm:space-x-2">
+    <input
+      v-model="reqQuery"
+      class="inp w-full"
+      type="text"
+      placeholder="enter screenshot text query"
+    />
+    <SearchSortFilter :items="reqParamSortModes" v-model="reqParamSortMode" />
+  </div>
   <p class="my-3 text-gray-500 text-right">
     {{ reqTotalHits }} results found in {{ reqTookMs }}ms
   </p>
@@ -35,8 +38,9 @@
 <script setup="props">
 import ScreenshotHighlight from "./ScreenshotHighlight.vue";
 import SearchSidebar from "./SearchSidebar.vue";
+import SearchSortFilter from "./SearchSortFilter.vue";
 export default {
-  components: { ScreenshotHighlight, SearchSidebar },
+  components: { ScreenshotHighlight, SearchSidebar, SearchSortFilter },
   props: {},
 };
 
@@ -56,20 +60,21 @@ const pageSize = 25;
 const pageNum = ref(0);
 export const pages = ref([]);
 
-const reqParamSortingMode = "timestamp_desc";
-const reqParamSorting = {
-  timestamp_desc: [`-${fields.TIMESTAMP}`],
-  timestamp_asc: [`${fields.TIMESTAMP}`],
-};
+export const reqParamSortMode = ref(0);
+export const reqParamSortModes = [
+  { filter: [`-${fields.TIMESTAMP}`], name: "updated", icon: "fa-chevron-down" },
+  { filter: [`${fields.TIMESTAMP}`], name: "updated", icon: "fa-chevron-up" },
+];
 
 export const reqQuery = ref("");
+export const reqQueryThrottled = useThrottle(reqQuery, 250);
 export const reqTotalHits = ref(0);
 export const reqTookMs = ref(0);
-export const fetchScreenshots = async () => {
+const fetchScreenshots = async () => {
   console.log("loading page #%d", pageNum.value);
 
   const from = pageSize * pageNum.value;
-  const sort = reqParamSorting[reqParamSortingMode];
+  const sort = reqParamSortModes[reqParamSortMode.value].filter;
   const resp = await store.screenshotsLoad(pageSize, from, sort, reqQuery.value);
 
   pages.value.push([]);
@@ -79,21 +84,22 @@ export const fetchScreenshots = async () => {
 
   reqTotalHits.value = resp.total_hits;
   reqTookMs.value = Math.round((resp.took / 100000) * 100) / 100;
+};
+
+const fetchScreenshotsClear = async () => {
+  pageNum.value = 0;
+  pages.value = [];
+  await fetchScreenshots();
   pageNum.value++;
 };
 
-// fetch screenshots when we type in search bar
-export const reqQueryThrottled = useThrottle(reqQuery, 250);
-watch(
-  reqQueryThrottled,
-  () => {
-    pageNum.value = 0;
-    pages.value = [];
-    fetchScreenshots();
-  },
-  { immediate: true },
-);
+// fetch screenshots on filter, sort, and mount
+watch(reqParamSortMode, fetchScreenshotsClear);
+watch(reqQueryThrottled, fetchScreenshotsClear, { immediate: true });
 
-// fetch screenshots when we reach the bottom of the page
-export const { scroller, isLoading } = useInfiniteScroll(fetchScreenshots);
+// fetch screenshots on reaching the bottom of page
+export const { scroller, isLoading } = useInfiniteScroll(async () => {
+  await fetchScreenshots();
+  pageNum.value++;
+});
 </script>
