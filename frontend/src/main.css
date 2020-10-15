@@ -17,14 +17,15 @@
 }
 
 @layer components {
-  .box { @apply border-2 border-solid border-white shadow; }
+  .padded { @apply py-1 px-4; }
+  .box    { @apply border-2 border-solid border-white shadow; }
 
-  .inp       { @apply appearance-none border rounded py-1 px-4 text-gray-700 leading-tight; }
+  .inp       { @apply appearance-none border rounded padded text-gray-700; }
   .inp:focus { @apply outline-none shadow-outline; }
   .inp-error { @apply border-red-500; }
   .inp-label { @apply block text-gray-700 text-sm font-bold mb-2; }
 
-  .btn          { @apply block bg-blue-500 text-white font-bold py-1 px-4 rounded; }
+  .btn          { @apply block bg-blue-500 text-white padded rounded; }
   .btn:focus    { @apply outline-none shadow-outline; }
   .btn:hover    { @apply bg-blue-700; }
   .btn:disabled { @apply opacity-50 cursor-not-allowed; }
@@ -35,8 +36,6 @@
 }
 
 @layer utilities {
-  .padded { @apply py-1 px-4; }
-
   @screen sm { .col-resp { column-count: 1; } }
   @screen md { .col-resp { column-count: 2; } }
   @screen lg { .col-resp { column-count: 3; } }
