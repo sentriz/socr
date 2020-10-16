@@ -25,11 +25,19 @@ type Screenshot struct {
 	ID         string           `json:"id"`
 	Timestamp  time.Time        `json:"timestamp"`
 	Filetype   imagery.Filetype `json:"filetype"`
-	Tags       []string         `json:"tags"`
+	Tags       []ScreenshotTag  `json:"tags"`
 	Dimensions Dimensions       `json:"dimensions"`
 	Blocks     []*Block         `json:"blocks"`
 	Blurhash   string           `json:"blurhash"`
 }
+
+type ScreenshotTag string
+
+const (
+	ScreenshotTagImported ScreenshotTag = "imported"
+	ScreenshotTagDesktop  ScreenshotTag = "desktop"
+	ScreenshotTagMobile   ScreenshotTag = "mobile"
+)
 
 type Dimensions struct {
 	Height int `json:"height"`
@@ -148,7 +156,9 @@ func (c *Controller) ReadAndIndexBytesWithIDTime(raw []byte, scrotID string, tim
 		Blurhash:  scrotBlurhash,
 		Blocks:    scrotBlocks,
 		Timestamp: timestamp,
-		Tags:      []string{},
+		Tags: []ScreenshotTag{
+			ScreenshotTagImported,
+		},
 	}
 
 	if err := c.Index.Index(screenshot.ID, screenshot); err != nil {
