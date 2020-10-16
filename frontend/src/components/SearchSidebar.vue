@@ -49,7 +49,20 @@ import { inject, computed, watch } from "vue";
 import { fields } from "../api/";
 import { useStore } from "../store/";
 
-export const store = useStore()
-export const screenshot = computed(() => store.state.screenshots[props.id]);
+export const store = useStore();
+
+// load the screenshot from the network if we can't find it in the store
+// (can happen on page reload if we've click an image on the eg. 5th page)
+watch(
+  () => props.id,
+  (id) => {
+    if (id && !store.screenshotByID(id)) {
+      store.screenshotsLoadID(id);
+    }
+  },
+  { immediate: true },
+);
+
+export const screenshot = computed(() => store.screenshotByID(props.id));
 export const text = computed(() => screenshot.value.fields[fields.BLOCKS_TEXT]);
 </script>
