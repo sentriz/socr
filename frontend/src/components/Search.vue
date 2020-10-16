@@ -83,7 +83,7 @@ const fetchScreenshots = async () => {
   }
 
   reqTotalHits.value = resp.total_hits;
-  reqTookMs.value = Math.round((resp.took / 100000) * 100) / 100;
+  reqTookMs.value = Math.round((resp.took / 1000000) * 100) / 100;
 };
 
 const fetchScreenshotsClear = async () => {
