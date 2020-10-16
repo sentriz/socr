@@ -1,8 +1,9 @@
 <template>
   <div class="bg-gray-200 h-screen flex items-center justify-center">
-    <div class="w-full max-w-xs space-y-4">
-      <div class="bg-white shadow-md rounded px-8 py-6">
-        <div class="mb-4">
+    <div class="w-full max-w-xs space-y-4 m-8">
+      <div class="bg-white shadow-md rounded p-8 space-y-6">
+        <Logo class="w-9/12 mx-auto" />
+        <div>
           <label class="inp-label" for="username"> username </label>
           <input
             class="inp shadow w-full"
@@ -12,7 +13,7 @@
             v-model="username"
           />
         </div>
-        <div class="mb-6">
+        <div>
           <label class="inp-label" for="password"> password </label>
           <input
             class="inp shadow w-full"
@@ -32,8 +33,9 @@
 </template>
 
 <script setup="props">
+import Logo from "./Logo.vue";
 export default {
-  components: {},
+  components: { Logo },
   props: {},
 };
 
