@@ -1,8 +1,10 @@
 <!-- <ScreenshotHighlight v-if="screenshot" :screenshot="screenshot" /> -->
 <template>
   <div class="bg-gray-200 min-h-screen">
-    <div v-show="imageHave" class="container mx-auto p-8 space-y-4">
-      <img class="box mx-auto" :src="imageSrc" @load="imageLoaded" />
+    <div v-show="imageHave" class="container mx-auto p-8 space-y-4 flex flex-col">
+      <div class="box bg-white">
+        <img class="mx-auto" :src="imageSrc" @load="imageLoaded" />
+      </div>
       <div class="box bg-gray-100 padded font-mono text-sm">
         <p v-show="text.length == 0" class="text-gray-600 py-2">
           <i class="animate-spin fas fa-circle-notch"></i>

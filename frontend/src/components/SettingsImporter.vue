@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-4">
     <div class="import">
-      <table class="import-status">
+      <table class="import-status bg-white">
         <colgroup>
           <col class="w-3/12" />
           <col class="w-9/12" />

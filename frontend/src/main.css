@@ -13,11 +13,11 @@
 @tailwind utilities;
 
 @layer base {
-  html { @apply bg-gray-100; }
   body { @apply min-h-screen w-full font-sans antialiased text-gray-900; }
   hr   { @apply my-6; }
   h1   { @apply my-3 text-gray-700 text-xl font-bold; }
   h2   { @apply my-3 text-gray-700 text-lg font-bold; }
+  a    { @apply leading-none; }
 }
 
 @layer components {
@@ -34,9 +34,6 @@
   .btn:hover    { @apply bg-blue-700; }
   .btn:disabled { @apply opacity-50 cursor-not-allowed; }
 
-  .nav       { @apply text-gray-500; }
-  .nav:hover { @apply text-blue-300; }
-  .nav-icon  { @apply mr-2; }
 }
 
 @layer utilities {

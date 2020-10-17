@@ -1,6 +1,6 @@
 <template>
-  <div class="container mx-auto h-screen p-5 mx-5">
-    <ul class="flex my-3">
+  <div class="container mx-auto min-h-screen p-6 mx-6">
+    <ul class="flex">
       <div class="flex-1 space-x-6">
         <router-link class="nav" :to="{ name: 'search' }">
           <i class="nav-icon fas fa-search"></i>
@@ -16,7 +16,7 @@
         <span>logout</span>
       </router-link>
     </ul>
-    <hr class="mt-0" />
+    <hr class="mt-3" />
     <router-view />
   </div>
 </template>
@@ -30,6 +30,10 @@ export default {
 </script>
 
 <style scoped>
+.nav       { @apply text-gray-500; }
+.nav:hover { @apply text-blue-300; }
+.nav-icon  { @apply mr-2; }
+
 .router-link-active {
   @apply text-blue-500;
 }

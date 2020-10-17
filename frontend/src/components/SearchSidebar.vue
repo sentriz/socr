@@ -11,11 +11,11 @@
       v-if="screenshot"
       class="z-20 fixed inset-y-0 right-0 w-9/12 p-6 bg-white overflow-y-auto"
     >
-      <div class="mx-auto space-y-6">
+      <div class="space-y-6">
         <div class="bg-black shadow">
           <ScreenshotHighlight class="mx-auto" :id="screenshot.id" />
         </div>
-        <div class="bg-gray-300 shadow font-mono text-sm padded">
+        <div class="bg-gray-200 shadow font-mono text-sm padded">
           <p v-for="(line, i) in text" :key="i">
             {{ line }}
           </p>
@@ -33,8 +33,14 @@
   >
     <div
       v-if="screenshot"
-      class="z-10 fixed inset-0 bg-gray-700 bg-opacity-50 transition-opacity pointer-events-none"
-    />
+      class="z-10 fixed inset-0 bg-gray-700 bg-opacity-75 transition-opacity"
+    >
+      <div class="w-3/12 p-6 flex justify-end text-white text-2xl pointer-events-none">
+        <router-link :to="{ name: 'search' }" class="pointer-events-auto">
+          <i class="fas fa-times-circle"></i>
+        </router-link>
+      </div>
+    </div>
   </Transition>
 </template>
 

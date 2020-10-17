@@ -29,7 +29,7 @@
       </div>
     </div>
   </div>
-  <div v-if="isLoading" class="bg-gray-300 text-gray-600 text-center rounded p-3 my-6">
+  <div v-if="isLoading" class="bg-gray-300 text-gray-600 text-center rounded p-3 mt-6">
     <i class="animate-spin fas fa-circle-notch"></i> loading more
   </div>
   <SearchSidebar :id="sidebarID" />
