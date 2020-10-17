@@ -29,8 +29,11 @@
       </div>
     </div>
   </div>
-  <div v-if="isLoading" class="bg-gray-300 text-gray-600 text-center rounded p-3 mt-6">
-    <i class="animate-spin fas fa-circle-notch"></i> loading more
+  <div
+    v-if="isLoading || !pages.length"
+    class="bg-gray-300 text-gray-600 text-center rounded p-3 mt-6"
+  >
+    <i class="animate-spin fas fa-circle-notch"></i> loading
   </div>
   <SearchSidebar :id="sidebarID" />
 </template>
