@@ -1,20 +1,25 @@
 # syntax=docker/dockerfile:experimental
 
-FROM golang:1.15-alpine3.12 AS build
-RUN apk add --no-cache ca-certificates
-WORKDIR /src
-COPY backend/* .
-RUN --mount=type=cache,target=/go/pkg/mod \
-    --mount=type=cache,target=/root/.cache/go-build \
-    CGO_ENABLED=0 GOOS=linux go build -a -installsuffix nocgo -o socr cmd/socr/main.go
+FROM golang:1.15-buster AS builder
+RUN apt-get update -qq
+RUN apt-get install -y -qq libtesseract-dev libleptonica-dev
 
-FROM scratch
-COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=build /src/socr /
+WORKDIR /src
+COPY . .
+RUN --mount=type=cache,target=/go/pkg/mod \
+        --mount=type=cache,target=/root/.cache/go-build \
+        GOOS=linux go build -o socr cmd/socr/main.go
+
+FROM debian:buster-slim
+RUN apt-get update -qq
+ENV TESSDATA_PREFIX=/usr/share/tesseract-ocr/4.00/tessdata/
+RUN apt-get install -y -qq tesseract-ocr-eng
+
+COPY --from=builder /src/socr /
 
 ENV SOCR_LISTEN_ADDR :80
 ENV SOCR_SCREENSHOTS_PATH /screenshots
 ENV SOCR_INDEX_PATH /index
-ENV SOCR_FRONTEND_URL ""
-ENV SOCR_FRONTEND_DIR ""
+ENV SOCR_IMPORT_PATH /import
+
 ENTRYPOINT ["/socr"]

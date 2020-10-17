@@ -10,7 +10,7 @@ import (
 
 	"github.com/buckket/go-blurhash"
 	"github.com/nfnt/resize"
-	"github.com/otiai10/gosseract/v2"
+	gosseract "github.com/otiai10/gosseract/v2"
 )
 
 type Filetype string

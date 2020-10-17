@@ -9,6 +9,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"github.com/rakyll/statik/fs"
+	_ "go.senan.xyz/socr/assets"
 	"go.senan.xyz/socr/controller"
 	"go.senan.xyz/socr/imagery"
 	"go.senan.xyz/socr/index"
@@ -75,6 +77,15 @@ func main() {
 	r.HandleFunc("/api/screenshot/{id}/raw", ctrl.ServeScreenshotRaw)
 	r.HandleFunc("/api/screenshot/{id}", ctrl.ServeScreenshot)
 	r.HandleFunc("/api/websocket", ctrl.ServeWebSocket)
+
+	fontendFS, err := fs.New()
+	if err != nil {
+		log.Fatalf("error creating fontend fs: %v", err)
+	}
+
+	// serve static frontend
+	// statik -f -p assets -src ../frontend/dist/
+	r.NotFoundHandler = http.FileServer(fontendFS)
 
 	// begin authenticated routes
 	rAuth := r.NewRoute().Subrouter()
