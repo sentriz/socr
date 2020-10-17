@@ -1,5 +1,12 @@
 module.exports = {
-  purge: [],
+  purge: {
+    enabled: !!process.env.PRODUCTION,
+    content: [
+      'index.html',
+      './src/**/*.vue',
+      './src/**/*.css'
+    ],
+  },
   theme: {
     extend: {},
   },
