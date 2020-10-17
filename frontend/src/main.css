@@ -13,7 +13,8 @@
 @tailwind utilities;
 
 @layer base {
-  body { @apply min-h-screen w-full; }
+  html { @apply bg-gray-100; }
+  body { @apply min-h-screen w-full font-sans antialiased text-gray-900; }
   hr   { @apply my-6; }
   h1   { @apply my-3 text-gray-700 text-xl font-bold; }
   h2   { @apply my-3 text-gray-700 text-lg font-bold; }
