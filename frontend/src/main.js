@@ -1,5 +1,5 @@
 import { createApp, reactive } from "vue";
-import { createRouter, createWebHashHistory, RouterView } from "vue-router";
+import { createRouter, createWebHistory, RouterView } from "vue-router";
 
 import "./main.css";
 import Search from "./components/Search.vue";
@@ -23,7 +23,7 @@ const beforeLogout = (to, from, next) => {
 };
 
 const router = createRouter({
-  history: createWebHashHistory(),
+  history: createWebHistory(),
   routes: [
     {
       path: "/login",
