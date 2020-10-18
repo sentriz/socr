@@ -67,8 +67,8 @@ export const pages = ref([]);
 
 export const reqParamSortMode = ref(0);
 export const reqParamSortModes = [
-  { filter: [`-${fields.TIMESTAMP}`], name: "updated", icon: "fa-chevron-down" },
-  { filter: [`${fields.TIMESTAMP}`], name: "updated", icon: "fa-chevron-up" },
+  { filter: [`-${fields.TIMESTAMP}`], name: "date", icon: "fa-chevron-down" },
+  { filter: [`${fields.TIMESTAMP}`], name: "date", icon: "fa-chevron-up" },
 ];
 
 export const reqQuery = ref("");
