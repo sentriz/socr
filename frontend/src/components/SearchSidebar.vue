@@ -9,10 +9,10 @@
   >
     <div
       v-if="screenshot"
-      class="z-20 fixed inset-y-0 right-0 w-9/12 p-6 bg-gray-100 overflow-y-auto"
+      class="z-20 fixed inset-y-0 right-0 w-9/12 p-6 bg-gray-200 overflow-y-auto"
     >
       <div class="space-y-6">
-        <div class="text-right space-x-2">
+        <div class="text-right space-x-3">
           <span>
             created
             <span
@@ -34,11 +34,19 @@
               </span>
             </span>
           </span>
+          <span>
+            &nbsp;
+            <span class="badge bg-indigo-200 text-indigo-900">
+              <a :href="screenshotRaw" target="_blank">
+                <i class="fas fa-external-link-alt"></i> raw
+              </a>
+            </span>
+          </span>
         </div>
         <div class="box bg-white">
           <ScreenshotHighlight class="mx-auto max-w-full" :id="screenshot.id" />
         </div>
-        <div class="box bg-gray-200 padded font-mono text-sm">
+        <div class="box bg-gray-100 padded font-mono text-sm">
           <p v-for="(line, i) in text" :key="i">
             {{ line }}
           </p>
@@ -76,7 +84,7 @@ export default {
 
 import { inject, computed, watch } from "vue";
 import relativeDate from "relative-date";
-import { fields } from "../api/";
+import { urlScreenshot, fields } from "../api/";
 import { useStore } from "../store/";
 
 export const store = useStore();
@@ -95,6 +103,7 @@ watch(
 
 export const relativeDateStr = (stamp) => relativeDate(new Date(stamp));
 
+export const screenshotRaw = computed(() => `${urlScreenshot}/${props.id}/raw`);
 export const screenshot = computed(() => store.screenshotByID(props.id));
 export const text = computed(() => screenshot.value.fields[fields.BLOCKS_TEXT]);
 export const tags = computed(() => {
