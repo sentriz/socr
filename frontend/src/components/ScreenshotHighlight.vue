@@ -62,13 +62,14 @@ const zipBlocks = (screenshot) => {
   const queryMatches = Object.values(queriesMatches)[0];
   const matchIndexes = new Set(queryMatches.map((match) => match.array_positions).flat());
 
-  return flatText.map((block, i) => {
-    const [minX, minY, maxX, maxY] = flatPosition.slice(4 * i, 4 * i + 4);
-    return {
-      text: block,
-      position: { minX, minY, maxX, maxY },
-      match: matchIndexes.has(i),
-    };
-  });
+  return flatText
+    .filter((_, i) => matchIndexes.has(i))
+    .map((block, i) => {
+      const [minX, minY, maxX, maxY] = flatPosition.slice(4 * i, 4 * i + 4);
+      return {
+        text: block,
+        position: { minX, minY, maxX, maxY },
+      };
+    });
 };
 </script>

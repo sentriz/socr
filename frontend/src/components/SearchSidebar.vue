@@ -12,6 +12,22 @@
       class="z-20 fixed inset-y-0 right-0 w-9/12 p-6 bg-white overflow-y-auto"
     >
       <div class="space-y-6">
+        <div class="text-right space-x-2">
+          <span>
+            created
+            <span class="badge bg-blue-400" :title="screenshot.fields.timestamp">
+              {{ relativeDateStr(screenshot.fields.timestamp) }}
+            </span>
+          </span>
+          <span v-if="tags?.length">
+            tags
+            <span class="space-x-2">
+              <span class="badge bg-blue-400" v-for="(tag, i) in tags" :id="i">
+                {{ tag }}
+              </span>
+            </span>
+          </span>
+        </div>
         <div class="bg-black shadow">
           <ScreenshotHighlight class="mx-auto" :id="screenshot.id" />
         </div>
@@ -52,6 +68,7 @@ export default {
 };
 
 import { inject, computed, watch } from "vue";
+import relativeDate from "relative-date";
 import { fields } from "../api/";
 import { useStore } from "../store/";
 
@@ -69,6 +86,12 @@ watch(
   { immediate: true },
 );
 
+export const relativeDateStr = (stamp) => relativeDate(new Date(stamp));
+
 export const screenshot = computed(() => store.screenshotByID(props.id));
 export const text = computed(() => screenshot.value.fields[fields.BLOCKS_TEXT]);
+export const tags = computed(() => {
+  const tags = screenshot.value.fields[fields.TAGS];
+  if (tags) return Array.isArray(tags) ? tags : [tags];
+});
 </script>

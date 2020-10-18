@@ -30,6 +30,7 @@ export const reqImportStatus = () => req("GET", urlImportStatus);
 
 export const fields = {
   TIMESTAMP: "timestamp",
+  TAGS: "tags",
   BLOCKS_TEXT: "blocks.text",
   BLOCKS_POSITION: "blocks.position",
   SIZE_HEIGHT: "dimensions.height",
