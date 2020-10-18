@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
@@ -19,14 +20,6 @@ import (
 const (
 	screenshotIndex = "screenshots"
 )
-
-func mustEnv(key string) string {
-	if v, ok := os.LookupEnv(key); ok {
-		return v
-	}
-	log.Fatalf("please provide a %q", key)
-	return ""
-}
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
@@ -78,14 +71,11 @@ func main() {
 	r.HandleFunc("/api/screenshot/{id}", ctrl.ServeScreenshot)
 	r.HandleFunc("/api/websocket", ctrl.ServeWebSocket)
 
-	fontendFS, err := fs.New()
+	frontendHander, err := makeFrontendHandler()
 	if err != nil {
-		log.Fatalf("error creating fontend fs: %v", err)
+		log.Fatalf("error making frontend handler: %v", err)
 	}
-
-	// serve static frontend
-	// statik -f -p assets -src ../frontend/dist/
-	r.NotFoundHandler = http.FileServer(fontendFS)
+	r.NotFoundHandler = frontendHander
 
 	// begin authenticated routes
 	rAuth := r.NewRoute().Subrouter()
@@ -103,4 +93,31 @@ func main() {
 
 	log.Printf("listening on %q", confListenAddr)
 	log.Fatalf("error starting server: %v", server.ListenAndServe())
+}
+
+func mustEnv(key string) string {
+	if v, ok := os.LookupEnv(key); ok {
+		return v
+	}
+	log.Fatalf("please provide a %q", key)
+	return ""
+}
+
+// serve static frontend
+// statik -f -p assets -src ../frontend/dist/
+func makeFrontendHandler() (http.Handler, error) {
+	frontendFS, err := fs.New()
+	if err != nil {
+		return nil, fmt.Errorf("fs new: %w", err)
+	}
+
+	httpFS := http.FileServer(frontendFS)
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		// return index.html even if we can't find the asset in the fs
+		if _, err := frontendFS.Open(req.URL.Path); err != nil {
+			req.URL.Path = "/"
+		}
+
+		httpFS.ServeHTTP(w, req)
+	}), nil
 }

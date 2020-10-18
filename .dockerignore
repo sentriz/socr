@@ -1,3 +1,10 @@
 Dockerfile
+Dockerfile.dev
 README.md
 .gitignore
+.git
+
+frontend/dist
+frontend/node_modules
+
+backend/assets
