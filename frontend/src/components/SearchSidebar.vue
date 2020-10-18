@@ -9,29 +9,36 @@
   >
     <div
       v-if="screenshot"
-      class="z-20 fixed inset-y-0 right-0 w-9/12 p-6 bg-white overflow-y-auto"
+      class="z-20 fixed inset-y-0 right-0 w-9/12 p-6 bg-gray-100 overflow-y-auto"
     >
       <div class="space-y-6">
         <div class="text-right space-x-2">
           <span>
             created
-            <span class="badge bg-blue-400" :title="screenshot.fields.timestamp">
+            <span
+              class="badge bg-pink-200 text-pink-900"
+              :title="screenshot.fields.timestamp"
+            >
               {{ relativeDateStr(screenshot.fields.timestamp) }}
             </span>
           </span>
           <span v-if="tags?.length">
             tags
             <span class="space-x-2">
-              <span class="badge bg-blue-400" v-for="(tag, i) in tags" :id="i">
+              <span
+                class="badge bg-blue-200 text-blue-900"
+                v-for="(tag, i) in tags"
+                :id="i"
+              >
                 {{ tag }}
               </span>
             </span>
           </span>
         </div>
-        <div class="bg-black shadow">
-          <ScreenshotHighlight class="mx-auto" :id="screenshot.id" />
+        <div class="box bg-white">
+          <ScreenshotHighlight class="mx-auto max-w-full" :id="screenshot.id" />
         </div>
-        <div class="bg-gray-200 shadow font-mono text-sm padded">
+        <div class="box bg-gray-200 padded font-mono text-sm">
           <p v-for="(line, i) in text" :key="i">
             {{ line }}
           </p>

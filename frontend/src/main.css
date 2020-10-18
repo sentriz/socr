@@ -34,7 +34,7 @@
   .btn:hover    { @apply bg-blue-700; }
   .btn:disabled { @apply opacity-50 cursor-not-allowed; }
 
-  .badge { @apply inline-block text-white px-3 rounded text-white; }
+  .badge { @apply inline-block text-white px-3 rounded; }
 }
 
 @layer utilities {

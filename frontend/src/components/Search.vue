@@ -22,7 +22,7 @@
           <router-link :to="{ name: 'search', params: { id: screenshotID } }">
             <ScreenshotHighlight
               :id="screenshotID"
-              class="border border-gray-300 rounded"
+              class="w-full border border-gray-300 rounded"
             />
           </router-link>
         </div>

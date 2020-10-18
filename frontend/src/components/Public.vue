@@ -1,7 +1,7 @@
 <!-- <ScreenshotHighlight v-if="screenshot" :screenshot="screenshot" /> -->
 <template>
   <div class="bg-gray-200 min-h-screen">
-    <div v-show="imageHave" class="container mx-auto p-8 space-y-4 flex flex-col">
+    <div v-show="imageHave" class="container mx-auto p-6 space-y-6 flex flex-col">
       <div class="box bg-white">
         <img class="mx-auto" :src="imageSrc" @load="imageLoaded" />
       </div>
