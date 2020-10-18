@@ -68,6 +68,9 @@ const zipBlocks = (screenshot) => {
       return {
         text: block,
         position: { minX, minY, maxX, maxY },
+        match: true,
+        // in future we may want to return non match blocks
+        // match: matchIndexes.has(i),
       };
     });
 };
