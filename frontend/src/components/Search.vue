@@ -10,10 +10,10 @@
       <SearchSortFilter :items="reqParamSortModes" v-model="reqParamSortMode" />
     </div>
     <div ref="scroller">
-      <p class="text-gray-500 text-right">
+      <p v-if="pages.length" class="text-gray-500 text-right">
         {{ reqTotalHits }} results found in {{ reqTookMs }}ms
       </p>
-      <div class="mt-2" v-for="(page, i) in pages">
+      <div v-for="(page, i) in pages" class="mt-3">
         <div v-show="i !== 0" class="my-6">
           <span class="text-gray-500"> page {{ i + 1 }}</span>
           <hr class="m-0" />
