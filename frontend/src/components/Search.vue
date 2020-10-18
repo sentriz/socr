@@ -1,39 +1,41 @@
 <template>
-  <div class="block space-y-2 sm:flex sm:space-y-0 sm:space-x-2">
-    <input
-      v-model="reqQuery"
-      class="inp w-full"
-      type="text"
-      placeholder="enter screenshot text query"
-    />
-    <SearchSortFilter :items="reqParamSortModes" v-model="reqParamSortMode" />
-  </div>
-  <p class="my-3 text-gray-500 text-right">
-    {{ reqTotalHits }} results found in {{ reqTookMs }}ms
-  </p>
-  <div ref="scroller">
-    <div v-for="(page, i) in pages">
-      <div v-show="i !== 0" class="my-6">
-        <span class="text-gray-500"> page {{ i + 1 }}</span>
-        <hr class="m-0" />
-      </div>
-      <div class="col-resp gap-x-3 space-y-3">
-        <div v-for="screenshotID in page">
-          <router-link :to="{ name: 'search', params: { id: screenshotID } }">
-            <ScreenshotHighlight
-              :id="screenshotID"
-              class="w-full border border-gray-300 rounded"
-            />
-          </router-link>
+  <div class="space-y-6">
+    <div class="block space-y-2 sm:flex sm:space-y-0 sm:space-x-2">
+      <input
+        v-model="reqQuery"
+        class="inp w-full"
+        type="text"
+        placeholder="enter screenshot text query"
+      />
+      <SearchSortFilter :items="reqParamSortModes" v-model="reqParamSortMode" />
+    </div>
+    <div ref="scroller">
+      <p class="text-gray-500 text-right">
+        {{ reqTotalHits }} results found in {{ reqTookMs }}ms
+      </p>
+      <div class="mt-2" v-for="(page, i) in pages">
+        <div v-show="i !== 0" class="my-6">
+          <span class="text-gray-500"> page {{ i + 1 }}</span>
+          <hr class="m-0" />
+        </div>
+        <div class="col-resp gap-x-3 space-y-3">
+          <div v-for="screenshotID in page">
+            <router-link :to="{ name: 'search', params: { id: screenshotID } }">
+              <ScreenshotHighlight
+                :id="screenshotID"
+                class="w-full border border-gray-300 rounded"
+              />
+            </router-link>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-  <div
-    v-if="isLoading || !pages.length"
-    class="bg-gray-300 text-gray-600 text-center rounded p-3 mt-6"
-  >
-    <i class="animate-spin fas fa-circle-notch"></i> loading
+    <div
+      v-if="isLoading || !pages.length"
+      class="bg-gray-300 text-gray-600 text-center rounded p-3"
+    >
+      <i class="animate-spin fas fa-circle-notch"></i> loading
+    </div>
   </div>
   <SearchSidebar :id="sidebarID" />
 </template>
