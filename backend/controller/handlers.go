@@ -116,12 +116,13 @@ func (c *Controller) ServeSearch(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&payload)
 	defer r.Body.Close()
 
-	var query query.Query = bleve.NewMatchAllQuery()
+	var q query.Query = bleve.NewMatchAllQuery()
 	if payload.Term != "" {
-		query = bleve.NewFuzzyQuery(payload.Term)
+		wildcard := fmt.Sprintf("*%s*", payload.Term)
+		q = bleve.NewWildcardQuery(wildcard)
 	}
 
-	request := bleve.NewSearchRequest(query)
+	request := bleve.NewSearchRequest(q)
 	request.SortBy(payload.Sort)
 	request.Size = payload.Size
 	request.From = payload.From
