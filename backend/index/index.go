@@ -32,11 +32,11 @@ func CreateIndexMapping() *mapping.IndexMappingImpl {
 
 	fieldMapTime := bleve.NewDateTimeFieldMapping()
 
-	mappingBlocks := bleve.NewDocumentStaticMapping()
+	mappingBlocks := bleve.NewDocumentMapping()
 	mappingBlocks.AddFieldMappingsAt("text", fieldMapKeyword)
 	mappingBlocks.AddFieldMappingsAt("position", fieldMapNumeric)
 
-	mappingScreenshot := bleve.NewDocumentStaticMapping()
+	mappingScreenshot := bleve.NewDocumentMapping()
 	mappingScreenshot.AddFieldMappingsAt("timestamp", fieldMapTime)
 	mappingScreenshot.AddFieldMappingsAt("tags", fieldMapKeyword)
 	mappingScreenshot.AddSubDocumentMapping("blocks", mappingBlocks)
