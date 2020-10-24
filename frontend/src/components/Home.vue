@@ -11,10 +11,12 @@
           <span>settings</span>
         </router-link>
       </div>
-      <router-link class="nav" :to="{ name: 'logout' }">
-        <i class="nav-icon fas fa-sign-out-alt"></i>
-        <span>logout</span>
-      </router-link>
+      <div class="hidden sm:block">
+        <router-link class="nav" :to="{ name: 'logout' }">
+          <i class="nav-icon fas fa-sign-out-alt"></i>
+          <span>logout</span>
+        </router-link>
+      </div>
     </ul>
     <hr class="mt-3" />
     <router-view />
