@@ -10,7 +10,7 @@
       <SearchSortFilter :items="reqParamSortModes" v-model="reqParamSortMode" />
     </div>
     <div ref="scroller">
-      <p v-if="pages.length" class="text-gray-500 text-right">
+      <p v-if="!reqIsLoading" class="text-gray-500 text-right">
         {{ reqTotalHits }} results found in {{ reqTookMs }}ms
       </p>
       <div v-for="(page, i) in pages" class="mt-3">
@@ -30,10 +30,7 @@
         </div>
       </div>
     </div>
-    <div
-      v-if="isLoading || !pages.length"
-      class="bg-gray-300 text-gray-600 text-center rounded p-3"
-    >
+    <div v-if="reqIsLoading" class="bg-gray-300 text-gray-600 text-center rounded p-3">
       <i class="animate-spin fas fa-circle-notch"></i> loading
     </div>
   </div>
@@ -51,7 +48,7 @@ export default {
 
 import { inject, ref, reactive, watch, computed, onMounted, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
-import { useThrottle } from "@vueuse/core";
+import { useDebounce } from "@vueuse/core";
 import { fields } from "../api";
 import { useStore } from "../store";
 import useInfiniteScroll from "../composables/useInfiniteScroll";
@@ -72,39 +69,47 @@ export const reqParamSortModes = [
 ];
 
 export const reqQuery = ref("");
-export const reqQueryThrottled = useThrottle(reqQuery, 250);
+export const reqQueryDebounced = useDebounce(reqQuery, 500);
 export const reqTotalHits = ref(0);
 export const reqTookMs = ref(0);
+export const reqHasMore = ref(true);
+export const reqIsLoading = ref(false);
 const fetchScreenshots = async () => {
+  if (reqIsLoading.value) return;
+  if (!reqHasMore.value) return;
+
   console.log("loading page #%d", pageNum.value);
 
   const from = pageSize * pageNum.value;
   const sort = reqParamSortModes[reqParamSortMode.value].filter;
+
+  reqIsLoading.value = true;
   const resp = await store.screenshotsLoad(pageSize, from, sort, reqQuery.value);
+  reqIsLoading.value = false;
+
+  reqTotalHits.value = resp.total_hits;
+  reqTookMs.value = Math.round((resp.took / 1000000) * 100) / 100;
+  reqHasMore.value = from + resp.hits.length < resp.total_hits;
 
   pages.value.push([]);
   for (const hit of resp.hits) {
     pages.value[pages.value.length - 1].push(hit.id);
   }
 
-  reqTotalHits.value = resp.total_hits;
-  reqTookMs.value = Math.round((resp.took / 1000000) * 100) / 100;
+  pageNum.value++;
 };
 
 const fetchScreenshotsClear = async () => {
+  reqHasMore.value = true;
   pageNum.value = 0;
   pages.value = [];
   await fetchScreenshots();
-  pageNum.value++;
 };
 
 // fetch screenshots on filter, sort, and mount
 watch(reqParamSortMode, fetchScreenshotsClear);
-watch(reqQueryThrottled, fetchScreenshotsClear, { immediate: true });
+watch(reqQueryDebounced, fetchScreenshotsClear, { immediate: true });
 
 // fetch screenshots on reaching the bottom of page
-export const { scroller, isLoading } = useInfiniteScroll(async () => {
-  await fetchScreenshots();
-  pageNum.value++;
-});
+export const scroller = useInfiniteScroll(fetchScreenshots);
 </script>
