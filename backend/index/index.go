@@ -6,6 +6,7 @@ import (
 
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/analysis/analyzer/keyword"
+	"github.com/blevesearch/bleve/analysis/lang/en"
 	"github.com/blevesearch/bleve/mapping"
 )
 
@@ -27,13 +28,16 @@ var (
 func CreateIndexMapping() *mapping.IndexMappingImpl {
 	fieldMapNumeric := bleve.NewNumericFieldMapping()
 
+	fieldMapEnglish := bleve.NewTextFieldMapping()
+	fieldMapEnglish.Analyzer = en.AnalyzerName
+
 	fieldMapKeyword := bleve.NewTextFieldMapping()
 	fieldMapKeyword.Analyzer = keyword.Name
 
 	fieldMapTime := bleve.NewDateTimeFieldMapping()
 
 	mappingBlocks := bleve.NewDocumentMapping()
-	mappingBlocks.AddFieldMappingsAt("text", fieldMapKeyword)
+	mappingBlocks.AddFieldMappingsAt("text", fieldMapEnglish)
 	mappingBlocks.AddFieldMappingsAt("position", fieldMapNumeric)
 
 	mappingScreenshot := bleve.NewDocumentMapping()

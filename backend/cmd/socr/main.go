@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	bleveHTTP "github.com/blevesearch/bleve/http"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/rakyll/statik/fs"
@@ -15,10 +16,6 @@ import (
 	"go.senan.xyz/socr/controller"
 	"go.senan.xyz/socr/imagery"
 	"go.senan.xyz/socr/index"
-)
-
-const (
-	screenshotIndex = "screenshots"
 )
 
 func main() {
@@ -85,6 +82,10 @@ func main() {
 	rAuth.HandleFunc("/api/about", ctrl.ServeAbout)
 	rAuth.HandleFunc("/api/import_status", ctrl.ServeImportStatus)
 	rAuth.HandleFunc("/api/search", ctrl.ServeSearch)
+
+	const indexName = "index"
+	bleveHTTP.RegisterIndexName(indexName, ctrl.Index)
+	rAuth.Handle("/api/search_bleve", bleveHTTP.NewSearchHandler(indexName))
 
 	server := http.Server{
 		Addr:    confListenAddr,

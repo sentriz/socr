@@ -118,8 +118,9 @@ func (c *Controller) ServeSearch(w http.ResponseWriter, r *http.Request) {
 
 	var q query.Query = bleve.NewMatchAllQuery()
 	if payload.Term != "" {
-		wildcard := fmt.Sprintf("*%s*", payload.Term)
-		q = bleve.NewWildcardQuery(wildcard)
+		match := bleve.NewMatchQuery(payload.Term)
+		match.Fuzziness = 1
+		q = match
 	}
 
 	request := bleve.NewSearchRequest(q)
