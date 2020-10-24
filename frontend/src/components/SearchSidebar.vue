@@ -66,10 +66,12 @@
       v-if="screenshot"
       class="z-10 fixed inset-0 bg-gray-700 bg-opacity-75 transition-opacity"
     >
-      <div class="w-3/12 p-6 flex justify-end text-white text-2xl pointer-events-none">
-        <router-link :to="{ name: 'search' }" class="pointer-events-auto">
-          <i class="fas fa-times-circle"></i>
-        </router-link>
+      <div class="w-3/12 p-6 flex justify-end text-white text-xl pointer-events-none">
+        <div>
+          <router-link :to="{ name: 'search' }" class="pointer-events-auto">
+            <i class="fas fa-times-circle"></i>
+          </router-link>
+        </div>
       </div>
     </div>
   </Transition>
