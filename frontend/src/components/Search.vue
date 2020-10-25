@@ -13,7 +13,7 @@
       <p v-if="!reqIsLoading" class="text-gray-500 text-right">
         {{ reqTotalHits }} results found in {{ reqTookMs }}ms
       </p>
-      <div v-for="(page, i) in pages" class="mt-3">
+      <div v-for="(page, i) in pages" class="mt-1">
         <div v-show="i !== 0" class="my-6">
           <span class="text-gray-500"> page {{ i + 1 }}</span>
           <hr class="m-0" />
@@ -21,10 +21,7 @@
         <div class="col-resp gap-x-3 space-y-3">
           <div v-for="screenshotID in page">
             <router-link :to="{ name: 'search', params: { id: screenshotID } }">
-              <ScreenshotHighlight
-                :id="screenshotID"
-                class="w-full border border-gray-300 rounded"
-              />
+              <ScreenshotHighlight :id="screenshotID" />
             </router-link>
           </div>
         </div>

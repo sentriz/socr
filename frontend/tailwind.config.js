@@ -8,7 +8,11 @@ module.exports = {
     ],
   },
   theme: {
-    extend: {},
+    extend: {
+      width: {
+        'fit': 'fit-content'
+      }
+    },
   },
   variants: {},
   plugins: [],

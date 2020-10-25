@@ -1,13 +1,8 @@
 <template>
-  <canvas
-    ref="canvas"
-    :height="scrotHeight"
-    :width="scrotWidth"
-    :style="{
-      background: `url(${scrotURL})`,
-      backgroundSize: 'cover',
-    }"
-  />
+  <div class="relative w-fit">
+    <img :src="scrotURL" class="shadow-lg" />
+    <canvas ref="canvas" class="absolute inset-0 w-full h-full" />
+  </div>
 </template>
 
 <script setup="props">
@@ -21,29 +16,40 @@ import { urlScreenshot, fields } from "../api";
 import { useStore } from "../store";
 
 const store = useStore();
+
 const screenshot = computed(() => store.screenshotByID(props.id));
-
 const blocks = computed(() => zipBlocks(screenshot.value));
-const highlightCanvas = (canvas) => {
-  const ctx = canvas.getContext("2d");
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+const dims = computed(() => ({
+  height: screenshot.value.fields[fields.SIZE_HEIGHT],
+  width: screenshot.value.fields[fields.SIZE_WIDTH],
+}));
 
+export const canvas = ref(null);
+
+const highlightCanvas = () => {
+  canvas.value.height = canvas.value.offsetHeight;
+  canvas.value.width = canvas.value.offsetWidth;
+
+  const ctx = canvas.value.getContext("2d");
+  ctx.clearRect(0, 0, canvas.value.width, canvas.value.height);
+
+  const ratioX = canvas.value.width / dims.value.width;
+  const ratioY = canvas.value.height / dims.value.height;
   for (const block of blocks.value) {
     if (!block.match) continue;
 
     ctx.fillStyle = "rgba(236, 201, 75, 0.75)";
     ctx.fillRect(
-      block.position.minX,
-      block.position.minY,
-      block.position.maxX - block.position.minX,
-      block.position.maxY - block.position.minY,
+      block.position.minX * ratioX,
+      block.position.minY * ratioY,
+      (block.position.maxX - block.position.minX) * ratioX,
+      (block.position.maxY - block.position.minY) * ratioY,
     );
   }
 };
 
-export const canvas = ref(null);
-onMounted(() => highlightCanvas(canvas.value));
-onUpdated(() => highlightCanvas(canvas.value));
+onMounted(() => highlightCanvas());
+onUpdated(() => highlightCanvas());
 
 export const scrotHeight = computed(() => screenshot.value.fields[fields.SIZE_HEIGHT]);
 export const scrotWidth = computed(() => screenshot.value.fields[fields.SIZE_WIDTH]);
