@@ -77,6 +77,7 @@ func main() {
 	// begin authenticated routes
 	rAuth := r.NewRoute().Subrouter()
 	rAuth.Use(ctrl.WithAuth())
+	rAuth.HandleFunc("/api/ping", ctrl.ServePing)
 	rAuth.HandleFunc("/api/upload", ctrl.ServeUpload)
 	rAuth.HandleFunc("/api/start_import", ctrl.ServeStartImport)
 	rAuth.HandleFunc("/api/about", ctrl.ServeAbout)

@@ -17,6 +17,14 @@ import (
 	"go.senan.xyz/socr/index"
 )
 
+func (c *Controller) ServePing(w http.ResponseWriter, r *http.Request) {
+	json.NewEncoder(w).Encode(struct {
+		Status string `json:"status"`
+	}{
+		Status: "ok",
+	})
+}
+
 func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(32 << 20)
 	infile, _, err := r.FormFile("image")
