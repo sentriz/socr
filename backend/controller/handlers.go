@@ -136,6 +136,7 @@ func (c *Controller) ServeSearch(w http.ResponseWriter, r *http.Request) {
 	request.Size = payload.Size
 	request.From = payload.From
 	request.Fields = index.BaseSearchFields
+	request.IncludeLocations = true
 
 	if payload.Term != "" {
 		highlight := bleve.NewHighlight()

@@ -18,7 +18,7 @@
           <span class="text-gray-500"> page {{ i + 1 }}</span>
           <hr class="m-0" />
         </div>
-        <div class="col-resp gap-x-3 space-y-3">
+        <div class="col-resp gap-x-4 space-y-4">
           <div v-for="screenshotID in page">
             <router-link :to="{ name: 'search', params: { id: screenshotID } }">
               <ScreenshotHighlight :id="screenshotID" />

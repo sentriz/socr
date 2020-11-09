@@ -80,6 +80,9 @@ window.onbeforeunload = () => {
 };
 
 const app = createApp(RouterView);
+const store = createStore()
+
+window.store = store
 app.use(router);
-app.provide(storeSymbol, createStore());
+app.provide(storeSymbol, store)
 app.mount("body");

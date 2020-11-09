@@ -1,7 +1,9 @@
 <template>
   <div class="relative w-fit">
-    <img :src="scrotURL" class="shadow-lg" />
-    <canvas ref="canvas" class="absolute inset-0 w-full h-full" />
+    <img :src="url" class="shadow" />
+    <svg class="absolute h-full w-full"></svg>
+    <!-- <canvas ref="canvas" class="absolute inset-0 w-full h-full" /> -->
+    <!-- <div class="absolute inset-0 bg-red-200 bg-opacity-25">{{ id }}</div> -->
   </div>
 </template>
 
@@ -11,31 +13,36 @@ export default {
   props: { id: String },
 };
 
-import { inject, ref, toRefs, computed, onMounted, onUpdated } from "vue";
+import {
+  inject,
+  ref,
+  toRefs,
+  computed,
+  watch,
+  watchEffect,
+  onMounted,
+  onUpdated,
+} from "vue";
 import { urlScreenshot, fields } from "../api";
 import { useStore } from "../store";
 
 const store = useStore();
 
-const screenshot = computed(() => store.screenshotByID(props.id));
-const blocks = computed(() => zipBlocks(screenshot.value));
-const dims = computed(() => ({
-  height: screenshot.value.fields[fields.SIZE_HEIGHT],
-  width: screenshot.value.fields[fields.SIZE_WIDTH],
-}));
-
+export const screenshot = computed(() => store.screenshotByID(props.id));
+export const id = computed(() => screenshot.value.id);
+export const url = computed(() => `${urlScreenshot}/${screenshot.value.id}/raw`);
 export const canvas = ref(null);
 
-const highlightCanvas = () => {
-  canvas.value.height = canvas.value.offsetHeight;
-  canvas.value.width = canvas.value.offsetWidth;
+const highlightCanvas = (canvas, blocks, { width, height }) => {
+  canvas.height = canvas.offsetHeight;
+  canvas.width = canvas.offsetWidth;
 
-  const ctx = canvas.value.getContext("2d");
-  ctx.clearRect(0, 0, canvas.value.width, canvas.value.height);
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  const ratioX = canvas.value.width / dims.value.width;
-  const ratioY = canvas.value.height / dims.value.height;
-  for (const block of blocks.value) {
+  const ratioX = canvas.width / width;
+  const ratioY = canvas.height / height;
+  for (const block of blocks) {
     if (!block.match) continue;
 
     ctx.fillStyle = "rgba(236, 201, 75, 0.75)";
@@ -47,13 +54,6 @@ const highlightCanvas = () => {
     );
   }
 };
-
-onMounted(() => highlightCanvas());
-onUpdated(() => highlightCanvas());
-
-export const scrotHeight = computed(() => screenshot.value.fields[fields.SIZE_HEIGHT]);
-export const scrotWidth = computed(() => screenshot.value.fields[fields.SIZE_WIDTH]);
-export const scrotURL = computed(() => `${urlScreenshot}/${screenshot.value.id}/raw`);
 
 const zipBlocks = (screenshot) => {
   if (!screenshot.locations?.[fields.BLOCKS_TEXT]) return [];
@@ -76,4 +76,16 @@ const zipBlocks = (screenshot) => {
     };
   });
 };
+
+watch([canvas, screenshot], ([canvas, screenshot]) => {
+  console.log(screenshot.id, Object.keys(screenshot.locations || {}).length, screenshot);
+  const blocks = zipBlocks(screenshot);
+  const size = {
+    height: screenshot.fields[fields.SIZE_HEIGHT],
+    width: screenshot.fields[fields.SIZE_WIDTH],
+  };
+  highlightCanvas(canvas, blocks, size);
+});
+
+// onMounted(() => highlightCanvas());
 </script>
