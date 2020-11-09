@@ -1,9 +1,19 @@
 <template>
   <div class="relative w-fit">
     <img :src="url" class="shadow" />
-    <svg class="absolute h-full w-full"></svg>
-    <!-- <canvas ref="canvas" class="absolute inset-0 w-full h-full" /> -->
-    <!-- <div class="absolute inset-0 bg-red-200 bg-opacity-25">{{ id }}</div> -->
+    <svg
+      :viewBox="`0 0 ${size.width} ${size.height}`"
+      class="absolute inset-0 fill-current text-yellow-500 text-opacity-50"
+    >
+      <rect
+        v-for="(block, i) in blocks"
+        :key="i"
+        :x="block.x"
+        :y="block.y"
+        :width="block.width"
+        :height="block.height"
+      />
+    </svg>
   </div>
 </template>
 
@@ -13,17 +23,8 @@ export default {
   props: { id: String },
 };
 
-import {
-  inject,
-  ref,
-  toRefs,
-  computed,
-  watch,
-  watchEffect,
-  onMounted,
-  onUpdated,
-} from "vue";
-import { urlScreenshot, fields } from "../api";
+import { inject, ref, toRefs, computed } from "vue";
+import { urlScreenshot, fields as apifields } from "../api";
 import { useStore } from "../store";
 
 const store = useStore();
@@ -31,61 +32,36 @@ const store = useStore();
 export const screenshot = computed(() => store.screenshotByID(props.id));
 export const id = computed(() => screenshot.value.id);
 export const url = computed(() => `${urlScreenshot}/${screenshot.value.id}/raw`);
-export const canvas = ref(null);
 
-const highlightCanvas = (canvas, blocks, { width, height }) => {
-  canvas.height = canvas.offsetHeight;
-  canvas.width = canvas.offsetWidth;
+export const size = computed(() => ({
+  height: screenshot.value.fields[apifields.SIZE_HEIGHT],
+  width: screenshot.value.fields[apifields.SIZE_WIDTH],
+}));
 
-  const ctx = canvas.getContext("2d");
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+export const blocks = computed(() => {
+  const { locations, fields } = screenshot.value;
+  if (!locations?.[apifields.BLOCKS_TEXT]) return [];
 
-  const ratioX = canvas.width / width;
-  const ratioY = canvas.height / height;
-  for (const block of blocks) {
-    if (!block.match) continue;
+  const flatText = toArray(fields[apifields.BLOCKS_TEXT]);
+  const flatPosition = toArray(fields[apifields.BLOCKS_POSITION]);
 
-    ctx.fillStyle = "rgba(236, 201, 75, 0.75)";
-    ctx.fillRect(
-      block.position.minX * ratioX,
-      block.position.minY * ratioY,
-      (block.position.maxX - block.position.minX) * ratioX,
-      (block.position.maxY - block.position.minY) * ratioY,
-    );
-  }
-};
-
-const zipBlocks = (screenshot) => {
-  if (!screenshot.locations?.[fields.BLOCKS_TEXT]) return [];
-
-  let flatText = screenshot.fields[fields.BLOCKS_TEXT];
-  let flatPosition = screenshot.fields[fields.BLOCKS_POSITION];
-  if (!Array.isArray(flatText)) flatText = [flatText];
-  if (!Array.isArray(flatPosition)) flatPosition = [flatPosition];
-
-  const queriesMatches = screenshot.locations[fields.BLOCKS_TEXT];
+  const queriesMatches = locations[apifields.BLOCKS_TEXT];
   const queryMatches = Object.values(queriesMatches)[0];
   const matchIndexes = new Set(queryMatches.map((match) => match.array_positions).flat());
 
-  return flatText.map((block, i) => {
-    const [minX, minY, maxX, maxY] = flatPosition.slice(4 * i, 4 * i + 4);
-    return {
-      text: block,
-      position: { minX, minY, maxX, maxY },
-      match: matchIndexes.has(i),
-    };
-  });
-};
-
-watch([canvas, screenshot], ([canvas, screenshot]) => {
-  console.log(screenshot.id, Object.keys(screenshot.locations || {}).length, screenshot);
-  const blocks = zipBlocks(screenshot);
-  const size = {
-    height: screenshot.fields[fields.SIZE_HEIGHT],
-    width: screenshot.fields[fields.SIZE_WIDTH],
-  };
-  highlightCanvas(canvas, blocks, size);
+  return flatText
+    .filter((_, i) => matchIndexes.has(i))
+    .map((block, i) => {
+      const [minX, minY, maxX, maxY] = flatPosition.slice(4 * i, 4 * i + 4);
+      return {
+        text: block,
+        x: minX,
+        y: minY,
+        width: maxX - minX,
+        height: maxY - minY,
+      };
+    });
 });
 
-// onMounted(() => highlightCanvas());
+const toArray = (value) => (Array.isArray(value) ? value : [value]);
 </script>
