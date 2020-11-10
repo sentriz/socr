@@ -12,7 +12,20 @@
       class="z-20 fixed inset-y-0 right-0 w-9/12 p-6 bg-gray-200 overflow-y-auto"
     >
       <div class="space-y-6">
-        <div class="text-right space-x-3">
+        <div class="text-right space-x-4">
+          <span class="badge bg-indigo-200 text-indigo-900">
+            <a :href="screenshotRaw" target="_blank">
+              <i class="fas fa-external-link-alt"></i> raw
+            </a>
+          </span>
+          <span class="badge bg-green-200 text-green-900">
+            <router-link
+              :to="{ name: 'public', params: { id: screenshot.id } }"
+              target="_blank"
+            >
+              <i class="fas fa-external-link-alt"></i> public
+            </router-link>
+          </span>
           <span>
             created
             <span
@@ -32,14 +45,6 @@
               >
                 {{ tag }}
               </span>
-            </span>
-          </span>
-          <span>
-            &nbsp;
-            <span class="badge bg-indigo-200 text-indigo-900">
-              <a :href="screenshotRaw" target="_blank">
-                <i class="fas fa-external-link-alt"></i> raw
-              </a>
             </span>
           </span>
         </div>

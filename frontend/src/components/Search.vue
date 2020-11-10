@@ -28,7 +28,7 @@
       </div>
     </div>
     <div v-if="reqIsLoading" class="bg-gray-300 text-gray-600 text-center rounded p-3">
-      <i class="animate-spin fas fa-circle-notch"></i> loading
+      <i class="animate-spin fas fa-circle-notch mr-1"></i> loading
     </div>
   </div>
   <SearchSidebar :id="sidebarID" />

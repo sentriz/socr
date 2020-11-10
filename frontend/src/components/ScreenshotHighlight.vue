@@ -10,8 +10,8 @@
         :key="i"
         :x="block.x"
         :y="block.y"
-        :width="block.width"
         :height="block.height"
+        :width="block.width"
       />
     </svg>
   </div>
