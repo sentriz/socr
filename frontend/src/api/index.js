@@ -35,6 +35,7 @@ export const fields = {
   BLOCKS_POSITION: "blocks.position",
   SIZE_HEIGHT: "dimensions.height",
   SIZE_WIDTH: "dimensions.width",
+  DOMINANT_COLOUR: "dominant_colour",
 };
 
 const tokenKey = "token";

@@ -28,11 +28,8 @@
           </span>
           <span>
             created
-            <span
-              class="badge bg-pink-200 text-pink-900"
-              :title="screenshot.fields.timestamp"
-            >
-              {{ relativeDateStr(screenshot.fields.timestamp) }}
+            <span class="badge bg-pink-200 text-pink-900" :title="timestamp">
+              {{ relativeDateStr(timestamp) }}
             </span>
           </span>
           <span v-if="tags?.length">
@@ -48,9 +45,9 @@
             </span>
           </span>
         </div>
-        <div class="box bg-white">
+        <ScreenshotBackground :id="screenshot.id" class="box p-3">
           <ScreenshotHighlight :id="screenshot.id" class="mx-auto" />
-        </div>
+        </ScreenshotBackground>
         <div v-if="text.length" class="box bg-gray-100 padded font-mono text-sm">
           <p v-for="(line, i) in text" :key="i">
             {{ line }}
@@ -84,8 +81,9 @@
 
 <script setup="props">
 import ScreenshotHighlight from "./ScreenshotHighlight.vue";
+import ScreenshotBackground from "./ScreenshotBackground.vue";
 export default {
-  components: { ScreenshotHighlight },
+  components: { ScreenshotHighlight, ScreenshotBackground },
   props: { id: String },
 };
 
@@ -113,6 +111,7 @@ export const relativeDateStr = (stamp) => relativeDate(new Date(stamp));
 export const screenshotRaw = computed(() => `${urlScreenshot}/${props.id}/raw`);
 export const screenshot = computed(() => store.screenshotByID(props.id));
 export const text = computed(() => screenshot.value.fields[fields.BLOCKS_TEXT]);
+export const timestamp = computed(() => screenshot.value.fields[fields.TIMESTAMP]);
 export const tags = computed(() => {
   const tags = screenshot.value.fields[fields.TAGS];
   if (tags) return Array.isArray(tags) ? tags : [tags];

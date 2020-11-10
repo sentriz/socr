@@ -1,6 +1,6 @@
 <template>
   <div class="relative w-fit">
-    <img :src="url" class="shadow" />
+    <img :src="url" />
     <svg
       :viewBox="`0 0 ${size.width} ${size.height}`"
       class="absolute inset-0 fill-current text-yellow-500 text-opacity-50"

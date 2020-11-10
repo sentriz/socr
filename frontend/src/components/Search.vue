@@ -13,17 +13,17 @@
       <p v-if="!reqIsLoading" class="text-gray-500 text-right">
         {{ reqTotalHits }} results found in {{ reqTookMs }}ms
       </p>
-      <div v-for="(page, i) in pages" class="mt-1">
+      <div v-for="(page, i) in pages" class="mt-2">
         <div v-show="i !== 0" class="my-6">
           <span class="text-gray-500"> page {{ i + 1 }}</span>
           <hr class="m-0" />
         </div>
         <div class="col-resp gap-x-4 space-y-4">
-          <div v-for="screenshotID in page" class="bg-gray-200">
-            <router-link :to="{ name: 'search', params: { id: screenshotID } }">
-              <ScreenshotHighlight :id="screenshotID" class="mx-auto" />
+          <ScreenshotBackground v-for="id in page" :key="id" :id="id" class="shadow-lg">
+            <router-link :to="{ name: 'search', params: { id: id } }">
+              <ScreenshotHighlight :id="id" class="mx-auto" />
             </router-link>
-          </div>
+          </ScreenshotBackground>
         </div>
       </div>
     </div>
@@ -36,14 +36,20 @@
 
 <script setup="props">
 import ScreenshotHighlight from "./ScreenshotHighlight.vue";
+import ScreenshotBackground from "./ScreenshotBackground.vue";
 import SearchSidebar from "./SearchSidebar.vue";
 import SearchSortFilter from "./SearchSortFilter.vue";
 export default {
-  components: { ScreenshotHighlight, SearchSidebar, SearchSortFilter },
+  components: {
+    ScreenshotHighlight,
+    ScreenshotBackground,
+    SearchSidebar,
+    SearchSortFilter,
+  },
   props: {},
 };
 
-import { inject, ref, reactive, watch, computed, onMounted, onUnmounted } from "vue";
+import { ref, watch, computed } from "vue";
 import { useRoute } from "vue-router";
 import { useDebounce } from "@vueuse/core";
 import { fields } from "../api";
