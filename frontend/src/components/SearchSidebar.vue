@@ -12,38 +12,27 @@
       class="z-20 fixed inset-y-0 right-0 w-9/12 p-6 bg-gray-200 overflow-y-auto"
     >
       <div class="space-y-6">
-        <div class="text-right space-x-4">
-          <span class="badge bg-indigo-200 text-indigo-900">
-            <a :href="screenshotRaw" target="_blank">
-              <i class="fas fa-external-link-alt"></i> raw
-            </a>
-          </span>
-          <span class="badge bg-green-200 text-green-900">
-            <router-link
-              :to="{ name: 'public', params: { id: screenshot.id } }"
-              target="_blank"
-            >
-              <i class="fas fa-external-link-alt"></i> public
-            </router-link>
-          </span>
-          <span>
-            created
-            <span class="badge bg-pink-200 text-pink-900" :title="timestamp">
+        <div
+          class="flex flex-col md:flex-row space-y-2 md:space-x-4 justify-end items-end"
+        >
+          <BadgeLabel label="created">
+            <Badge class="badge bg-pink-200 text-pink-900" :title="timestamp">
               {{ relativeDateStr(timestamp) }}
-            </span>
-          </span>
-          <span v-if="tags?.length">
-            tags
-            <span class="space-x-2">
-              <span
-                class="badge bg-blue-200 text-blue-900"
-                v-for="(tag, i) in tags"
-                :id="i"
-              >
-                {{ tag }}
-              </span>
-            </span>
-          </span>
+            </Badge>
+          </BadgeLabel>
+          <BadgeLabel v-if="tags?.length" label="tags">
+            <Badge v-for="tag in tags" class="badge bg-blue-200 text-blue-900">
+              {{ tag }}
+            </Badge>
+          </BadgeLabel>
+          <Badge class="bg-indigo-200 text-indigo-900" icon="fas fa-external-link-alt">
+            <a :href="screenshotRaw" target="_blank">raw</a>
+          </Badge>
+          <Badge class="bg-green-200 text-green-900" icon="fas fa-external-link-alt">
+            <router-link :to="{ name: 'public', params: { id: screenshot.id } }">
+              public
+            </router-link>
+          </Badge>
         </div>
         <ScreenshotBackground :id="screenshot.id" class="box p-3">
           <ScreenshotHighlight :id="screenshot.id" class="mx-auto" />
@@ -82,8 +71,15 @@
 <script setup="props">
 import ScreenshotHighlight from "./ScreenshotHighlight.vue";
 import ScreenshotBackground from "./ScreenshotBackground.vue";
+import BadgeLabel from "./BadgeLabel.vue";
+import Badge from "./Badge.vue";
 export default {
-  components: { ScreenshotHighlight, ScreenshotBackground },
+  components: {
+    ScreenshotHighlight,
+    ScreenshotBackground,
+    BadgeLabel,
+    Badge,
+  },
   props: { id: String },
 };
 

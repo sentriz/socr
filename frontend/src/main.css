@@ -29,9 +29,6 @@
   .btn:focus    { @apply outline-none shadow-outline; }
   .btn:hover    { @apply bg-blue-700; }
   .btn:disabled { @apply opacity-50 cursor-not-allowed; }
-
-  .badge   { @apply inline-block text-white px-3 rounded; }
-  .badge i { @apply text-xs mr-1; }
 }
 
 @layer utilities {
