@@ -19,9 +19,9 @@
           <hr class="m-0" />
         </div>
         <div class="col-resp gap-x-4 space-y-4">
-          <div v-for="screenshotID in page">
+          <div v-for="screenshotID in page" class="bg-gray-200">
             <router-link :to="{ name: 'search', params: { id: screenshotID } }">
-              <ScreenshotHighlight :id="screenshotID" />
+              <ScreenshotHighlight :id="screenshotID" class="mx-auto" />
             </router-link>
           </div>
         </div>
