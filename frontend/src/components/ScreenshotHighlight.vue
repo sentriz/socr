@@ -47,10 +47,10 @@ export const blocks = computed(() => {
 
   const queriesMatches = locations[apifields.BLOCKS_TEXT];
   const queryMatches = Object.values(queriesMatches)[0];
-  const matchIndexes = new Set(queryMatches.map((match) => match.array_positions).flat());
+  const matchIndexes = queryMatches.map((match) => match.array_positions).flat();
 
-  return flatText
-    .filter((_, i) => matchIndexes.has(i))
+  return matchIndexes
+    .map((i) => flatText[i])
     .map((block, i) => {
       const [minX, minY, maxX, maxY] = flatPosition.slice(4 * i, 4 * i + 4);
       return {
