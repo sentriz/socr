@@ -3,12 +3,14 @@ package imagery
 import (
 	"fmt"
 	"image"
+	"image/color"
 	"image/gif"
 	"image/jpeg"
 	"image/png"
 	"io"
 
 	"github.com/buckket/go-blurhash"
+	"github.com/cenkalti/dominantcolor"
 	"github.com/nfnt/resize"
 	gosseract "github.com/otiai10/gosseract/v2"
 )
@@ -105,4 +107,10 @@ const (
 
 func CalculateBlurhash(img image.Image) (string, error) {
 	return blurhash.Encode(BlurhashXC, BlurhashXC, img)
+}
+
+func DominantColour(img image.Image) (color.Color, string) {
+	colour := dominantcolor.Find(img)
+	hex := dominantcolor.Hex(colour)
+	return colour, hex
 }

@@ -22,13 +22,14 @@ import (
 )
 
 type Screenshot struct {
-	ID         string           `json:"id"`
-	Timestamp  time.Time        `json:"timestamp"`
-	Filetype   imagery.Filetype `json:"filetype"`
-	Tags       []ScreenshotTag  `json:"tags"`
-	Dimensions Dimensions       `json:"dimensions"`
-	Blocks     []*Block         `json:"blocks"`
-	Blurhash   string           `json:"blurhash"`
+	ID             string           `json:"id"`
+	Timestamp      time.Time        `json:"timestamp"`
+	Filetype       imagery.Filetype `json:"filetype"`
+	Tags           []ScreenshotTag  `json:"tags"`
+	Dimensions     Dimensions       `json:"dimensions"`
+	Blocks         []*Block         `json:"blocks"`
+	DominantColour string           `json:"dominant_colour"`
+	Blurhash       string           `json:"blurhash"`
 }
 
 type ScreenshotTag string
@@ -141,6 +142,7 @@ func (c *Controller) ReadAndIndexBytesWithIDTime(raw []byte, scrotID string, tim
 		})
 	}
 
+	_, scrotDominantColour := imagery.DominantColour(image)
 	scrotBlurhash, err := imagery.CalculateBlurhash(image)
 	if err != nil {
 		return nil, fmt.Errorf("calculate blurhash: %w", err)
@@ -153,9 +155,10 @@ func (c *Controller) ReadAndIndexBytesWithIDTime(raw []byte, scrotID string, tim
 			Width:  image.Bounds().Size().X,
 			Height: image.Bounds().Size().Y,
 		},
-		Blurhash:  scrotBlurhash,
-		Blocks:    scrotBlocks,
-		Timestamp: timestamp,
+		DominantColour: scrotDominantColour,
+		Blurhash:       scrotBlurhash,
+		Blocks:         scrotBlocks,
+		Timestamp:      timestamp,
 		Tags: []ScreenshotTag{
 			ScreenshotTagImported,
 		},
