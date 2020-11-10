@@ -51,7 +51,7 @@
         <div class="box bg-white">
           <ScreenshotHighlight :id="screenshot.id" class="mx-auto" />
         </div>
-        <div class="box bg-gray-100 padded font-mono text-sm">
+        <div v-if="text.length" class="box bg-gray-100 padded font-mono text-sm">
           <p v-for="(line, i) in text" :key="i">
             {{ line }}
           </p>
