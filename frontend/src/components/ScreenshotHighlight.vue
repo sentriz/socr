@@ -23,7 +23,7 @@ export default {
   props: { id: String },
 };
 
-import { inject, ref, toRefs, computed } from "vue";
+import { computed } from "vue";
 import { urlScreenshot, fields as apifields } from "../api";
 import { useStore } from "../store";
 

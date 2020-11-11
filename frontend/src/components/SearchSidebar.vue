@@ -83,7 +83,7 @@ export default {
   props: { id: String },
 };
 
-import { inject, computed, watch } from "vue";
+import { computed, watch } from "vue";
 import relativeDate from "relative-date";
 import { urlScreenshot, fields } from "../api/";
 import { useStore } from "../store/";

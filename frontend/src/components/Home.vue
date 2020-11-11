@@ -24,9 +24,8 @@
 </template>
 
 <script setup="props">
-import Search from "./Search.vue";
 export default {
-  components: { Search },
+  components: {},
   props: {},
 };
 </script>

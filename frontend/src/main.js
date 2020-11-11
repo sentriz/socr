@@ -1,4 +1,4 @@
-import { createApp, reactive } from "vue";
+import { createApp } from "vue";
 import { createRouter, createWebHistory, RouterView } from "vue-router";
 
 import "./main.css";
@@ -82,7 +82,6 @@ window.onbeforeunload = () => {
 const app = createApp(RouterView);
 const store = createStore()
 
-window.store = store
 app.use(router);
 app.provide(storeSymbol, store)
 app.mount("body");

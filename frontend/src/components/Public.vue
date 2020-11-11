@@ -1,4 +1,3 @@
-<!-- <ScreenshotHighlight v-if="screenshot" :screenshot="screenshot" /> -->
 <template>
   <div class="bg-gray-200 min-h-screen">
     <div v-show="imageHave" class="container mx-auto p-6 space-y-6 flex flex-col">
@@ -19,20 +18,18 @@
 </template>
 
 <script setup="props">
-import ScreenshotHighlight from "./ScreenshotHighlight.vue";
 import ScreenshotBackground from "./ScreenshotBackground.vue";
 export default {
-  components: { ScreenshotHighlight, ScreenshotBackground },
+  components: { ScreenshotBackground },
   props: {},
 };
 
-import { ref, reactive, watch, computed, onMounted } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { reqScreenshot, fields as apifields, urlScreenshot, newSocket } from "../api";
-import { useStore } from "../store" ;
+import { ref, computed, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import { fields as apifields, urlScreenshot, newSocket } from "../api";
+import { useStore } from "../store";
 
 const store = useStore();
-const router = useRouter();
 const route = useRoute();
 const screenshotID = route.params.id;
 
@@ -44,9 +41,9 @@ const requestScreenshot = async () => {
   screenshot.value = store.screenshotByID(screenshotID);
 };
 
-export const fields = computed(() => screenshot.value?.fields)
-export const text = computed(() => fields.value?.[apifields.BLOCKS_TEXT] || [])
-export const timestamp = computed(() => fields.value?.[apifields.TIMESTAMP] || "")
+export const fields = computed(() => screenshot.value?.fields);
+export const text = computed(() => fields.value?.[apifields.BLOCKS_TEXT] || []);
+export const timestamp = computed(() => fields.value?.[apifields.TIMESTAMP] || "");
 
 // suspend showing anything until we have an image
 export const imageSrc = `${urlScreenshot}/${screenshotID}/raw`;

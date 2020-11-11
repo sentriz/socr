@@ -69,7 +69,7 @@ export default {
   props: {},
 };
 
-import { ref, inject, onMounted, computed } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { newSocketAuth, urlScreenshot } from "../api";
 export { reqStartImport, reqImportStatus } from "../api";
 
