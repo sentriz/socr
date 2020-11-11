@@ -47,21 +47,23 @@ export const blocks = computed(() => {
 
   const queriesMatches = locations[apifields.BLOCKS_TEXT];
   const queryMatches = Object.values(queriesMatches)[0];
-  const matchIndexes = queryMatches.map((match) => match.array_positions).flat();
 
-  return matchIndexes
-    .map((i) => flatText[i])
-    .map((block, i) => {
-      const [minX, minY, maxX, maxY] = flatPosition.slice(4 * i, 4 * i + 4);
-      return {
-        text: block,
-        x: minX,
-        y: minY,
-        width: maxX - minX,
-        height: maxY - minY,
-      };
-    });
+  return queryMatches
+    .map((match) => match.array_positions)
+    .flat()
+    .map((i) => blockFromMatchIndexes(flatPosition, i, flatText[i]));
 });
+
+const blockFromMatchIndexes = (flatPosition, i, text) => {
+  const [minX, minY, maxX, maxY] = flatPosition.slice(4 * i, 4 * i + 4);
+  return {
+    text,
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY,
+  };
+};
 
 const toArray = (value) => (Array.isArray(value) ? value : [value]);
 </script>
