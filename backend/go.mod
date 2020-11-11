@@ -3,7 +3,7 @@ module go.senan.xyz/socr
 go 1.15
 
 require (
-	github.com/RoaringBitmap/roaring v0.5.3 // indirect
+	github.com/RoaringBitmap/roaring v0.5.5 // indirect
 	github.com/araddon/dateparse v0.0.0-20201001162425-8aadafed4dc4
 	github.com/blevesearch/bleve v1.0.12
 	github.com/buckket/go-blurhash v1.1.0
@@ -29,9 +29,9 @@ require (
 	github.com/rakyll/statik v0.1.7
 	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
 	github.com/tecbot/gorocksdb v0.0.0-20191217155057-f0fad39f321c // indirect
-	github.com/tinylib/msgp v1.1.2 // indirect
+	github.com/tinylib/msgp v1.1.3 // indirect
 	github.com/willf/bitset v1.1.11 // indirect
-	golang.org/x/sys v0.0.0-20201022201747-fb209a7c41cd // indirect
+	golang.org/x/sys v0.0.0-20201110211018-35f3e6cf4a65 // indirect
 	golang.org/x/text v0.3.2 // indirect
 	google.golang.org/protobuf v1.25.0 // indirect
 )
