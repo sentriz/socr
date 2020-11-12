@@ -1,4 +1,4 @@
 module.exports = {
-  printWidth: 90,
+  printWidth: 120,
   trailingComma: "all",
 }

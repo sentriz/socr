@@ -7,14 +7,9 @@
     leaveToClass="translate-x-full"
     leaveFromClass="translate-x-0"
   >
-    <div
-      v-if="screenshot"
-      class="z-20 fixed inset-y-0 right-0 w-9/12 p-6 bg-gray-200 overflow-y-auto"
-    >
+    <div v-if="screenshot" class="z-20 fixed inset-y-0 right-0 w-9/12 p-6 bg-gray-200 overflow-y-auto">
       <div class="space-y-6">
-        <div
-          class="flex flex-col md:flex-row space-y-2 md:space-x-4 justify-end items-end"
-        >
+        <div class="flex flex-col md:flex-row space-y-2 md:space-x-4 justify-end items-end">
           <BadgeLabel label="created">
             <Badge class="badge bg-pink-200 text-pink-900" :title="timestamp">
               {{ relativeDateStr(timestamp) }}
@@ -29,9 +24,7 @@
             <a :href="screenshotRaw" target="_blank">raw</a>
           </Badge>
           <Badge class="bg-green-200 text-green-900" icon="fas fa-external-link-alt">
-            <router-link :to="{ name: 'public', params: { id: screenshot.id } }">
-              public
-            </router-link>
+            <router-link :to="{ name: 'public', params: { id: screenshot.id } }"> public </router-link>
           </Badge>
         </div>
         <ScreenshotBackground :id="screenshot.id" class="box p-3">
@@ -53,10 +46,7 @@
     leaveToClass="opacity-0"
     leaveFromClass="opacity-100"
   >
-    <div
-      v-if="screenshot"
-      class="z-10 fixed inset-0 bg-gray-700 bg-opacity-75 transition-opacity"
-    >
+    <div v-if="screenshot" class="z-10 fixed inset-0 bg-gray-700 bg-opacity-75 transition-opacity">
       <div class="w-3/12 p-6 flex justify-end text-white text-xl pointer-events-none">
         <div>
           <router-link :to="{ name: 'search' }" class="pointer-events-auto">

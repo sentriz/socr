@@ -16,8 +16,8 @@
         <div class="col-resp gap-x-4 space-y-4">
           <ScreenshotBackground v-for="id in page" :key="id" :id="id" class="shadow-lg">
             <router-link :to="{ name: 'search', params: { id: id } }">
-              <ScreenshotHighlight :id="id" class="mx-auto" />
-            </router-link>
+              <ScreenshotHighlight :id="id" class="mx-auto"
+            /></router-link>
           </ScreenshotBackground>
         </div>
       </div>

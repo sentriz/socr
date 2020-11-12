@@ -56,9 +56,7 @@
           </li>
         </ol>
       </div>
-      <button class="import-start btn" :disabled="status.running" @click="reqStartImport">
-        start import
-      </button>
+      <button class="import-start btn" :disabled="status.running" @click="reqStartImport">start import</button>
     </div>
   </div>
 </template>

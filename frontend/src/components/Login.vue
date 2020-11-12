@@ -5,29 +5,15 @@
         <Logo class="w-9/12 mx-auto" />
         <div>
           <label class="inp-label" for="username"> username </label>
-          <input
-            class="inp shadow w-full"
-            id="username"
-            type="text"
-            placeholder="mark_e_smith"
-            v-model="username"
-          />
+          <input class="inp shadow w-full" id="username" type="text" placeholder="mark_e_smith" v-model="username" />
         </div>
         <div>
           <label class="inp-label" for="password"> password </label>
-          <input
-            class="inp shadow w-full"
-            id="password"
-            type="password"
-            placeholder="*******"
-            v-model="password"
-          />
+          <input class="inp shadow w-full" id="password" type="password" placeholder="*******" v-model="password" />
         </div>
         <button class="btn w-full" type="button" @click="login">sign in</button>
       </div>
-      <p class="text-center text-gray-500 text-xs">
-        <b>s</b>creenshot <b>ocr</b> server &mdash; Senan Kelly 2020
-      </p>
+      <p class="text-center text-gray-500 text-xs"><b>s</b>creenshot <b>ocr</b> server &mdash; Senan Kelly 2020</p>
     </div>
   </div>
 </template>
