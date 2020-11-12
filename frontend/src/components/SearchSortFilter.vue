@@ -1,14 +1,9 @@
 <template>
-  <div
-    class="border border-gray-400 bg-white rounded flex divide-x divide-gray-400 whitespace-no-wrap"
-  >
-    <div class="flex items-center padded bg-gray-200 text-gray-600">sort by</div>
-    <div
-      @click="toggle"
-      class="flex items-center padded justify-end w-full space-x-2 text-gray-800"
-    >
+  <div class="flex border border-gray-400 bg-white rounded divide-x divide-gray-400 whitespace-no-wrap lea">
+    <div class="padded text-gray-600 bg-gray-200 rounded-l">sort by</div>
+    <div class="padded text-gray-800 w-full space-x-2 text-right" @click="toggle">
       <span class="select-none">{{ item.name }}</span>
-      <i :class="`fas ${item.icon}`"></i>
+      <i :class="item.icon" class="align-middle"></i>
     </div>
   </div>
 </template>

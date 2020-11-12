@@ -1,12 +1,7 @@
 <template>
   <div class="space-y-6">
     <div class="block space-y-2 sm:flex sm:space-y-0 sm:space-x-2">
-      <input
-        v-model="reqQuery"
-        class="inp w-full"
-        type="text"
-        placeholder="enter screenshot text query"
-      />
+      <input v-model="reqQuery" class="inp w-full" type="text" placeholder="enter screenshot text query" />
       <SearchSortFilter :items="reqParamSortModes" v-model="reqParamSortMode" />
     </div>
     <div ref="scroller">
@@ -69,8 +64,8 @@ export const pages = ref([]);
 
 export const reqParamSortMode = ref(0);
 export const reqParamSortModes = [
-  { filter: [`-${fields.TIMESTAMP}`], name: "date", icon: "fa-chevron-down" },
-  { filter: [`${fields.TIMESTAMP}`], name: "date", icon: "fa-chevron-up" },
+  { filter: [`-${fields.TIMESTAMP}`], name: "date", icon: "fas fa-chevron-down" },
+  { filter: [`${fields.TIMESTAMP}`], name: "date", icon: "fas fa-chevron-up" },
 ];
 
 export const reqQuery = ref("");
