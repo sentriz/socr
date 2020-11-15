@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6">
-    <div class="block space-y-2 sm:flex sm:space-y-0 sm:space-x-2">
+    <div class="flex flex-col md:flex-row gap-2">
       <input v-model="reqQuery" class="inp w-full" type="text" placeholder="enter screenshot text query" />
       <SearchSortFilter :items="reqParamSortModes" v-model="reqParamSortMode" />
     </div>

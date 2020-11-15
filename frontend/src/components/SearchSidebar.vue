@@ -9,7 +9,7 @@
   >
     <div v-if="screenshot" class="z-20 fixed inset-y-0 right-0 w-9/12 p-6 bg-gray-200 overflow-y-auto">
       <div class="space-y-6">
-        <div class="flex flex-col md:flex-row space-y-2 md:space-x-4 justify-end items-end">
+        <div class="flex flex-col md:flex-row gap-3 justify-end items-end">
           <BadgeLabel label="created">
             <Badge class="badge bg-pink-200 text-pink-900" :title="timestamp">
               {{ relativeDateStr(timestamp) }}

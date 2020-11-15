@@ -1,6 +1,6 @@
 <template>
   <div class="bg-gray-200 min-h-screen">
-    <div v-show="imageHave" class="container mx-auto p-6 space-y-6 flex flex-col">
+    <div v-show="imageHave" class="container mx-auto p-6 flex flex-col gap-6">
       <ScreenshotBackground :id="screenshot?.id" class="box p-3">
         <img class="mx-auto" :src="imageSrc" @load="imageLoaded" />
       </ScreenshotBackground>

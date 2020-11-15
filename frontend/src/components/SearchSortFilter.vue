@@ -1,9 +1,9 @@
 <template>
-  <div class="flex border border-gray-400 bg-white rounded divide-x divide-gray-400 whitespace-no-wrap lea">
+  <div class="flex border border-gray-400 bg-white rounded divide-x divide-gray-400 whitespace-no-wrap">
     <div class="padded text-gray-600 bg-gray-200 rounded-l">sort by</div>
     <div class="padded text-gray-800 w-full space-x-2 text-right" @click="toggle">
       <span class="select-none">{{ item.name }}</span>
-      <i :class="item.icon" class="align-middle"></i>
+      <i :class="item.icon"></i>
     </div>
   </div>
 </template>
