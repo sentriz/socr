@@ -1,35 +1,45 @@
 <template>
   <Transition
-    enterActiveClass="transform transition ease-in-out duration-200"
-    enterToClass="translate-x-0"
-    enterFromClass="translate-x-full"
-    leaveActiveClass="transform transition ease-in-out duration-200"
-    leaveToClass="translate-x-full"
-    leaveFromClass="translate-x-0"
+    enter-active-class="transform transition ease-in-out duration-200"
+    enter-to-class="translate-x-0"
+    enter-from-class="translate-x-full"
+    leave-active-class="transform transition ease-in-out duration-200"
+    leave-to-class="translate-x-full"
+    leave-from-class="translate-x-0"
   >
-    <div v-if="screenshot" class="z-20 fixed inset-y-0 right-0 w-9/12 p-6 bg-gray-200 overflow-y-auto">
+    <div v-if="screenshot" class="z-20 fixed inset-y-0 right-0 max-w-lg w-full p-6 bg-gray-200 overflow-y-auto">
+      <!-- sidebar main column -->
       <div class="space-y-6">
-        <div class="flex flex-col md:flex-row gap-3 justify-end items-end">
-          <BadgeLabel label="created">
-            <Badge class="badge bg-pink-200 text-pink-900" :title="timestamp">
-              {{ relativeDateStr(timestamp) }}
+        <!-- sidebar header -->
+        <div class="flex leading-normal">
+          <router-link :to="{ name: 'search' }" class="flex-grow text-xl leading-none">
+            <i class="text-gray-900 fas fa-times-circle"></i>
+          </router-link>
+          <!-- sidebar header badges -->
+          <div class="flex flex-col md:flex-row gap-3 justify-end items-end">
+            <BadgeLabel label="created">
+              <Badge class="badge bg-pink-200 text-pink-900" :title="timestamp">
+                {{ relativeDateStr(timestamp) }}
+              </Badge>
+            </BadgeLabel>
+            <BadgeLabel v-if="tags?.length" label="tags">
+              <Badge v-for="tag in tags" class="badge bg-blue-200 text-blue-900">
+                {{ tag }}
+              </Badge>
+            </BadgeLabel>
+            <Badge class="bg-indigo-200 text-indigo-900" icon="fas fa-external-link-alt">
+              <a :href="screenshotRaw" target="_blank">raw</a>
             </Badge>
-          </BadgeLabel>
-          <BadgeLabel v-if="tags?.length" label="tags">
-            <Badge v-for="tag in tags" class="badge bg-blue-200 text-blue-900">
-              {{ tag }}
+            <Badge class="bg-green-200 text-green-900" icon="fas fa-external-link-alt">
+              <router-link :to="{ name: 'public', params: { id: screenshot.id } }"> public </router-link>
             </Badge>
-          </BadgeLabel>
-          <Badge class="bg-indigo-200 text-indigo-900" icon="fas fa-external-link-alt">
-            <a :href="screenshotRaw" target="_blank">raw</a>
-          </Badge>
-          <Badge class="bg-green-200 text-green-900" icon="fas fa-external-link-alt">
-            <router-link :to="{ name: 'public', params: { id: screenshot.id } }"> public </router-link>
-          </Badge>
+          </div>
         </div>
+        <!-- sidebar box -->
         <ScreenshotBackground :id="screenshot.id" class="box p-3">
           <ScreenshotHighlight :id="screenshot.id" class="mx-auto" />
         </ScreenshotBackground>
+        <!-- sidebar box -->
         <div v-if="text.length" class="box bg-gray-100 padded font-mono text-sm">
           <p v-for="(line, i) in text" :key="i">
             {{ line }}
@@ -39,22 +49,17 @@
     </div>
   </Transition>
   <Transition
-    enterActiveClass="ease-in-out duration-500"
-    enterToClass="opacity-100"
-    enterFromClass="opacity-0"
-    leaveActiveClass="ease-in-out duration-500"
-    leaveToClass="opacity-0"
-    leaveFromClass="opacity-100"
+    enter-active-class="ease-in-out duration-500"
+    enter-to-class="opacity-100"
+    enter-from-class="opacity-0"
+    leave-active-class="ease-in-out duration-500"
+    leave-to-class="opacity-0"
+    leave-from-class="opacity-100"
   >
-    <div v-if="screenshot" class="z-10 fixed inset-0 bg-gray-700 bg-opacity-75 transition-opacity">
-      <div class="w-3/12 p-6 flex justify-end text-white text-xl pointer-events-none">
-        <div>
-          <router-link :to="{ name: 'search' }" class="pointer-events-auto">
-            <i class="fas fa-times-circle"></i>
-          </router-link>
-        </div>
-      </div>
-    </div>
+    <div
+      v-if="screenshot"
+      class="z-10 fixed inset-0 bg-gray-700 bg-opacity-75 transition-opacity pointer-events-none"
+    />
   </Transition>
 </template>
 

@@ -36,4 +36,9 @@
   @screen md { .col-resp { column-count: 2; } }
   @screen lg { .col-resp { column-count: 3; } }
   @screen xl { .col-resp { column-count: 4; } }
+
+  .max-w-sm { max-width: theme('screens.sm'); }
+  .max-w-md { max-width: theme('screens.md'); }
+  .max-w-lg { max-width: theme('screens.lg'); }
+  .max-w-xl { max-width: theme('screens.xl'); }
 }
