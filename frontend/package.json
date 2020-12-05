@@ -7,15 +7,15 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.15.1",
-    "@vueuse/core": "^4.0.0-beta.22",
+    "@vueuse/core": "^4.0.0-rc.6",
     "blurhash": "^1.1.3",
     "relative-date": "^1.1.3",
-    "tailwindcss": "^1.9.1",
-    "vue": "^3.0.0",
-    "vue-router": "^4.0.0-beta.13"
+    "tailwindcss": "^1.9.6",
+    "vue": "^3.0.4",
+    "vue-router": "^4.0.0-rc.6"
   },
   "devDependencies": {
-    "@vue/compiler-sfc": "^3.0.0",
-    "vite": "^1.0.0-rc.1"
+    "@vue/compiler-sfc": "^3.0.4",
+    "vite": "^1.0.0-rc.13"
   }
 }
