@@ -8,7 +8,7 @@
       <p v-if="!loading" class="text-gray-500 text-right">
         {{ respTotalHits }} results found in {{ respTookMs || 0 }}ms
       </p>
-      <div v-for="(page, i) in pages" class="mt-2">
+      <div v-for="(page, i) in pages" :key="i" class="mt-2">
         <div v-show="i !== 0" class="my-6">
           <span class="text-gray-500"> page {{ i + 1 }}</span>
           <hr class="m-0" />

@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto min-h-screen p-6 mx-6">
+  <div class="container mx-auto min-h-screen p-6">
     <ul class="flex">
       <div class="flex-1 space-x-6">
         <router-link class="nav" :to="{ name: 'search' }">
