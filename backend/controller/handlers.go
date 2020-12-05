@@ -44,7 +44,7 @@ func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		screenshot, err := c.ReadAndIndexBytesWithID(raw, screenshotID)
 		if err != nil {
-			http.Error(w, fmt.Sprintf("processing upload: %v", err), 500)
+			log.Printf("error processing screenshot %s: %v", screenshotID, err)
 			return
 		}
 
