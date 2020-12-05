@@ -17,12 +17,8 @@
   </div>
 </template>
 
-<script setup="props">
+<script setup lang="ts">
 import ScreenshotBackground from "./ScreenshotBackground.vue";
-export default {
-  components: { ScreenshotBackground },
-  props: {},
-};
 
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
@@ -33,7 +29,7 @@ const store = useStore();
 const route = useRoute();
 const screenshotID = route.params.id;
 
-export const screenshot = ref(null);
+const screenshot = ref(null);
 const requestScreenshot = async () => {
   const resp = await store.screenshotsLoadID(screenshotID);
   if (resp.hits.length == 0) return;
@@ -41,14 +37,14 @@ const requestScreenshot = async () => {
   screenshot.value = store.screenshotByID(screenshotID);
 };
 
-export const fields = computed(() => screenshot.value?.fields);
-export const text = computed(() => fields.value?.[apifields.BLOCKS_TEXT] || []);
-export const timestamp = computed(() => fields.value?.[apifields.TIMESTAMP] || "");
+const fields = computed(() => screenshot.value?.fields);
+const text = computed(() => fields.value?.[apifields.BLOCKS_TEXT] || []);
+const timestamp = computed(() => fields.value?.[apifields.TIMESTAMP] || "");
 
 // suspend showing anything until we have an image
-export const imageSrc = `${urlScreenshot}/${screenshotID}/raw`;
-export const imageHave = ref(false);
-export const imageLoaded = () => {
+const imageSrc = `${urlScreenshot}/${screenshotID}/raw`;
+const imageHave = ref(false);
+const imageLoaded = () => {
   imageHave.value = true;
 };
 

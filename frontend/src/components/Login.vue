@@ -18,12 +18,8 @@
   </div>
 </template>
 
-<script setup="props">
+<script setup lang="ts">
 import Logo from "./Logo.vue";
-export default {
-  components: { Logo },
-  props: {},
-};
 
 import { ref } from "vue";
 import { useRouter, useRoute } from "vue-router";
@@ -32,9 +28,9 @@ import { reqAuthenticate, tokenSet } from "../api";
 const route = useRoute();
 const router = useRouter();
 
-export const username = ref("");
-export const password = ref("");
-export const login = async () => {
+const username = ref("");
+const password = ref("");
+const login = async () => {
   try {
     const resp = await reqAuthenticate({
       username: username.value,

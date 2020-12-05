@@ -59,19 +59,14 @@
   </div>
 </template>
 
-<script setup="props">
-export default {
-  components: {},
-  props: {},
-};
-
+<script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import { newSocketAuth, urlScreenshot } from "../api";
-export { reqStartImport, reqImportStatus } from "../api";
+import { reqStartImport, reqImportStatus } from "../api";
 
-export const localTime = (iso) => new Date(iso).toLocaleTimeString();
+const localTime = (iso) => new Date(iso).toLocaleTimeString();
 
-export const status = ref({
+const status = ref({
   running: false,
   errors: [],
   last_id: "",
@@ -83,12 +78,12 @@ const requestImportStatus = async () => {
   status.value = await reqImportStatus();
 };
 
-export const url = computed(() => {
+const url = computed(() => {
   if (!status.value.last_id) return null;
   return `${urlScreenshot}/${status.value.last_id}/raw`;
 });
 
-export const progress = computed(() => {
+const progress = computed(() => {
   if (!status.value.count_total) return `0%`;
   const perc = (100 * status.value.count_processed) / status.value.count_total;
   return `${Math.round(perc)}%`;

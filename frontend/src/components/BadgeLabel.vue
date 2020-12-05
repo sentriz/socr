@@ -7,13 +7,12 @@
   </span>
 </template>
 
-<script setup="props">
-export default {
-  components: {},
-  props: { label: String },
-};
+<script setup lang="ts">
+import { defineProps, toRefs } from "vue";
 
-import { toRefs } from "vue";
+const props = defineProps<{
+  label: string
+}>();
 
-export const { label } = toRefs(props);
+const { label } = toRefs(props);
 </script>

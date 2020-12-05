@@ -17,28 +17,27 @@
   </div>
 </template>
 
-<script setup="props">
-export default {
-  components: {},
-  props: { id: String },
-};
-
-import { computed } from "vue";
+<script setup lang="ts">
+import { defineProps, computed } from "vue";
 import { urlScreenshot, fields as apifields } from "../api";
 import { useStore } from "../store";
 
+const props = defineProps<{
+  id: string
+}>();
+
 const store = useStore();
 
-export const screenshot = computed(() => store.screenshotByID(props.id));
-export const id = computed(() => screenshot.value.id);
-export const url = computed(() => `${urlScreenshot}/${screenshot.value.id}/raw`);
+const screenshot = computed(() => store.screenshotByID(props.id));
+const id = computed(() => screenshot.value.id);
+const url = computed(() => `${urlScreenshot}/${screenshot.value.id}/raw`);
 
-export const size = computed(() => ({
+const size = computed(() => ({
   height: screenshot.value.fields[apifields.SIZE_HEIGHT],
   width: screenshot.value.fields[apifields.SIZE_WIDTH],
 }));
 
-export const blocks = computed(() => {
+const blocks = computed(() => {
   const { locations, fields } = screenshot.value;
   if (!locations?.[apifields.BLOCKS_TEXT]) return [];
 

@@ -29,20 +29,11 @@
   <SearchSidebar :id="sidebarID" />
 </template>
 
-<script setup="props">
+<script setup lang="ts">
 import ScreenshotHighlight from "./ScreenshotHighlight.vue";
 import ScreenshotBackground from "./ScreenshotBackground.vue";
 import SearchSidebar from "./SearchSidebar.vue";
 import SearchSortFilter from "./SearchSortFilter.vue";
-export default {
-  components: {
-    ScreenshotHighlight,
-    ScreenshotBackground,
-    SearchSidebar,
-    SearchSortFilter,
-  },
-  props: {},
-};
 
 import { ref, watch, computed } from "vue";
 import { useRoute } from "vue-router";
@@ -52,26 +43,26 @@ import { useStore } from "../store";
 import useInfiniteScroll from "../composables/useInfiniteScroll";
 import useLoading from "../composables/useLoading";
 
-export const store = useStore();
-export const route = useRoute();
-export const { loading, load } = useLoading();
+const store = useStore();
+const route = useRoute();
+const { loading, load } = useLoading();
 
-export const sidebarID = computed(() => route.params.id);
+const sidebarID = computed(() => route.params.id as string);
 
 const pageSize = 25;
 const pageNum = ref(0);
-export const pages = ref([]);
+const pages = ref([]);
 
-export const reqParamSortMode = ref(0);
-export const reqParamSortModes = [
+const reqParamSortMode = ref(0);
+const reqParamSortModes = [
   { filter: [`-${fields.TIMESTAMP}`], name: "date", icon: "fas fa-chevron-down" },
   { filter: [`${fields.TIMESTAMP}`], name: "date", icon: "fas fa-chevron-up" },
 ];
 
-export const reqQuery = ref("");
-export const reqQueryDebounced = useDebounce(reqQuery, 500);
-export const resp = ref({});
-export const hasMore = ref(true);
+const reqQuery = ref("");
+const reqQueryDebounced = useDebounce(reqQuery, 500);
+const resp = ref({});
+const hasMore = ref(true);
 
 const fetchScreenshots = async () => {
   if (loading.value) return;
@@ -97,13 +88,13 @@ const fetchScreenshotsClear = async () => {
   await fetchScreenshots();
 };
 
-export const respTotalHits = computed(() => resp.value.total_hits);
-export const respTookMs = computed(() => (resp.value.took / 10 ** 6).toFixed(2));
+const respTotalHits = computed(() => resp.value.total_hits);
+const respTookMs = computed(() => (resp.value.took / 10 ** 6).toFixed(2));
 
 // fetch screenshots on filter, sort, and mount
 watch(reqParamSortMode, fetchScreenshotsClear);
 watch(reqQueryDebounced, fetchScreenshotsClear, { immediate: true });
 
 // fetch screenshots on reaching the bottom of page
-export const scroller = useInfiniteScroll(fetchScreenshots);
+const scroller = useInfiniteScroll(fetchScreenshots);
 </script>

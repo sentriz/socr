@@ -1,5 +1,7 @@
 <template>
-  <div class="flex border border-gray-400 bg-white rounded divide-x divide-gray-400 whitespace-nowrap">
+  <div
+    class="flex border border-gray-400 bg-white rounded divide-x divide-gray-400 whitespace-nowrap"
+  >
     <div class="padded text-gray-600 bg-gray-200 rounded-l">sort by</div>
     <div class="padded text-gray-800 w-full space-x-2 text-right" @click="toggle">
       <span class="select-none">{{ item.name }}</span>
@@ -8,19 +10,21 @@
   </div>
 </template>
 
-<script setup="props, { emit }">
-export default {
-  components: {},
-  props: {
-    items: Array,
-    modelValue: Number,
-  },
-};
+<script setup lang="ts">
+import { computed, defineProps, defineEmit } from "vue";
 
-import { computed } from "vue";
+const emit = defineEmit<(e: 'update:modelValue', modelValue: number) => void>()
+const props = defineProps<{
+  modelValue: number,
+  items: {
+    name: string,
+    icon: string,
+    filter?: string[],
+  }[]
+}>();
 
-export const item = computed(() => props.items[props.modelValue]);
-export const toggle = () => {
-  emit("update:modelValue", (props.modelValue === 0) | 0);
+const item = computed(() => props.items[props.modelValue]);
+const toggle = () => {
+  emit("update:modelValue", [1, 0][props.modelValue]);
 };
 </script>

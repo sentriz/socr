@@ -23,17 +23,12 @@
   </table>
 </template>
 
-<script setup="props">
-export default {
-  components: {},
-  props: {},
-};
-
+<script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { reqAbout } from "../api";
 
 // fetch import status and about on mount
-export const about = ref({});
+const about = ref({});
 onMounted(async () => {
   about.value = await reqAbout();
 });

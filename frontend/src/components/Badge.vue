@@ -5,13 +5,12 @@
   </span>
 </template>
 
-<script setup="props">
-export default {
-  components: {},
-  props: { icon: String },
-};
+<script setup lang="ts">
+import { defineProps, toRefs } from "vue";
 
-import { toRefs } from "vue";
+const props = defineProps<{
+  icon?: string
+}>();
 
-export const { icon } = toRefs(props);
+const { icon } = toRefs(props);
 </script>

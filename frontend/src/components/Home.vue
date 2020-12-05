@@ -23,13 +23,6 @@
   </div>
 </template>
 
-<script setup="props">
-export default {
-  components: {},
-  props: {},
-};
-</script>
-
 <style scoped>
 .nav       { @apply text-gray-500; }
 .nav:hover { @apply text-blue-300; }

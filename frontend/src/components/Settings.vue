@@ -6,11 +6,7 @@
   <SettingsAbout />
 </template>
 
-<script setup="props">
+<script setup lang="ts">
 import SettingsImporter from "./SettingsImporter.vue";
 import SettingsAbout from "./SettingsAbout.vue";
-export default {
-  components: { SettingsImporter, SettingsAbout },
-  props: {},
-};
 </script>

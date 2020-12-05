@@ -63,27 +63,22 @@
   </Transition>
 </template>
 
-<script setup="props">
+<script setup lang="ts">
 import ScreenshotHighlight from "./ScreenshotHighlight.vue";
 import ScreenshotBackground from "./ScreenshotBackground.vue";
 import BadgeLabel from "./BadgeLabel.vue";
 import Badge from "./Badge.vue";
-export default {
-  components: {
-    ScreenshotHighlight,
-    ScreenshotBackground,
-    BadgeLabel,
-    Badge,
-  },
-  props: { id: String },
-};
 
-import { computed, watch } from "vue";
+import { computed, defineProps, watch } from "vue";
 import relativeDate from "relative-date";
 import { urlScreenshot, fields } from "../api/";
 import { useStore } from "../store/";
 
-export const store = useStore();
+const props = defineProps<{
+  id: string | undefined,
+}>();
+
+const store = useStore();
 
 // load the screenshot from the network if we can't find it in the store
 // (can happen on page reload if we've click an image on the eg. 5th page)
@@ -97,13 +92,13 @@ watch(
   { immediate: true },
 );
 
-export const relativeDateStr = (stamp) => relativeDate(new Date(stamp));
+const relativeDateStr = (stamp: string) => relativeDate(new Date(stamp));
 
-export const screenshotRaw = computed(() => `${urlScreenshot}/${props.id}/raw`);
-export const screenshot = computed(() => store.screenshotByID(props.id));
-export const text = computed(() => screenshot.value.fields[fields.BLOCKS_TEXT]);
-export const timestamp = computed(() => screenshot.value.fields[fields.TIMESTAMP]);
-export const tags = computed(() => {
+const screenshotRaw = computed(() => `${urlScreenshot}/${props.id}/raw`);
+const screenshot = computed(() => store.screenshotByID(props.id));
+const text = computed(() => screenshot.value.fields[fields.BLOCKS_TEXT]);
+const timestamp = computed(() => screenshot.value.fields[fields.TIMESTAMP]);
+const tags = computed(() => {
   const tags = screenshot.value.fields[fields.TAGS];
   if (tags) return Array.isArray(tags) ? tags : [tags];
 });
