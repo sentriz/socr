@@ -21,12 +21,12 @@
   .box    { @apply border-2 border-solid border-white shadow; }
 
   .inp       { @apply appearance-none border rounded padded text-gray-700; }
-  .inp:focus { @apply outline-none shadow-outline; }
+  .inp:focus { @apply outline-none ring; }
   .inp-error { @apply border-red-500; }
   .inp-label { @apply block text-gray-700 text-sm font-bold mb-2; }
 
   .btn          { @apply block bg-blue-500 text-white padded rounded; }
-  .btn:focus    { @apply outline-none shadow-outline; }
+  .btn:focus    { @apply outline-none ring; }
   .btn:hover    { @apply bg-blue-700; }
   .btn:disabled { @apply opacity-50 cursor-not-allowed; }
 }

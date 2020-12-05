@@ -1,5 +1,5 @@
 <template>
-  <div class="flex border border-gray-400 bg-white rounded divide-x divide-gray-400 whitespace-no-wrap">
+  <div class="flex border border-gray-400 bg-white rounded divide-x divide-gray-400 whitespace-nowrap">
     <div class="padded text-gray-600 bg-gray-200 rounded-l">sort by</div>
     <div class="padded text-gray-800 w-full space-x-2 text-right" @click="toggle">
       <span class="select-none">{{ item.name }}</span>

@@ -1,5 +1,5 @@
 <template>
-  <span class="whitespace-no-wrap">
+  <span class="whitespace-nowrap">
     {{ label }}
     <span class="space-x-2">
       <slot />
