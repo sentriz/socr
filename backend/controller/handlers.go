@@ -27,7 +27,7 @@ func (c *Controller) ServePing(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(32 << 20)
-	infile, _, err := r.FormFile("image")
+	infile, _, err := r.FormFile("i")
 	if err != nil {
 		http.Error(w, fmt.Sprintf("read form: %v", err), 500)
 		return
