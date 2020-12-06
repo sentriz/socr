@@ -19,7 +19,7 @@
 
 <script setup lang="ts">
 import { defineProps, computed } from "vue";
-import { urlScreenshot, fields as apifields } from "../api";
+import { urlScreenshot, Field } from "../api";
 import { useStore } from "../store";
 
 const props = defineProps<{
@@ -33,18 +33,18 @@ const id = computed(() => screenshot.value.id);
 const url = computed(() => `${urlScreenshot}/${screenshot.value.id}/raw`);
 
 const size = computed(() => ({
-  height: screenshot.value.fields[apifields.SIZE_HEIGHT],
-  width: screenshot.value.fields[apifields.SIZE_WIDTH],
+  height: screenshot.value.fields[Field.SIZE_HEIGHT],
+  width: screenshot.value.Field[Field.SIZE_WIDTH],
 }));
 
 const blocks = computed(() => {
   const { locations, fields } = screenshot.value;
-  if (!locations?.[apifields.BLOCKS_TEXT]) return [];
+  if (!locations?.[Field.BLOCKS_TEXT]) return [];
 
-  const flatText = toArray(fields[apifields.BLOCKS_TEXT]);
-  const flatPosition = toArray(fields[apifields.BLOCKS_POSITION]);
+  const flatText = toArray(fields[Field.BLOCKS_TEXT]);
+  const flatPosition = toArray(fields[Field.BLOCKS_POSITION]);
 
-  const queriesMatches = locations[apifields.BLOCKS_TEXT];
+  const queriesMatches = locations[Field.BLOCKS_TEXT];
   const queryMatches = Object.values(queriesMatches)[0];
 
   return queryMatches
