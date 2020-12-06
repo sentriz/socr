@@ -25,7 +25,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { reqAbout, ResponseAbout } from "../api";
+import { reqAbout } from "../api";
+import type { ResponseAbout } from "../api";
 
 // fetch import status and about on mount
 const about = ref({} as ResponseAbout);

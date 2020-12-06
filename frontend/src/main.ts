@@ -1,5 +1,5 @@
 import { createApp } from "vue";
-import { createRouter, createWebHistory, RouterView } from "vue-router";
+import { createRouter, createWebHistory, RouterView, NavigationGuard } from "vue-router";
 
 import "./main.css";
 import Search from "./components/Search.vue";
@@ -12,14 +12,14 @@ import NotFound from "./components/NotFound.vue";
 import { tokenHas, tokenSet } from "./api";
 import { storeSymbol, createStore } from "./store";
 
-const beforeCheckAuth = (to, from, next) => {
+const beforeCheckAuth: NavigationGuard  = (to, _, next) => {
   if (tokenHas()) return next();
   next({ name: "login", query: { redirect: to.fullPath } });
 };
 
-const beforeLogout = (to, from, next) => {
+const beforeLogout: NavigationGuard = (_, __, next) => {
   tokenSet("");
-  next({ name: "login" });
+  next();
 };
 
 const router = createRouter({
@@ -33,6 +33,7 @@ const router = createRouter({
     {
       path: "/logout",
       name: "logout",
+      redirect: {name: "login"},
       beforeEnter: beforeLogout,
     },
     {

@@ -6,7 +6,7 @@ export const urlSocket = "/api/websocket";
 export const urlAbout = "/api/about";
 export const urlImportStatus = "/api/import_status";
 
-const req = async (method: 'get' | 'post' | 'put', url: string, body = {}) => {
+const req = async (method: 'get' | 'post' | 'put', url: string, body?: object) => {
   const token = tokenGet();
   const response = await fetch(url, {
     method,
@@ -57,6 +57,7 @@ interface SocketParams {
 
 export const newSocketAuth = (params: SocketParams) => newSocket({ ...params, token: tokenGet() });
 export const newSocket = (params: SocketParams) => {
+  // @ts-ignore
   const paramsEnc = new URLSearchParams(params);
   return new WebSocket(`${socketProtocol}//${socketHost}${urlSocket}?${paramsEnc}`);
 };
@@ -168,7 +169,7 @@ export interface ResponseImportStatus {
   running: boolean
   errors: {
     error: string
-    time: Date
+    time: string
   }[]
   last_id: string
   count_processed: number

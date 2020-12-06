@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import { defineProps, computed } from "vue";
 import { Field } from "../api";
-import { Store } from "../store"
+import type { Store } from "../store"
 import useStore from "../composables/useStore";
 
 const props = defineProps<{

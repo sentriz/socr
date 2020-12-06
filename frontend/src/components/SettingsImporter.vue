@@ -49,7 +49,7 @@
       <span v-if="!status.errors" class="text-red-300">no errors yet</span>
       <ol v-for="error in status.errors">
         <li>
-          {{ error.time.toLocaleTimeString() }}
+          {{ new Date(error.time).toLocaleTimeString() }}
           <span class="text-red-400 mx-3">|</span>
           {{ error.error }}
         </li>
@@ -61,7 +61,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
-import { newSocketAuth, urlScreenshot, reqStartImport, reqImportStatus, ResponseImportStatus } from "../api";
+import { newSocketAuth, urlScreenshot, reqStartImport, reqImportStatus } from "../api";
+import type { ResponseImportStatus } from "../api";
 
 const status = ref({} as ResponseImportStatus);
 

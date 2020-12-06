@@ -2,7 +2,13 @@
   <div class="space-y-6">
     <div class="flex flex-col md:flex-row gap-2">
       <input v-model="reqQuery" class="inp w-full" type="text" placeholder="enter screenshot text query" />
-      <SearchSortFilter :items="reqParamSortModes" v-model="reqParamSortMode" />
+      <SearchSortFilter
+        v-model="reqParamSortMode"
+        :values="{
+          [`${Field.TIMESTAMP}`]:  { icon: 'fas fa-chevron-up', status: 'date' },
+          [`-${Field.TIMESTAMP}`]: { icon: 'fas fa-chevron-down', status: 'date' },
+        }"
+      >
     </div>
     <div ref="scroller">
       <p v-if="!loading" class="text-gray-500 text-right">
@@ -16,8 +22,8 @@
         <div class="col-resp gap-x-4 space-y-4">
           <ScreenshotBackground v-for="id in page" :key="id" :id="id" class="shadow-lg">
             <router-link :to="{ name: 'search', params: { id: id } }">
-              <ScreenshotHighlight :id="id" class="mx-auto"
-            /></router-link>
+              <ScreenshotHighlight :id="id" class="mx-auto"/>
+            </router-link>
           </ScreenshotBackground>
         </div>
       </div>
@@ -34,12 +40,14 @@ import ScreenshotHighlight from "./ScreenshotHighlight.vue";
 import ScreenshotBackground from "./ScreenshotBackground.vue";
 import SearchSidebar from "./SearchSidebar.vue";
 import SearchSortFilter from "./SearchSortFilter.vue";
+import SearchSortFilterItem from './SearchSortFilterItem.vue'
 
 import { ref, watch, computed } from "vue";
 import { useRoute } from "vue-router";
 import { useDebounce } from "@vueuse/core";
-import { Field, ResponseSearch, Screenshot } from "../api";
-import { Store } from "../store"
+import { Field } from "../api";
+import type { ResponseSearch, Screenshot, FieldSort } from "../api";
+import type { Store } from "../store"
 import useStore from "../composables/useStore";
 import useInfiniteScroll from "../composables/useInfiniteScroll";
 import useLoading from "../composables/useLoading";
@@ -54,12 +62,7 @@ const pageSize = 25;
 const pageNum = ref(0);
 const pages = ref<string[][]>([]);
 
-const reqParamSortMode = ref(0);
-const reqParamSortModes = [
-  { filter: [`-${Field.TIMESTAMP}`], name: "date", icon: "fas fa-chevron-down" },
-  { filter: [`${Field.TIMESTAMP}`], name: "date", icon: "fas fa-chevron-up" },
-];
-
+const reqParamSortMode = ref(`-${Field.TIMESTAMP}` as FieldSort);
 const reqQuery = ref("");
 const reqQueryDebounced = useDebounce(reqQuery, 500);
 const resp = ref<ResponseSearch<Screenshot>>();
@@ -71,8 +74,7 @@ const fetchScreenshots = async () => {
 
   console.log("loading page #%d", pageNum.value);
   const from = pageSize * pageNum.value;
-  const sort = reqParamSortModes[reqParamSortMode.value].filter;
-  resp.value = await load(pageSize, from, sort, reqQuery.value);
+  resp.value = await load(pageSize, from, [reqParamSortMode.value], reqQuery.value);
   if (!resp.value) return
 
   hasMore.value = from + resp.value.hits.length < resp.value.total_hits;

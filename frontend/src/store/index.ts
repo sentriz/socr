@@ -1,5 +1,6 @@
-import { reactive, provide, inject, readonly, InjectionKey } from "vue";
-import { reqSearch, reqScreenshot, Screenshot, FieldSort, ResponseSearch } from "../api";
+import { reactive, readonly, InjectionKey } from "vue";
+import { reqSearch, reqScreenshot } from "../api";
+import type { Screenshot, FieldSort, ResponseSearch } from "../api";
 
 const screenshotsLoadState = async (state: State, resp: ResponseSearch<Screenshot>) => {
   for (const hit of resp.hits || []) {

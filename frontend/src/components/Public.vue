@@ -22,8 +22,9 @@ import ScreenshotBackground from "./ScreenshotBackground.vue";
 
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import { Field, Screenshot, urlScreenshot, newSocket } from "../api";
-import { Store } from "../store"
+import { Field, urlScreenshot, newSocket } from "../api";
+import type { Screenshot } from "../api";
+import type { Store } from "../store"
 import useStore from "../composables/useStore";
 
 const store = useStore() || {} as Store;
@@ -39,8 +40,10 @@ const requestScreenshot = async () => {
 };
 
 const fields = computed(() => screenshot.value?.fields);
-const text = computed(() => fields.value?.[Field.BLOCKS_TEXT] || []);
+const text = computed(() => toArray(fields.value?.[Field.BLOCKS_TEXT] || []));
 const timestamp = computed(() => fields.value?.[Field.TIMESTAMP] || "");
+
+const toArray = <T>(value: T | T[]) => (Array.isArray(value) ? value : [value]);
 
 // suspend showing anything until we have an image
 const imageSrc = `${urlScreenshot}/${screenshotID}/raw`;
