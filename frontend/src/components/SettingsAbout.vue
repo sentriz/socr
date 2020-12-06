@@ -25,10 +25,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { reqAbout } from "../api";
+import { reqAbout, ResponseAbout } from "../api";
 
 // fetch import status and about on mount
-const about = ref({});
+const about = ref({} as ResponseAbout);
 onMounted(async () => {
   about.value = await reqAbout();
 });

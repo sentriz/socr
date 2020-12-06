@@ -33,7 +33,7 @@ export const reqScreenshot = (id: string): Promise<ResponseSearch<Screenshot>> =
 export const reqAbout = (): Promise<ResponseAbout> =>
   req("get", urlAbout);
 
-export const reqImportStatus = (): Promise<any> =>
+export const reqImportStatus = (): Promise<ResponseImportStatus> =>
   req("get", urlImportStatus);
 
 const tokenKey = "token";
@@ -50,7 +50,8 @@ const socketProtocol = socketGuesses[window.location.protocol];
 const socketHost = window.location.host;
 
 interface SocketParams {
-  want_settings: 0 | 1,
+  want_settings?: 0 | 1,
+  want_screenshot_id?: string,
   token?: string,
 }
 
@@ -65,14 +66,17 @@ export interface PayloadSearch {
   query?: Query
   size: number
   from: number
-  highlight?: any
+  highlight?: {
+    style: {}
+    fields: Field[]
+  }
   fields?: string[]
-  facets?: any
+  facets?: {}
   explain?: boolean
   sort: string[]
   includeLocations?: boolean
-  search_after?: any
-  search_before?: any
+  search_after?: {}
+  search_before?: {}
 }
 
 export interface PayloadAuthenticate {
@@ -87,9 +91,19 @@ export interface Status {
 }
 
 export interface Query {
-  boost?: any
+  boost?: {}
   match_all?: {}
 }
+
+export interface Block {
+  pos: number;
+  start: number;
+  end: number;
+  array_positions: number[];
+}
+
+type Locations = { [key in Field]?: { [q: string]: Block[] } }
+type Fragments  = { [key in Field]?: string[] }
 
 export enum Field {
   TIMESTAMP = "timestamp",
@@ -105,7 +119,7 @@ export type FieldSort = `-${Field}` | `${Field}`
 
 export interface ScreenshotFields {
   [Field.BLOCKS_POSITION]: number[]
-  [Field.BLOCKS_TEXT]: any
+  [Field.BLOCKS_TEXT]: string | string[]
   [Field.SIZE_HEIGHT]: number
   [Field.SIZE_WIDTH]: number
   [Field.DOMINANT_COLOUR]: string
@@ -119,6 +133,8 @@ export interface Hit<T, Sort> {
   score: number
   sort: Sort[]
   fields: T
+  locations?: Locations
+  fragments?: Fragments
 }
 
 export type Screenshot = Hit<ScreenshotFields, FieldSort>
@@ -130,7 +146,7 @@ export interface ResponseSearch<T> {
   total_hits: number
   max_score: number
   took: number
-  facets?: any
+  facets?: {}
 }
 
 export interface ResponseAuthenticate {
@@ -152,7 +168,7 @@ export interface ResponseImportStatus {
   running: boolean
   errors: {
     error: string
-    time: string
+    time: Date
   }[]
   last_id: string
   count_processed: number

@@ -1,7 +1,7 @@
 <template>
   <div class="bg-gray-200 min-h-screen">
     <div v-show="imageHave" class="container mx-auto p-6 flex flex-col gap-6">
-      <ScreenshotBackground :id="screenshot?.id" class="box p-3">
+      <ScreenshotBackground :id="screenshot?.id || ''" class="box p-3">
         <img class="mx-auto" :src="imageSrc" @load="imageLoaded" />
       </ScreenshotBackground>
       <div class="box bg-gray-100 padded font-mono text-sm">
@@ -22,14 +22,15 @@ import ScreenshotBackground from "./ScreenshotBackground.vue";
 
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import { Field, urlScreenshot, newSocket } from "../api";
-import { useStore } from "../store";
+import { Field, Screenshot, urlScreenshot, newSocket } from "../api";
+import { Store } from "../store"
+import useStore from "../composables/useStore";
 
-const store = useStore();
+const store = useStore() || {} as Store;
 const route = useRoute();
-const screenshotID = route.params.id;
+const screenshotID = route.params.id as string;
 
-const screenshot = ref(null);
+const screenshot = ref<Screenshot>();
 const requestScreenshot = async () => {
   const resp = await store.screenshotsLoadID(screenshotID);
   if (resp.hits.length == 0) return;

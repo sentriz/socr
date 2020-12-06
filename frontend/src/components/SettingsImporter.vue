@@ -6,7 +6,7 @@
         <col class="w-9/12" />
       </colgroup>
       <tr>
-        <td colspan="2" class="border padded text-center">
+        <td :colspan="2" class="border padded text-center">
           <span v-if="status.running && status.last_id">
             added
             <span class="text-sm font-mono bg-gray-300 px-2 rounded">
@@ -49,7 +49,7 @@
       <span v-if="!status.errors" class="text-red-300">no errors yet</span>
       <ol v-for="error in status.errors">
         <li>
-          {{ localTime(error.time) }}
+          {{ error.time.toLocaleTimeString() }}
           <span class="text-red-400 mx-3">|</span>
           {{ error.error }}
         </li>
@@ -61,25 +61,16 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
-import { newSocketAuth, urlScreenshot } from "../api";
-import { reqStartImport, reqImportStatus } from "../api";
+import { newSocketAuth, urlScreenshot, reqStartImport, reqImportStatus, ResponseImportStatus } from "../api";
 
-const localTime = (iso) => new Date(iso).toLocaleTimeString();
-
-const status = ref({
-  running: false,
-  errors: [],
-  last_id: "",
-  count_processed: 0,
-  count_total: 0,
-});
+const status = ref({} as ResponseImportStatus);
 
 const requestImportStatus = async () => {
   status.value = await reqImportStatus();
 };
 
 const url = computed(() => {
-  if (!status.value.last_id) return null;
+  if (!status.value?.last_id) return null;
   return `${urlScreenshot}/${status.value.last_id}/raw`;
 });
 

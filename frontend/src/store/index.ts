@@ -1,4 +1,4 @@
-import { reactive, provide, inject, readonly } from "vue";
+import { reactive, provide, inject, readonly, InjectionKey } from "vue";
 import { reqSearch, reqScreenshot, Screenshot, FieldSort, ResponseSearch } from "../api";
 
 const screenshotsLoadState = async (state: State, resp: ResponseSearch<Screenshot>) => {
@@ -7,7 +7,7 @@ const screenshotsLoadState = async (state: State, resp: ResponseSearch<Screensho
   }
 };
 
-interface State {
+export interface State {
   screenshots: {[id: string]: Screenshot}
 }
 
@@ -24,7 +24,7 @@ export const createStore = () => {
       screenshotsLoadState(state, resp);
       return resp;
     },
-    async screenshotsLoadID(id: string) {
+    async screenshotsLoadID(id: string): Promise<ResponseSearch<Screenshot>> {
       const resp = await reqScreenshot(id);
       screenshotsLoadState(state, resp);
       return resp;
@@ -35,6 +35,5 @@ export const createStore = () => {
   };
 };
 
-export const storeSymbol = Symbol("store");
-export const useStore = () => inject(storeSymbol);
-export const provideStore = () => provide(storeSymbol, createStore());
+export type Store = ReturnType<typeof createStore>
+export const storeSymbol: InjectionKey<Store> = Symbol("store");

@@ -38,30 +38,31 @@ import SearchSortFilter from "./SearchSortFilter.vue";
 import { ref, watch, computed } from "vue";
 import { useRoute } from "vue-router";
 import { useDebounce } from "@vueuse/core";
-import { fields } from "../api";
-import { useStore } from "../store";
+import { Field, ResponseSearch, Screenshot } from "../api";
+import { Store } from "../store"
+import useStore from "../composables/useStore";
 import useInfiniteScroll from "../composables/useInfiniteScroll";
 import useLoading from "../composables/useLoading";
 
-const store = useStore();
+const store = useStore() || {} as Store;
 const route = useRoute();
-const { loading, load } = useLoading();
+const { loading, load } = useLoading(store.screenshotsLoad);
 
 const sidebarID = computed(() => route.params.id as string);
 
 const pageSize = 25;
 const pageNum = ref(0);
-const pages = ref([]);
+const pages = ref<string[][]>([]);
 
 const reqParamSortMode = ref(0);
 const reqParamSortModes = [
-  { filter: [`-${fields.TIMESTAMP}`], name: "date", icon: "fas fa-chevron-down" },
-  { filter: [`${fields.TIMESTAMP}`], name: "date", icon: "fas fa-chevron-up" },
+  { filter: [`-${Field.TIMESTAMP}`], name: "date", icon: "fas fa-chevron-down" },
+  { filter: [`${Field.TIMESTAMP}`], name: "date", icon: "fas fa-chevron-up" },
 ];
 
 const reqQuery = ref("");
 const reqQueryDebounced = useDebounce(reqQuery, 500);
-const resp = ref({});
+const resp = ref<ResponseSearch<Screenshot>>();
 const hasMore = ref(true);
 
 const fetchScreenshots = async () => {
@@ -71,7 +72,9 @@ const fetchScreenshots = async () => {
   console.log("loading page #%d", pageNum.value);
   const from = pageSize * pageNum.value;
   const sort = reqParamSortModes[reqParamSortMode.value].filter;
-  resp.value = await load(store.screenshotsLoad, pageSize, from, sort, reqQuery.value);
+  resp.value = await load(pageSize, from, sort, reqQuery.value);
+  if (!resp.value) return
+
   hasMore.value = from + resp.value.hits.length < resp.value.total_hits;
 
   pageNum.value++;
@@ -88,8 +91,8 @@ const fetchScreenshotsClear = async () => {
   await fetchScreenshots();
 };
 
-const respTotalHits = computed(() => resp.value.total_hits);
-const respTookMs = computed(() => (resp.value.took / 10 ** 6).toFixed(2));
+const respTotalHits = computed(() => resp.value?.total_hits || 0);
+const respTookMs = computed(() => ((resp.value?.took || 0) / 10 ** 6).toFixed(2));
 
 // fetch screenshots on filter, sort, and mount
 watch(reqParamSortMode, fetchScreenshotsClear);

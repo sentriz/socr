@@ -1,7 +1,7 @@
 import { ref, onMounted, onUnmounted } from "vue";
 
-export default (onNewPage) => {
-  const scroller = ref(null);
+export default (onNewPage: () => Promise<void>) => {
+  const scroller = ref<HTMLElement>();
 
   const handleScroll = async () => {
     if (!scroller.value) return;

@@ -71,14 +71,15 @@ import Badge from "./Badge.vue";
 
 import { computed, defineProps, watch } from "vue";
 import relativeDate from "relative-date";
-import { urlScreenshot, fields } from "../api/";
-import { useStore } from "../store/";
+import { urlScreenshot, Field } from "../api/";
+import { Store } from "../store"
+import useStore from "../composables/useStore";
 
 const props = defineProps<{
   id: string | undefined,
 }>();
 
-const store = useStore();
+const store = useStore() || {} as Store;
 
 // load the screenshot from the network if we can't find it in the store
 // (can happen on page reload if we've click an image on the eg. 5th page)
@@ -95,11 +96,11 @@ watch(
 const relativeDateStr = (stamp: string) => relativeDate(new Date(stamp));
 
 const screenshotRaw = computed(() => `${urlScreenshot}/${props.id}/raw`);
-const screenshot = computed(() => store.screenshotByID(props.id));
-const text = computed(() => screenshot.value.fields[fields.BLOCKS_TEXT]);
-const timestamp = computed(() => screenshot.value.fields[fields.TIMESTAMP]);
+const screenshot = computed(() => store.screenshotByID(props.id || ""));
+const text = computed(() => screenshot.value.fields[Field.BLOCKS_TEXT]);
+const timestamp = computed(() => `${screenshot.value.fields[Field.TIMESTAMP]}`);
 const tags = computed(() => {
-  const tags = screenshot.value.fields[fields.TAGS];
+  const tags = screenshot.value.fields[Field.TAGS];
   if (tags) return Array.isArray(tags) ? tags : [tags];
 });
 </script>

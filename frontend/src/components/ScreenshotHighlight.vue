@@ -20,13 +20,14 @@
 <script setup lang="ts">
 import { defineProps, computed } from "vue";
 import { urlScreenshot, Field } from "../api";
-import { useStore } from "../store";
+import { Store } from "../store";
+import useStore from "../composables/useStore";
 
 const props = defineProps<{
   id: string
 }>();
 
-const store = useStore();
+const store = useStore() || {} as Store;
 
 const screenshot = computed(() => store.screenshotByID(props.id));
 const id = computed(() => screenshot.value.id);
@@ -34,7 +35,7 @@ const url = computed(() => `${urlScreenshot}/${screenshot.value.id}/raw`);
 
 const size = computed(() => ({
   height: screenshot.value.fields[Field.SIZE_HEIGHT],
-  width: screenshot.value.Field[Field.SIZE_WIDTH],
+  width: screenshot.value.fields[Field.SIZE_WIDTH],
 }));
 
 const blocks = computed(() => {
@@ -43,8 +44,9 @@ const blocks = computed(() => {
 
   const flatText = toArray(fields[Field.BLOCKS_TEXT]);
   const flatPosition = toArray(fields[Field.BLOCKS_POSITION]);
-
   const queriesMatches = locations[Field.BLOCKS_TEXT];
+  if (!queriesMatches) return []
+
   const queryMatches = Object.values(queriesMatches)[0];
 
   return queryMatches
@@ -53,7 +55,7 @@ const blocks = computed(() => {
     .map((i) => blockFromMatchIndexes(flatPosition, i, flatText[i]));
 });
 
-const blockFromMatchIndexes = (flatPosition, i, text) => {
+const blockFromMatchIndexes = (flatPosition: number[], i: number, text: string) => {
   const [minX, minY, maxX, maxY] = flatPosition.slice(4 * i, 4 * i + 4);
   return {
     text,
@@ -64,5 +66,5 @@ const blockFromMatchIndexes = (flatPosition, i, text) => {
   };
 };
 
-const toArray = (value) => (Array.isArray(value) ? value : [value]);
+const toArray = <T>(value: T | T[]) => (Array.isArray(value) ? value : [value]);
 </script>

@@ -38,7 +38,7 @@ const login = async () => {
     });
     if (resp.token) {
       tokenSet(resp.token);
-      router.replace(route.query.redirect || "/");
+      router.replace(route.query.redirect as string || "/");
     }
   } catch (err) {}
 };
