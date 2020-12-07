@@ -57,8 +57,8 @@ const relativeDateStr = (stamp: string) => relativeDate(new Date(stamp));
 
 const screenshotRaw = computed(() => `${urlScreenshot}/${props.id}/raw`);
 const screenshot = computed(() => store.screenshotByID(props.id || ""));
-const text = computed(() => toArray(screenshot.value.fields[Field.BLOCKS_TEXT] || []));
-const timestamp = computed(() => `${screenshot.value.fields[Field.TIMESTAMP]}`);
+const text = computed(() => toArray(screenshot.value?.fields[Field.BLOCKS_TEXT] || []));
+const timestamp = computed(() => `${screenshot.value?.fields[Field.TIMESTAMP]}`);
 const tags = computed(() => {
   const tags = screenshot.value.fields[Field.TAGS];
   if (tags) return Array.isArray(tags) ? tags : [tags];

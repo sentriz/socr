@@ -8,7 +8,7 @@
           [`${Field.TIMESTAMP}`]:  { icon: 'fas fa-chevron-up', status: 'date' },
           [`-${Field.TIMESTAMP}`]: { icon: 'fas fa-chevron-down', status: 'date' },
         }"
-      >
+      />
     </div>
     <div ref="scroller">
       <p v-if="!loading" class="text-gray-500 text-right">
