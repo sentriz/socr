@@ -29,7 +29,7 @@ import useStore from "../composables/useStore";
 
 const store = useStore() || {} as Store;
 const route = useRoute();
-const screenshotID = route.params.id as string;
+const screenshotID = route.params.id as string || "";
 
 const screenshot = ref<Screenshot>();
 const requestScreenshot = async () => {

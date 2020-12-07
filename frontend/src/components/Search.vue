@@ -56,7 +56,7 @@ const store = useStore() || {} as Store;
 const route = useRoute();
 const { loading, load } = useLoading(store.screenshotsLoad);
 
-const sidebarID = computed(() => route.params.id as string);
+const sidebarID = computed(() => route.params.id as string || "");
 
 const pageSize = 25;
 const pageNum = ref(0);
