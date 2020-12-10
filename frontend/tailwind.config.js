@@ -4,10 +4,16 @@ module.exports = {
     content: [
       'index.html',
       './src/**/*.vue',
-      './src/**/*.css'
+      './src/**/*.css',
     ],
   },
   theme: {
+    screens: {
+      'sm': '640px',
+      'md': '768px',
+      'lg': '1024px',
+      'xl': '1280px',
+    },
     extend: {
       width: {
         'fit': 'fit-content'
