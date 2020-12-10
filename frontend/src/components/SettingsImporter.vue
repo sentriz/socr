@@ -1,6 +1,6 @@
 <template>
-  <div class="import space-y-4">
-    <table class="import-status bg-white">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <table class="md:col-span-2 bg-white">
       <colgroup>
         <col class="w-3/12" />
         <col class="w-9/12" />
@@ -9,9 +9,7 @@
         <td :colspan="2" class="border padded text-center">
           <span v-if="status.running && status.last_id">
             added
-            <span class="text-sm font-mono bg-gray-300 px-2 rounded">
-              {{ status.last_id }}
-            </span>
+            <span class="text-sm font-mono bg-gray-300 px-2 rounded">{{ status.last_id }}</span>
           </span>
           <span v-else-if="status.running">running</span>
           <span v-else>finished</span>
@@ -34,7 +32,7 @@
       </tr>
     </table>
     <div
-      class="import-preview flex justify-center items-center text-gray-500"
+      class="flex justify-center items-center text-gray-500"
       :style="{
         background: `url(${url})`,
         backgroundSize: 'contain',
@@ -45,17 +43,17 @@
     >
       <span v-if="!url">no preview available</span>
     </div>
-    <div class="import-errors bg-red-100 padded border border-red-200">
+    <div class="md:col-span-2 bg-red-100 padded border border-red-200">
       <span v-if="!status.errors" class="text-red-300">no errors yet</span>
       <ol v-for="error in status.errors">
-        <li>
+        <li class="text-red-900">
           {{ new Date(error.time).toLocaleTimeString() }}
           <span class="text-red-400 mx-3">|</span>
           {{ error.error }}
         </li>
       </ol>
     </div>
-    <button class="import-start btn" :disabled="status.running" @click="reqStartImport">start import</button>
+    <button class="btn" :disabled="status.running" @click="reqStartImport">start import</button>
   </div>
 </template>
 
@@ -88,32 +86,3 @@ onMounted(requestImportStatus);
 const socket = newSocketAuth({ want_settings: 1 });
 socket.onmessage = requestImportStatus;
 </script>
-
-<style scoped>
-.import         { @apply grid gap-4; }
-.import-status  { grid-area: status; }
-.import-preview { grid-area: preview; }
-.import-errors  { grid-area: errors; }
-.import-start   { grid-area: start; }
-
-.import {
-  @apply grid-cols-1;
-  grid-template-rows: 1fr 1fr auto auto;
-  grid-template-areas:
-    "status"
-    "preview"
-    "errors"
-    "start";
-}
-
-@screen md {
-  .import {
-    @apply grid-cols-3;
-    grid-template-rows: 1fr auto auto;
-    grid-template-areas:
-      "status status preview"
-      "errors errors errors"
-      ".      .      start";
-  }
-}
-</style>
