@@ -46,7 +46,7 @@
     <div class="md:col-span-2 bg-red-100 padded border border-red-200">
       <span v-if="!status.errors" class="text-red-300">no errors yet</span>
       <ol v-for="error in status.errors">
-        <li class="text-red-900">
+        <li class="text-red-900 truncate">
           {{ new Date(error.time).toLocaleTimeString() }}
           <span class="text-red-400 mx-3">|</span>
           {{ error.error }}
