@@ -6,7 +6,7 @@
     <!-- box, header -->
     <div class="flex leading-normal">
       <router-link :to="{ name: 'search' }" class="flex-grow text-xl leading-none">
-        <i class="text-gray-900 fas fa-times-circle"></i>
+        <i class="text-gray-800 hover:text-gray-600 fas fa-times-circle"></i>
       </router-link>
       <!-- header badges -->
       <div class="flex flex-col md:flex-row gap-3 justify-end items-end">
