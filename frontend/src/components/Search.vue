@@ -28,9 +28,7 @@
         </div>
       </div>
     </div>
-    <div v-if="loading" class="bg-gray-300 text-gray-600 text-center rounded p-3">
-      <i class="animate-spin fas fa-circle-notch mr-1"></i> loading
-    </div>
+    <SearchLoading v-if="loading" />
   </div>
   <SearchSidebar :id="sidebarID" />
 </template>
@@ -41,6 +39,7 @@ import ScreenshotBackground from "./ScreenshotBackground.vue";
 import SearchSidebar from "./SearchSidebar.vue";
 import SearchSortFilter from "./SearchSortFilter.vue";
 import SearchSortFilterItem from './SearchSortFilterItem.vue'
+import SearchLoading from './SearchLoading.vue'
 
 import { ref, watch, computed } from "vue";
 import { useRoute } from "vue-router";
