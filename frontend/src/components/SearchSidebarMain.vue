@@ -14,7 +14,9 @@
           <Badge
             class="badge bg-pink-200 text-pink-900"
             :title="timestamp"
-          >{{ relativeDateStr(timestamp) }}</Badge>
+          >
+            {{ relativeDateStr(timestamp) }}
+          </Badge>
         </BadgeLabel>
         <BadgeLabel v-if="tags?.length" label="tags">
           <Badge v-for="(tag, i) in tags" :key="i" class="badge bg-blue-200 text-blue-900">{{ tag }}</Badge>

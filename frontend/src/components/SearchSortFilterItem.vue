@@ -1,16 +1,14 @@
 <template>
-    <span class="select-none">{{ name }}</span>
-    <i :class="icon"></i>
+    <span class="select-none">{{ props.name }}</span>
+    <i :class="props.icon"></i>
 </template>
 
 <script setup lang="ts">
-import { defineProps, toRefs } from "vue";
+import { defineProps } from "vue";
 
 const props = defineProps<{
   id: string,
   name: string,
   icon: string
 }>();
-
-const { name, icon } = toRefs(props)
 </script>

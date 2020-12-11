@@ -1,6 +1,6 @@
 <template>
   <span class="whitespace-nowrap">
-    {{ label }}
+    {{ props.label }}
     <span class="space-x-2">
       <slot />
     </span>
@@ -8,11 +8,9 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, toRefs } from "vue";
+import { defineProps } from "vue";
 
 const props = defineProps<{
   label: string
 }>();
-
-const { label } = toRefs(props);
 </script>

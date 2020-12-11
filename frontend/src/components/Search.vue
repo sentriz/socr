@@ -63,6 +63,7 @@ const pages = ref<string[][]>([]);
 const reqParamSortMode = ref(`-${Field.TIMESTAMP}` as FieldSort);
 const reqQuery = ref("");
 const reqQueryDebounced = useDebounce(reqQuery, 500);
+
 const resp = ref<ResponseSearch<Screenshot>>();
 const hasMore = ref(true);
 
@@ -76,7 +77,6 @@ const fetchScreenshots = async () => {
   if (!resp.value) return
 
   hasMore.value = from + resp.value.hits.length < resp.value.total_hits;
-
   pageNum.value++;
   pages.value.push([]);
   for (const hit of resp.value.hits) {
