@@ -32,14 +32,8 @@
       </tr>
     </table>
     <div
-      class="flex justify-center items-center text-gray-500"
-      :style="{
-        background: `url(${url})`,
-        backgroundSize: 'contain',
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'center',
-        backgroundColor: 'rgb(247, 250, 252)',
-      }"
+      class="flex justify-center items-center text-gray-500 bg-center bg-contain bg-no-repeat bg-gray-100"
+      :style="{ backgroundImage: `url(${url})` }"
     >
       <span v-if="!url">no preview available</span>
     </div>
