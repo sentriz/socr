@@ -20,14 +20,13 @@
 <script setup lang="ts">
 import { defineProps, computed } from "vue";
 import { urlScreenshot, Field } from "../api";
-import type { Store } from "../store";
 import useStore from "../composables/useStore";
 
 const props = defineProps<{
   id: string
 }>();
 
-const store = useStore() || {} as Store;
+const store = useStore();
 
 const screenshot = computed(() => store.screenshotByID(props.id));
 const id = computed(() => screenshot.value.id);

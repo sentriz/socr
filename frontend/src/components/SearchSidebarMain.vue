@@ -47,14 +47,13 @@ import Badge from "./Badge.vue";
 import { computed, defineProps, watch } from "vue";
 import relativeDate from "relative-date";
 import { urlScreenshot, Field } from "../api/";
-import type { Store } from "../store"
 import useStore from "../composables/useStore";
 
 const props = defineProps<{
   id: string | undefined,
 }>();
 
-const store = useStore() || {} as Store;
+const store = useStore();
 
 // load the screenshot from the network if we can't find it in the store
 // (can happen on page reload if we've click an image on the eg. 5th page)

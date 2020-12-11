@@ -46,12 +46,11 @@ import { useRoute } from "vue-router";
 import { useDebounce } from "@vueuse/core";
 import { Field } from "../api";
 import type { ResponseSearch, Screenshot, FieldSort } from "../api";
-import type { Store } from "../store"
 import useStore from "../composables/useStore";
 import useInfiniteScroll from "../composables/useInfiniteScroll";
 import useLoading from "../composables/useLoading";
 
-const store = useStore() || {} as Store;
+const store = useStore();
 const route = useRoute();
 const { loading, load } = useLoading(store.screenshotsLoad);
 

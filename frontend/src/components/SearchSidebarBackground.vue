@@ -7,13 +7,12 @@
 
 <script setup lang="ts">
 import { computed, defineProps, watch } from "vue";
-import type { Store } from "../store"
 import useStore from "../composables/useStore";
 
 const props = defineProps<{
   id: string | undefined,
 }>();
 
-const store = useStore() || {} as Store;
+const store = useStore();
 const screenshot = computed(() => store.screenshotByID(props.id || ""));
 </script>
