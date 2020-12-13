@@ -1,7 +1,8 @@
 import { createApp } from "vue";
-import { createRouter, createWebHistory, RouterView, NavigationGuard } from "vue-router";
+import { createRouter, createWebHistory, NavigationGuard } from "vue-router";
 
 import "./main.css";
+import App from "./components/App.vue";
 import Search from "./components/Search.vue";
 import Settings from "./components/Settings.vue";
 import Login from "./components/Login.vue";
@@ -80,7 +81,7 @@ window.onbeforeunload = () => {
   window.scrollTo(0, 0);
 };
 
-const app = createApp(RouterView);
+const app = createApp(App);
 const store = createStore()
 
 app.use(router);

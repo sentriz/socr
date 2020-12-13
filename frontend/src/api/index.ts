@@ -15,6 +15,8 @@ const req = async (method: 'get' | 'post' | 'put', url: string, body?: object) =
       ? { authorization: `bearer ${token}` }
       : {},
   });
+  if (!response.ok) throw response
+
   return await response.json();
 };
 

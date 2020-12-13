@@ -62,8 +62,8 @@ const store = useStore();
 watch(
   () => props.id,
   (id) => {
-    if (id && !store.screenshotByID(id)) {
-      store.screenshotsLoadID(id);
+    if (id && !store.getScreenshotByID(id)) {
+      store.loadScreenshot(id);
     }
   },
   { immediate: true },
@@ -72,7 +72,7 @@ watch(
 const relativeDateStr = (stamp: string) => relativeDate(new Date(stamp));
 
 const screenshotRaw = computed(() => `${urlScreenshot}/${props.id}/raw`);
-const screenshot = computed(() => store.screenshotByID(props.id || ""));
+const screenshot = computed(() => store.getScreenshotByID(props.id || ""));
 const text = computed(() => toArray(screenshot.value.fields[Field.BLOCKS_TEXT] || []));
 const timestamp = computed(() => `${screenshot.value.fields[Field.TIMESTAMP]}`);
 const tags = computed(() => {

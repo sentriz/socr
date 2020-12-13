@@ -16,7 +16,7 @@ const props = defineProps<{
 const ALPHA = "88";
 const store = useStore();
 
-const screenshot = computed(() => store.screenshotByID(props.id));
+const screenshot = computed(() => store.getScreenshotByID(props.id));
 const dominantStyle = computed(() => {
   const backgroundColor = `${screenshot.value?.fields?.[Field.DOMINANT_COLOUR]}${ALPHA}`;
   return { backgroundColor };

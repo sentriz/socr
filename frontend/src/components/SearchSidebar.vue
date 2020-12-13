@@ -7,7 +7,7 @@
     leave-to-class="translate-x-full"
     leave-from-class="translate-x-0"
   >
-  <SearchSidebarMain :id="props.id" />
+    <SearchSidebarMain :id="props.id" />
   </Transition>
   <Transition
     enter-active-class="ease-in-out duration-500"

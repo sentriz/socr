@@ -24,9 +24,11 @@ import Logo from "./Logo.vue";
 import { ref } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { reqAuthenticate, tokenSet } from "../api";
+import useStore from "../composables/useStore"
 
 const route = useRoute();
 const router = useRouter();
+const store = useStore();
 
 const username = ref("");
 const password = ref("");
@@ -40,6 +42,8 @@ const login = async () => {
       tokenSet(resp.token);
       router.replace(route.query.redirect as string || "/");
     }
-  } catch (err) {}
+  } catch (err) {
+    store.setToast(await err.text())
+  }
 };
 </script>

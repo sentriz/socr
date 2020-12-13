@@ -32,10 +32,10 @@ const screenshotID = route.params.id as string || "";
 
 const screenshot = ref<Screenshot>();
 const requestScreenshot = async () => {
-  const resp = await store.screenshotsLoadID(screenshotID);
+  const resp = await store.loadScreenshot(screenshotID);
   if (resp.hits.length == 0) return;
 
-  screenshot.value = store.screenshotByID(screenshotID);
+  screenshot.value = store.getScreenshotByID(screenshotID);
 };
 
 const fields = computed(() => screenshot.value?.fields);

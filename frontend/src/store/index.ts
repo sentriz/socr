@@ -9,30 +9,36 @@ const screenshotsLoadState = async (state: State, resp: ResponseSearch<Screensho
 };
 
 export interface State {
-  screenshots: {[id: string]: Screenshot}
+  screenshots: {[id: string]: Screenshot},
+  toast: string,
 }
 
 export const createStore = () => {
   const state = reactive<State>({
     // map screenshot id -> screenshot
     screenshots: {},
+    toast: "",
   });
 
   return {
     state: readonly(state),
-    async screenshotsLoad(size: number, from: number, sort: FieldSort[], term: string): Promise<ResponseSearch<Screenshot>> {
+    async loadScreenshots(size: number, from: number, sort: FieldSort[], term: string): Promise<ResponseSearch<Screenshot>> {
       const resp = await reqSearch({ size, from, sort, term });
       screenshotsLoadState(state, resp);
       return resp;
     },
-    async screenshotsLoadID(id: string): Promise<ResponseSearch<Screenshot>> {
+    async loadScreenshot(id: string): Promise<ResponseSearch<Screenshot>> {
       const resp = await reqScreenshot(id);
       screenshotsLoadState(state, resp);
       return resp;
     },
-    screenshotByID(id: string) {
+    getScreenshotByID(id: string) {
       return state.screenshots[id];
     },
+    setToast(toast: string) {
+      state.toast = toast
+      setTimeout(() => state.toast = "", 1000)
+    }
   };
 };
 

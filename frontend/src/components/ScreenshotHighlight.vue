@@ -28,7 +28,7 @@ const props = defineProps<{
 
 const store = useStore();
 
-const screenshot = computed(() => store.screenshotByID(props.id));
+const screenshot = computed(() => store.getScreenshotByID(props.id));
 const id = computed(() => screenshot.value.id);
 const url = computed(() => `${urlScreenshot}/${screenshot.value.id}/raw`);
 

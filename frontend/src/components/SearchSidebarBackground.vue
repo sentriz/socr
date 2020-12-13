@@ -14,5 +14,5 @@ const props = defineProps<{
 }>();
 
 const store = useStore();
-const screenshot = computed(() => store.screenshotByID(props.id || ""));
+const screenshot = computed(() => store.getScreenshotByID(props.id || ""));
 </script>

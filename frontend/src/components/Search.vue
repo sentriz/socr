@@ -52,7 +52,7 @@ import useLoading from "../composables/useLoading";
 
 const store = useStore();
 const route = useRoute();
-const { loading, load } = useLoading(store.screenshotsLoad);
+const { loading, load } = useLoading(store.loadScreenshots);
 
 const sidebarID = computed(() => route.params.id as string || "");
 
