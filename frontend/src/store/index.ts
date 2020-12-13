@@ -37,7 +37,7 @@ export const createStore = () => {
     },
     setToast(toast: string) {
       state.toast = toast
-      setTimeout(() => state.toast = "", 1000)
+      setTimeout(() => state.toast = "", 1500)
     }
   };
 };

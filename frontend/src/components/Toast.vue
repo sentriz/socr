@@ -1,5 +1,5 @@
 <template>
-  <div class="transition transform bg-white text-gray-700 shadow-md border border-gray-100 rounded padded shadow">
+  <div class="transition transform bg-white text-gray-700 shadow-md border border-gray-100 rounded padded">
     {{props.toast}}
   </div>
 </template>
