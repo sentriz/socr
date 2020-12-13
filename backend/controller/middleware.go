@@ -18,29 +18,25 @@ func (c *Controller) WithCORS() func(http.Handler) http.Handler {
 	)
 }
 
-func (c *Controller) WithAuth() func(http.Handler) http.Handler {
+func (c *Controller) WithJWT() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			keyHeader := r.Header.Get("x-api-key")
-			if c.APIKey != "" && keyHeader == c.APIKey {
+			if checkJWT(c, r) || checkJWTParam(c, r) {
 				next.ServeHTTP(w, r)
 				return
 			}
+			http.Error(w, "unauthorised", http.StatusUnauthorized)
+		})
+	}
+}
 
-			authHeader := r.Header.Get("authorization")
-			authHeader = strings.TrimPrefix(authHeader, "bearer ")
-			authHeader = strings.TrimPrefix(authHeader, "Bearer ")
-			if err := auth.TokenParse(c.HMACSecret, authHeader); err == nil {
+func (c *Controller) WithAPIKey() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if checkAPIKey(c, r) {
 				next.ServeHTTP(w, r)
 				return
 			}
-
-			authParam := r.URL.Query().Get("token")
-			if err := auth.TokenParse(c.HMACSecret, authParam); err == nil {
-				next.ServeHTTP(w, r)
-				return
-			}
-
 			http.Error(w, "unauthorised", http.StatusUnauthorized)
 		})
 	}
@@ -53,4 +49,21 @@ func (c *Controller) WithLogging() func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+func checkAPIKey(c *Controller, r *http.Request) bool {
+	header := r.Header.Get("x-api-key")
+	return c.APIKey != "" && header == c.APIKey
+}
+
+func checkJWT(c *Controller, r *http.Request) bool {
+	header := r.Header.Get("authorization")
+	header = strings.TrimPrefix(header, "bearer ")
+	header = strings.TrimPrefix(header, "Bearer ")
+	return auth.TokenParse(c.HMACSecret, header) == nil
+}
+
+func checkJWTParam(c *Controller, r *http.Request) bool {
+	param := r.URL.Query().Get("token")
+	return auth.TokenParse(c.HMACSecret, param) == nil
 }

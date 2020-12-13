@@ -75,18 +75,21 @@ func main() {
 	r.NotFoundHandler = frontendHander
 
 	// begin authenticated routes
-	rAuth := r.NewRoute().Subrouter()
-	rAuth.Use(ctrl.WithAuth())
-	rAuth.HandleFunc("/api/ping", ctrl.ServePing)
-	rAuth.HandleFunc("/api/upload", ctrl.ServeUpload)
-	rAuth.HandleFunc("/api/start_import", ctrl.ServeStartImport)
-	rAuth.HandleFunc("/api/about", ctrl.ServeAbout)
-	rAuth.HandleFunc("/api/import_status", ctrl.ServeImportStatus)
-	rAuth.HandleFunc("/api/search", ctrl.ServeSearch)
+	rJWT := r.NewRoute().Subrouter()
+	rJWT.Use(ctrl.WithJWT())
+	rJWT.HandleFunc("/api/ping", ctrl.ServePing)
+	rJWT.HandleFunc("/api/start_import", ctrl.ServeStartImport)
+	rJWT.HandleFunc("/api/about", ctrl.ServeAbout)
+	rJWT.HandleFunc("/api/import_status", ctrl.ServeImportStatus)
+	rJWT.HandleFunc("/api/search", ctrl.ServeSearch)
 
 	const indexName = "index"
 	bleveHTTP.RegisterIndexName(indexName, ctrl.Index)
-	rAuth.Handle("/api/search_bleve", bleveHTTP.NewSearchHandler(indexName))
+	rJWT.Handle("/api/search_bleve", bleveHTTP.NewSearchHandler(indexName))
+
+	rAPIKey := r.NewRoute().Subrouter()
+	rAPIKey.Use(ctrl.WithAPIKey())
+	rAPIKey.HandleFunc("/api/upload", ctrl.ServeUpload)
 
 	server := http.Server{
 		Addr:    confListenAddr,
