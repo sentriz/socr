@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="screenshot"
-    class="z-20 fixed inset-y-0 right-0 max-w-lg w-full p-6 bg-gray-200 overflow-y-auto space-y-6"
+    class="z-20 fixed inset-y-0 right-0 max-w-lg w-full p-6 bg-gray-100 overflow-y-auto space-y-6"
   >
     <!-- box, header -->
     <div class="flex leading-normal">
@@ -34,7 +34,7 @@
       <ScreenshotHighlight :id="screenshot.id" class="mx-auto" />
     </ScreenshotBackground>
     <!-- box -->
-    <div v-if="text.length" class="box bg-gray-100 padded font-mono text-sm">
+    <div v-if="text.length" class="box bg-gray-200 padded font-mono text-sm">
       <p v-for="(line, i) in text" :key="i">{{ line }}</p>
     </div>
   </div>
