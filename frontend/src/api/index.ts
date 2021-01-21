@@ -1,3 +1,5 @@
+import router from "../router"
+
 export const urlScreenshot = "/api/screenshot";
 export const urlSearch = "/api/search";
 export const urlStartImport = "/api/start_import";
@@ -5,6 +7,7 @@ export const urlAuthenticate = "/api/authenticate";
 export const urlSocket = "/api/websocket";
 export const urlAbout = "/api/about";
 export const urlImportStatus = "/api/import_status";
+export const urlPing = "/api/ping";
 
 const req = async (method: 'get' | 'post' | 'put', url: string, body?: object) => {
   const token = tokenGet();
@@ -15,7 +18,15 @@ const req = async (method: 'get' | 'post' | 'put', url: string, body?: object) =
       ? { authorization: `bearer ${token}` }
       : {},
   });
-  if (!response.ok) throw response
+
+  if (response.status === 401) {
+    router.push(({ name: "login" }))
+    return
+  }
+
+  if (!response.ok) {
+    throw response
+  }
 
   return await response.json();
 };
@@ -37,6 +48,9 @@ export const reqAbout = (): Promise<ResponseAbout> =>
 
 export const reqImportStatus = (): Promise<ResponseImportStatus> =>
   req("get", urlImportStatus);
+
+export const reqPing = (): Promise<{}> =>
+  req("get", urlPing);
 
 const tokenKey = "token";
 export const tokenSet = (token: string) => localStorage.setItem(tokenKey, token);

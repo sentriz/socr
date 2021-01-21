@@ -3,6 +3,7 @@ import { reqSearch, reqScreenshot } from "../api";
 import type { Screenshot, FieldSort, ResponseSearch } from "../api";
 
 const screenshotsLoadState = async (state: State, resp: ResponseSearch<Screenshot>) => {
+  if (!resp) return
   for (const hit of resp.hits || []) {
     state.screenshots[hit.id] = hit;
   }
