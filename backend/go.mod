@@ -8,6 +8,7 @@ require (
 	github.com/blevesearch/bleve v1.0.12
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/cenkalti/dominantcolor v0.0.0-20171020061837-df772e8dd39e
+	github.com/cespare/xxhash v1.1.0
 	github.com/cznic/b v0.0.0-20181122101859-a26611c4d92d // indirect
 	github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548 // indirect
 	github.com/cznic/strutil v0.0.0-20181122101858-275e90344537 // indirect
@@ -22,6 +23,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/jmhodges/levigo v1.0.0 // indirect
+	github.com/matryer/is v1.4.0
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/otiai10/gosseract/v2 v2.2.4
 	github.com/pelletier/go-toml v1.2.0
@@ -31,6 +33,7 @@ require (
 	github.com/tecbot/gorocksdb v0.0.0-20191217155057-f0fad39f321c // indirect
 	github.com/tinylib/msgp v1.1.3 // indirect
 	github.com/willf/bitset v1.1.11 // indirect
+	go.etcd.io/bbolt v1.3.5
 	golang.org/x/sys v0.0.0-20201110211018-35f3e6cf4a65 // indirect
 	golang.org/x/text v0.3.2 // indirect
 	google.golang.org/protobuf v1.25.0 // indirect

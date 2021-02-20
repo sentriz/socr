@@ -171,18 +171,11 @@ func (c *Controller) ReadAndIndexBytesWithIDTime(raw []byte, scrotID string, tim
 	return screenshot, nil
 }
 
-func procSuffixHas(in string) bool   { return strings.HasSuffix(in, ".processed") }
-func procSuffixAdd(in string) string { return fmt.Sprintf("%s.processed", in) }
-
 func (c *Controller) IndexImportFile(file os.FileInfo) (*Screenshot, error) {
 	filePath := filepath.Join(c.ImportPath, file.Name())
 	bytes, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("reading from disk: %v", err)
-	}
-
-	if err := os.Rename(filePath, procSuffixAdd(filePath)); err != nil {
-		return nil, fmt.Errorf("renaming: %v", err)
 	}
 
 	screenshotTimestamp := guessFileCreated(file)
