@@ -14,7 +14,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
 import Toast from "./Toast.vue"
 import useStore from "../composables/useStore"
 

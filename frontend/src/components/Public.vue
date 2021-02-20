@@ -32,15 +32,14 @@ const screenshotID = route.params.id as string || "";
 
 const screenshot = ref<Screenshot>();
 const requestScreenshot = async () => {
-  const resp = await store.loadScreenshot(screenshotID);
-  if (resp.hits.length == 0) return;
+  const [resp] = await store.loadScreenshot(screenshotID);
+  if (!resp?.hits.length) return;
 
   screenshot.value = store.getScreenshotByID(screenshotID);
 };
 
 const fields = computed(() => screenshot.value?.fields);
 const text = computed(() => toArray(fields.value?.[Field.BLOCKS_TEXT] || []));
-const timestamp = computed(() => fields.value?.[Field.TIMESTAMP] || "");
 
 const toArray = <T>(value: T | T[]) => (Array.isArray(value) ? value : [value]);
 

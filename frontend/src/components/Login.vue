@@ -39,7 +39,6 @@ import Logo from "./Logo.vue";
 import { ref } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { reqAuthenticate, tokenSet } from "../api";
-import type { ResponseAuthenticate } from "../api";
 import useStore from "../composables/useStore"
 
 const route = useRoute();
@@ -50,15 +49,13 @@ const username = ref("");
 const password = ref("");
 
 const login = async () => {
-  let response: ResponseAuthenticate | undefined
-  try {
-    response = await reqAuthenticate({
-      username: username.value,
-      password: password.value,
-    })
-  } catch (err) {
-    store.setToast(err.message)
-    return
+  const [response, error] = await reqAuthenticate({
+    username: username.value,
+    password: password.value,
+  })
+
+  if (error) {
+    store.setToast(error)
   }
 
   if (response?.token) {

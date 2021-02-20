@@ -1,8 +1,8 @@
 import { reactive, readonly, InjectionKey } from "vue";
 import { reqSearch, reqScreenshot } from "../api";
-import type { Screenshot, FieldSort, ResponseSearch } from "../api";
+import type { Response, Screenshot, FieldSort, ResponseSearch } from "../api";
 
-const screenshotsLoadState = async (state: State, resp: ResponseSearch<Screenshot>) => {
+const screenshotsLoadState = async (state: State, resp?: ResponseSearch<Screenshot>) => {
   if (!resp) return
   for (const hit of resp.hits || []) {
     state.screenshots[hit.id] = hit;
@@ -23,14 +23,14 @@ const createStore = () => {
 
   return {
     state: readonly(state),
-    async loadScreenshots(size: number, from: number, sort: FieldSort[], term: string): Promise<ResponseSearch<Screenshot>> {
+    async loadScreenshots(size: number, from: number, sort: FieldSort[], term: string): Response<ResponseSearch<Screenshot>> {
       const resp = await reqSearch({ size, from, sort, term });
-      screenshotsLoadState(state, resp);
+      screenshotsLoadState(state, resp[0]);
       return resp;
     },
-    async loadScreenshot(id: string): Promise<ResponseSearch<Screenshot>> {
+    async loadScreenshot(id: string): Response<ResponseSearch<Screenshot>> {
       const resp = await reqScreenshot(id);
-      screenshotsLoadState(state, resp);
+      screenshotsLoadState(state, resp[0]);
       return resp;
     },
     getScreenshotByID(id: string) {

@@ -1,5 +1,4 @@
 import router from "../router"
-import store from "../store"
 
 export const urlScreenshot = "/api/screenshot";
 export const urlSearch = "/api/search";
@@ -10,10 +9,17 @@ export const urlAbout = "/api/about";
 export const urlImportStatus = "/api/import_status";
 export const urlPing = "/api/ping";
 
+const tokenKey = "token";
+export const tokenSet = (token: string) => localStorage.setItem(tokenKey, token);
+export const tokenGet = () => localStorage.getItem(tokenKey) || undefined;
+export const tokenHas = () => !!localStorage.getItem(tokenKey);
+
+export type Error = string
+export type Response<T> = Promise<[T?, Error?]>
 
 type ReqMethod = 'get' | 'post' | 'put'
 
-const req = async (method: ReqMethod, url: string, body?: object) => {
+const req = async <T>(method: ReqMethod, url: string, body?: object): Response<T> => {
   const token = tokenGet();
 
   const response = await fetch(url, {
@@ -29,39 +35,34 @@ const req = async (method: ReqMethod, url: string, body?: object) => {
   }
 
   if (!response?.ok) {
-    const message = response.statusText.toLowerCase()
-    store.setToast(`error: ${message}`)
-    return {}
+    const error = response.statusText.toLowerCase()
+    return [undefined, error]
   }
 
-  return await response.json();
+  const responseJSON = await response.json();
+  return [responseJSON, undefined]
 };
 
-export const reqSearch = (body: PayloadSearch): Promise<ResponseSearch<Screenshot>> =>
-  req("post", urlSearch, body);
+export const reqSearch = (body: PayloadSearch) =>
+  req<ResponseSearch<Screenshot>>("post", urlSearch, body);
 
-export const reqAuthenticate = (body: PayloadAuthenticate): Promise<ResponseAuthenticate> =>
-  req("put", urlAuthenticate, body);
+export const reqAuthenticate = (body: PayloadAuthenticate) =>
+  req<ResponseAuthenticate>("put", urlAuthenticate, body);
 
-export const reqStartImport = (): Promise<ResponseStartImport> =>
-  req("post", urlStartImport);
+export const reqStartImport = () =>
+  req<ResponseStartImport>("post", urlStartImport);
 
-export const reqScreenshot = (id: string): Promise<ResponseSearch<Screenshot>> =>
-  req("get", `${urlScreenshot}/${id}`);
+export const reqScreenshot = (id: string) =>
+  req<ResponseSearch<Screenshot>>("get", `${urlScreenshot}/${id}`);
 
-export const reqAbout = (): Promise<ResponseAbout> =>
-  req("get", urlAbout);
+export const reqAbout = () =>
+  req<ResponseAbout>("get", urlAbout);
 
-export const reqImportStatus = (): Promise<ResponseImportStatus> =>
-  req("get", urlImportStatus);
+export const reqImportStatus = () =>
+  req<ResponseImportStatus>("get", urlImportStatus);
 
-export const reqPing = (): Promise<{}> =>
-  req("get", urlPing);
-
-const tokenKey = "token";
-export const tokenSet = (token: string) => localStorage.setItem(tokenKey, token);
-export const tokenGet = () => localStorage.getItem(tokenKey) || undefined;
-export const tokenHas = () => !!localStorage.getItem(tokenKey);
+export const reqPing = () =>
+  req<{}>("get", urlPing); req<{}>("get", urlPing);
 
 const socketGuesses: { [key: string]: string } = {
   "https:": "wss:",

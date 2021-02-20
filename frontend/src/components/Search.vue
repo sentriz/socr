@@ -72,7 +72,7 @@ const fetchScreenshots = async () => {
 
   console.log("loading page #%d", pageNum.value);
   const from = pageSize * pageNum.value;
-  resp.value = await load(pageSize, from, [reqParamSortMode.value], reqQuery.value);
+  [resp.value] = await load(pageSize, from, [reqParamSortMode.value], reqQuery.value);
   if (!resp.value) return
 
   hasMore.value = from + resp.value.hits.length < resp.value.total_hits;

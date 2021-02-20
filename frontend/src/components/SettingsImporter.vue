@@ -7,11 +7,11 @@
       </colgroup>
       <tr>
         <td :colspan="2" class="border padded text-center">
-          <span v-if="status.running && status.last_id">
+          <span v-if="status?.running && status.last_id">
             added
             <span class="text-sm font-mono bg-gray-300 px-2 rounded">{{ status.last_id }}</span>
           </span>
-          <span v-else-if="status.running">running</span>
+          <span v-else-if="status?.running">running</span>
           <span v-else>finished</span>
         </td>
       </tr>
@@ -24,11 +24,11 @@
       </tr>
       <tr>
         <td class="border padded">processed</td>
-        <td class="border padded">{{ status.count_processed }}</td>
+        <td class="border padded">{{ status?.count_processed || 0 }}</td>
       </tr>
       <tr class="bg-gray-100">
         <td class="border padded">total</td>
-        <td class="border padded">{{ status.count_total }}</td>
+        <td class="border padded">{{ status?.count_total || 0}}</td>
       </tr>
     </table>
     <div
@@ -38,8 +38,8 @@
       <span v-if="!url">no preview available</span>
     </div>
     <div class="md:col-span-2 bg-red-100 padded border border-red-200">
-      <span v-if="!status.errors" class="text-red-300">no errors yet</span>
-      <ol v-for="error in status.errors">
+      <span v-if="!status?.errors" class="text-red-300">no errors yet</span>
+      <ol v-for="error in status?.errors">
         <li class="text-red-900 truncate">
           {{ new Date(error.time).toLocaleTimeString() }}
           <span class="text-red-400 mx-3">|</span>
@@ -47,7 +47,7 @@
         </li>
       </ol>
     </div>
-    <button class="btn" :disabled="status.running" @click="reqStartImport">start import</button>
+    <button class="btn" :disabled="status?.running" @click="reqStartImport">start import</button>
   </div>
 </template>
 
@@ -56,10 +56,10 @@ import { ref, onMounted, computed } from "vue";
 import { newSocketAuth, urlScreenshot, reqStartImport, reqImportStatus } from "../api";
 import type { ResponseImportStatus } from "../api";
 
-const status = ref({} as ResponseImportStatus);
+const status = ref<ResponseImportStatus | undefined>();
 
 const requestImportStatus = async () => {
-  status.value = await reqImportStatus();
+  [status.value] = await reqImportStatus();
 };
 
 const url = computed(() => {
@@ -68,7 +68,7 @@ const url = computed(() => {
 });
 
 const progress = computed(() => {
-  if (!status.value.count_total) return `0%`;
+  if (!status.value?.count_total) return `0%`;
   const perc = (100 * status.value.count_processed) / status.value.count_total;
   return `${Math.round(perc)}%`;
 });
