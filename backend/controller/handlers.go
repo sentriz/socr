@@ -12,6 +12,7 @@ import (
 	"github.com/blevesearch/bleve/search/query"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+
 	"go.senan.xyz/socr/controller/auth"
 	"go.senan.xyz/socr/controller/id"
 	"go.senan.xyz/socr/index"

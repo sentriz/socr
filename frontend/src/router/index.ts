@@ -16,7 +16,7 @@ const beforeCheckAuth: NavigationGuard = (to, _, next) => {
 
 const beforeLogout: NavigationGuard = (_, __, next) => {
     tokenSet("");
-    next();
+    next({name: "login" });
 };
 
 export default createRouter({
@@ -30,8 +30,8 @@ export default createRouter({
         {
             path: "/logout",
             name: "logout",
-            redirect: { name: "login" },
             beforeEnter: beforeLogout,
+            redirect: ""
         },
         {
             path: "/",

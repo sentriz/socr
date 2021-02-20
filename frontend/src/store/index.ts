@@ -14,7 +14,7 @@ export interface State {
   toast: string,
 }
 
-export const createStore = () => {
+const createStore = () => {
   const state = reactive<State>({
     // map screenshot id -> screenshot
     screenshots: {},
@@ -43,5 +43,6 @@ export const createStore = () => {
   };
 };
 
+export default createStore()
 export type Store = ReturnType<typeof createStore>
 export const storeSymbol: InjectionKey<Store> = Symbol("store");

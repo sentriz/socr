@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/rakyll/statik/fs"
+
 	_ "go.senan.xyz/socr/assets"
 	"go.senan.xyz/socr/controller"
 	"go.senan.xyz/socr/imagery"

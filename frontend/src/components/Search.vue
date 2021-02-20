@@ -38,7 +38,6 @@ import ScreenshotHighlight from "./ScreenshotHighlight.vue";
 import ScreenshotBackground from "./ScreenshotBackground.vue";
 import SearchSidebar from "./SearchSidebar.vue";
 import SearchSortFilter from "./SearchSortFilter.vue";
-import SearchSortFilterItem from './SearchSortFilterItem.vue'
 import SearchLoading from './SearchLoading.vue'
 
 import { ref, watch, computed } from "vue";

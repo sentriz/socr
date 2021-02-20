@@ -1,4 +1,5 @@
 import router from "../router"
+import store from "../store"
 
 export const urlScreenshot = "/api/screenshot";
 export const urlSearch = "/api/search";
@@ -9,8 +10,12 @@ export const urlAbout = "/api/about";
 export const urlImportStatus = "/api/import_status";
 export const urlPing = "/api/ping";
 
-const req = async (method: 'get' | 'post' | 'put', url: string, body?: object) => {
+
+type ReqMethod = 'get' | 'post' | 'put'
+
+const req = async (method: ReqMethod, url: string, body?: object) => {
   const token = tokenGet();
+
   const response = await fetch(url, {
     method,
     body: JSON.stringify(body),
@@ -19,13 +24,14 @@ const req = async (method: 'get' | 'post' | 'put', url: string, body?: object) =
       : {},
   });
 
-  if (response.status === 401) {
+  if (response?.status === 401) {
     router.push(({ name: "login" }))
-    return
   }
 
-  if (!response.ok) {
-    throw response
+  if (!response?.ok) {
+    const message = response.statusText.toLowerCase()
+    store.setToast(`error: ${message}`)
+    return {}
   }
 
   return await response.json();
@@ -120,7 +126,7 @@ export interface Block {
 }
 
 type Locations = { [key in Field]?: { [q: string]: Block[] } }
-type Fragments  = { [key in Field]?: string[] }
+type Fragments = { [key in Field]?: string[] }
 
 export enum Field {
   TIMESTAMP = "timestamp",
