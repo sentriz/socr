@@ -11,53 +11,44 @@ import (
 	"github.com/blevesearch/bleve/mapping"
 )
 
-type Field string
-
 const (
-	FieldTags             Field = "tags"
-	FieldTimestamp        Field = "timestamp"
-	FieldBlocks           Field = "blocks"
-	FieldBlocksText       Field = "text"
-	FieldBlocksPosition   Field = "position"
-	FieldDimensions       Field = "dimensions"
-	FieldDimensionsHeight Field = "height"
-	FieldDimensionsWidth  Field = "width"
-	FieldDominantColour   Field = "dominant_colour"
+	FieldTags             = "tags"
+	FieldTimestamp        = "timestamp"
+	FieldBlocks           = "blocks"
+	FieldBlocksText       = "text"
+	FieldBlocksPosition   = "position"
+	FieldDimensions       = "dimensions"
+	FieldDimensionsHeight = "height"
+	FieldDimensionsWidth  = "width"
+	FieldDominantColour   = "dominant_colour"
 )
 
-type Path []Field
-
-var (
-	PathTags             Path = []Field{FieldTags}
-	PathTimestamp        Path = []Field{FieldTimestamp}
-	PathBlocksText       Path = []Field{FieldBlocks, FieldBlocksText}
-	PathBlocksPosition   Path = []Field{FieldBlocks, FieldBlocksPosition}
-	PathDimensionsHeight Path = []Field{FieldDimensions, FieldDimensionsHeight}
-	PathDimensionsWidth  Path = []Field{FieldDimensions, FieldDimensionsWidth}
-	PathDominantColour   Path = []Field{FieldDominantColour}
-)
-
-func (p Path) String() string {
-	var s []string
-	for _, path := range p {
-		s = append(s, string(path))
-	}
-
-	return strings.Join(s, ".")
+func path(fields ...string) string {
+	return strings.Join(fields, ".")
 }
 
 var (
+	PathTags             = path(FieldTags)
+	PathTimestamp        = path(FieldTimestamp)
+	PathBlocksText       = path(FieldBlocks, FieldBlocksText)
+	PathBlocksPosition   = path(FieldBlocks, FieldBlocksPosition)
+	PathDimensionsHeight = path(FieldDimensions, FieldDimensionsHeight)
+	PathDimensionsWidth  = path(FieldDimensions, FieldDimensionsWidth)
+	PathDominantColour   = path(FieldDominantColour)
+)
+
+var (
 	BaseSearchFields = []string{
-		PathTags.String(),
-		PathTimestamp.String(),
-		PathBlocksText.String(),
-		PathBlocksPosition.String(),
-		PathDimensionsHeight.String(),
-		PathDimensionsWidth.String(),
-		PathDominantColour.String(),
+		PathTags,
+		PathTimestamp,
+		PathBlocksText,
+		PathBlocksPosition,
+		PathDimensionsHeight,
+		PathDimensionsWidth,
+		PathDominantColour,
 	}
-	BaseHighlightFields = []string{PathBlocksText.String()}
-	BaseQueryField      = PathBlocksText.String()
+	BaseHighlightFields = path(PathBlocksText)
+	BaseQueryField      = PathBlocksText
 )
 
 func CreateIndexMapping() *mapping.IndexMappingImpl {
