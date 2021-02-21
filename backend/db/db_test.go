@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/matryer/is"
 
@@ -26,38 +27,44 @@ func setup(t *testing.T) (*db.DB, func()) {
 	}
 }
 
-func TestHash(t *testing.T) {
+func TestModTime(t *testing.T) {
 	db, cleanup := setup(t)
 	defer cleanup()
 
 	is := is.New(t)
 
-	is.NoErr(db.SetHash("laptop", "2020.01.01.jpg", []byte("aaa")))
-	is.NoErr(db.SetHash("laptop", "2020.01.02.jpg", []byte("bbb")))
-	is.NoErr(db.SetHash("phone", "2020.01.03.jpg", []byte("ccc")))
-	is.NoErr(db.SetHash("phone", "2020.01.04.jpg", []byte("ddd")))
+	date := time.Now()
+	dateA := date.Add(1 * time.Hour)
+	dateB := date.Add(2 * time.Hour)
+	dateC := date.Add(3 * time.Hour)
+	dateD := date.Add(4 * time.Hour)
 
-	r, err := db.GetHash("laptop", "2020.01.01.jpg")
+	is.NoErr(db.SetModTime("laptop", "2020.01.01.jpg", dateA))
+	is.NoErr(db.SetModTime("laptop", "2020.01.02.jpg", dateB))
+	is.NoErr(db.SetModTime("phone", "2020.01.03.jpg", dateC))
+	is.NoErr(db.SetModTime("phone", "2020.01.04.jpg", dateD))
+
+	r, err := db.GetModTime("laptop", "2020.01.01.jpg")
 	is.NoErr(err)
-	is.Equal(r, []byte("aaa"))
+	is.Equal(r.Unix(), dateA.Unix())
 
-	r, err = db.GetHash("laptop", "2020.01.02.jpg")
+	r, err = db.GetModTime("laptop", "2020.01.02.jpg")
 	is.NoErr(err)
-	is.Equal(r, []byte("bbb"))
+	is.Equal(r.Unix(), dateB.Unix())
 
-	r, err = db.GetHash("phone", "2020.01.03.jpg")
+	r, err = db.GetModTime("phone", "2020.01.03.jpg")
 	is.NoErr(err)
-	is.Equal(r, []byte("ccc"))
+	is.Equal(r.Unix(), dateC.Unix())
 
-	r, err = db.GetHash("phone", "2020.01.04.jpg")
+	r, err = db.GetModTime("phone", "2020.01.04.jpg")
 	is.NoErr(err)
-	is.Equal(r, []byte("ddd"))
+	is.Equal(r.Unix(), dateD.Unix())
 
-	r, err = db.GetHash("laptop", "2020.01.03.jpg")
+	r, err = db.GetModTime("laptop", "2020.01.03.jpg")
 	is.NoErr(err)
 	is.Equal(r, nil)
 
-	r, err = db.GetHash("laptop", "2020.01.05.jpg")
+	r, err = db.GetModTime("laptop", "2020.01.05.jpg")
 	is.NoErr(err)
 	is.Equal(r, nil)
 }
@@ -68,10 +75,14 @@ func TestDupe(t *testing.T) {
 
 	is := is.New(t)
 
-	is.NoErr(db.SetHash("a", "a", []byte("a")))
-	is.NoErr(db.SetHash("a", "a", []byte("b")))
+	date := time.Now()
+	dateA := date.Add(1 * time.Hour)
+	dateB := date.Add(2 * time.Hour)
 
-	r, err := db.GetHash("a", "a")
+	is.NoErr(db.SetModTime("a", "a", dateA))
+	is.NoErr(db.SetModTime("a", "a", dateB))
+
+	r, err := db.GetModTime("a", "a")
 	is.NoErr(err)
-	is.Equal(r, []byte("b"))
+	is.Equal(r.Unix(), dateB.Unix())
 }

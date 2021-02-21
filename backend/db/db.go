@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"time"
 
 	bolt "go.etcd.io/bbolt"
 )
@@ -29,28 +30,39 @@ func New(path string) (*DB, error) {
 	return &DB{bdb}, nil
 }
 
-func (db *DB) GetHash(dir string, filename string) ([]byte, error) {
-	var hash []byte
+func (db *DB) GetModTime(dir string, filename string) (*time.Time, error) {
+	var modTime *time.Time
 	err := db.View(func(tx *bolt.Tx) error {
 		bucketFolders := tx.Bucket([]byte(key))
-		bucketHashes := bucketFolders.Bucket([]byte(dir))
-		hash = bucketHashes.Get([]byte(filename))
+		bucketModTimes := bucketFolders.Bucket([]byte(dir))
+		modTimeRaw := bucketModTimes.Get([]byte(filename))
+		if modTimeRaw == nil {
+			return nil
+		}
+		modTime = &time.Time{}
+		if err := modTime.UnmarshalBinary(modTimeRaw); err != nil {
+			return fmt.Errorf("decode time: %w", err)
+		}
 		return nil
 	})
 	if err != nil {
 		return nil, fmt.Errorf("view: %w", err)
 	}
-	return hash, nil
+	return modTime, nil
 }
 
-func (db *DB) SetHash(dir string, filename string, hash []byte) error {
+func (db *DB) SetModTime(dir string, filename string, modTime time.Time) error {
 	return db.Update(func(tx *bolt.Tx) error {
 		bucketFolders := tx.Bucket([]byte(key))
-		bucketHashes, err := bucketFolders.CreateBucketIfNotExists([]byte(dir))
+		bucketModTimees, err := bucketFolders.CreateBucketIfNotExists([]byte(dir))
 		if err != nil {
 			return fmt.Errorf("create dir bucket: %w", err)
 		}
-		if err := bucketHashes.Put([]byte(filename), hash); err != nil {
+		modTimeRaw, err := modTime.MarshalBinary()
+		if err != nil {
+			return fmt.Errorf("encode time: %w", err)
+		}
+		if err := bucketModTimees.Put([]byte(filename), modTimeRaw); err != nil {
 			return fmt.Errorf("insert mod time: %w", err)
 		}
 		return nil

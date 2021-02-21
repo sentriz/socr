@@ -7,13 +7,11 @@ import (
 	"time"
 
 	"go.senan.xyz/socr/db"
-	"go.senan.xyz/socr/hasher"
 )
 
 type Importer struct {
 	isRunning *int32
 	DB        db.DB
-	Hasher    hasher.Hasher
 	Dirs      []string
 }
 
@@ -48,17 +46,19 @@ func (i *Importer) Scan() error {
 		}
 
 		for _, file := range files {
-			bytes, err := ioutil.ReadFile(file.Name())
+			timeLast, err := i.DB.GetModTime(dir, file.Name())
 			if err != nil {
-				return fmt.Errorf("reading from disk: %v", err)
+				return fmt.Errorf("get last mod time: %v", err)
 			}
 
-			hashLatest, err := i.Hasher.Hash(bytes)
-			if err != nil {
-				return fmt.Errorf("get latest hash: %v", err)
+			if timeLast == nil {
+
 			}
 
-			hash :=  i.DB.GetHash(dir, file.Name, )
+			// bytes, err := ioutil.ReadFile(file.Name())
+			// if err != nil {
+			// 	return fmt.Errorf("reading from disk: %v", err)
+			// }
 		}
 
 	}
