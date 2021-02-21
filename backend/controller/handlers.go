@@ -87,14 +87,14 @@ func (c *Controller) ServeAbout(w http.ResponseWriter, r *http.Request) {
 		ScreenshotsIndexed: screenshotsIndexed,
 		APIKey:             c.APIKey,
 		SocketClients:      len(c.SocketClientsSettings),
-		ImportPath:         c.ImportPath,
-		ScreenshotsPath:    c.ScreenshotsPath,
 	})
 }
 
 func (c *Controller) ServeScreenshotRaw(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	http.ServeFile(w, r, filepath.Join(c.ScreenshotsPath, vars["id"]))
+	dir := c.Directories[vars["dir"]]
+	id := vars["id"]
+	http.ServeFile(w, r, filepath.Join(dir, vars["id"]))
 }
 
 func (c *Controller) ServeScreenshot(w http.ResponseWriter, r *http.Request) {

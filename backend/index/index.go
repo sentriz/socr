@@ -47,8 +47,10 @@ var (
 		PathDimensionsWidth,
 		PathDominantColour,
 	}
-	BaseHighlightFields = path(PathBlocksText)
-	BaseQueryField      = PathBlocksText
+	BaseHighlightFields = []string{
+		PathBlocksText,
+	}
+	BaseQueryField = PathBlocksText
 )
 
 func CreateIndexMapping() *mapping.IndexMappingImpl {

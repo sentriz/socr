@@ -6,7 +6,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
-	"strings"
+	"regexp"
 	"time"
 
 	bleveHTTP "github.com/blevesearch/bleve/http"
@@ -19,6 +19,7 @@ import (
 	"go.senan.xyz/socr/imagery"
 	"go.senan.xyz/socr/importer"
 	"go.senan.xyz/socr/index"
+	"go.senan.xyz/socr/screenshot"
 )
 
 func main() {
@@ -26,7 +27,6 @@ func main() {
 
 	confListenAddr := mustEnv("SOCR_LISTEN_ADDR")
 	confIndexPath := mustEnv("SOCR_INDEX_PATH")
-	confImportPath := mustEnv("SOCR_IMPORT_PATH")
 	confHMACSecret := mustEnv("SOCR_HMAC_SECRET")
 	confLoginUsername := mustEnv("SOCR_LOGIN_USERNAME")
 	confLoginPassword := mustEnv("SOCR_LOGIN_PASSWORD")
@@ -39,11 +39,13 @@ func main() {
 	}
 
 	importer := &importer.Importer{
-		Dirs: confDirs,
+		Directories: confDirs,
+		Index:       index,
 	}
 
 	ctrl := &controller.Controller{
-		Index: index,
+		Index:       index,
+		Directories: confDirs,
 		SocketUpgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				// TODO: this?
@@ -53,7 +55,7 @@ func main() {
 		SocketClientsSettings:   map[*websocket.Conn]struct{}{},
 		SocketClientsScreenshot: map[string]map[*websocket.Conn]struct{}{},
 		SocketUpdatesSettings:   make(chan struct{}),
-		SocketUpdatesScreenshot: make(chan *controller.Screenshot),
+		SocketUpdatesScreenshot: make(chan *screenshot.Screenshot),
 		HMACSecret:              confHMACSecret,
 		LoginUsername:           confLoginUsername,
 		LoginPassword:           confLoginPassword,
@@ -68,8 +70,8 @@ func main() {
 	r.Use(ctrl.WithCORS())
 	r.Use(ctrl.WithLogging())
 	r.HandleFunc("/api/authenticate", ctrl.ServeAuthenticate)
-	r.HandleFunc("/api/screenshot/{id}/raw", ctrl.ServeScreenshotRaw)
-	r.HandleFunc("/api/screenshot/{id}", ctrl.ServeScreenshot)
+	r.HandleFunc("/api/screenshot/{dir}/{id}/raw", ctrl.ServeScreenshotRaw)
+	r.HandleFunc("/api/screenshot/{dir}/{id}", ctrl.ServeScreenshot)
 	r.HandleFunc("/api/websocket", ctrl.ServeWebSocket)
 
 	frontendHander, err := makeFrontendHandler()
@@ -112,22 +114,23 @@ func mustEnv(key string) string {
 	return ""
 }
 
-func mustEnvDirs(prefix string) []string {
-	var folders []string
+func mustEnvDirs(prefix string) screenshot.Directories {
+	expr := regexp.MustCompile(`SOCR_DIR_(?P<Alias>[\w_]+)=(?P<Path>.*)`)
+	const (
+		partFull = iota
+		partAlias
+		partPath
+	)
+
+	dirs := screenshot.Directories{}
 	for _, env := range os.Environ() {
-		if !strings.HasPrefix(env, prefix) {
-			continue
+		parts := expr.FindStringSubmatch(env)
+		if len(parts) != 3 {
+			log.Fatalf("invalid screenshot var %s", env)
 		}
-		parts := strings.SplitN(env, "=", 2)
-		if len(parts) != 2 {
-			continue
-		}
-		folders = append(folders, parts[1])
+		dirs[parts[partAlias]] = parts[partPath]
 	}
-	if len(folders) == 0 {
-		log.Fatalf("please provide at least one folder")
-	}
-	return folders
+	return dirs
 }
 
 // serve static frontend
