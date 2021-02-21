@@ -1,16 +1,13 @@
 package controller
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"go.senan.xyz/socr/controller/id"
@@ -22,59 +19,15 @@ import (
 )
 
 type Screenshot struct {
-	ID             string           `json:"id"`
-	Timestamp      time.Time        `json:"timestamp"`
-	Filetype       imagery.Filetype `json:"filetype"`
-	Tags           []ScreenshotTag  `json:"tags"`
-	Dimensions     Dimensions       `json:"dimensions"`
-	Blocks         []*Block         `json:"blocks"`
-	DominantColour string           `json:"dominant_colour"`
-	Blurhash       string           `json:"blurhash"`
-}
-
-type ScreenshotTag string
-
-const (
-	ScreenshotTagImported ScreenshotTag = "imported"
-	ScreenshotTagDesktop  ScreenshotTag = "desktop"
-	ScreenshotTagMobile   ScreenshotTag = "mobile"
-)
-
-type Dimensions struct {
-	Height int `json:"height"`
-	Width  int `json:"width"`
-}
-
-type Block struct {
-	// [x1 y1 x2 y2]
-	Position [4]int `json:"position"`
-	Text     string `json:"text"`
-}
-
-type ImportStatusError struct {
-	Time  time.Time `json:"time"`
-	Error string    `json:"error"`
-}
-
-type ImportStatus struct {
-	Errors         []ImportStatusError `json:"errors,omitempty"`
-	LastID         string              `json:"last_id,omitempty"`
-	CountProcessed int                 `json:"count_processed"`
-	CountTotal     int                 `json:"count_total"`
-}
-
-func (s *ImportStatus) AddError(err error) {
-	s.Errors = append(s.Errors, ImportStatusError{
-		Time:  time.Now(),
-		Error: err.Error(),
-	})
+	ID        string           `json:"id"`
+	Timestamp time.Time        `json:"timestamp"`
+	Filetype  imagery.Filetype `json:"filetype"`
+	Directory string           `json:"directory"`
+	Tags      []string         `json:"tags"`
+	*imagery.Properties
 }
 
 type Controller struct {
-	ScreenshotsPath         string
-	ImportPath              string
-	ImportRunning           *int32
-	ImportStatus            ImportStatus
 	Index                   bleve.Index
 	SocketUpgrader          websocket.Upgrader
 	SocketClientsSettings   map[*websocket.Conn]struct{}
@@ -88,80 +41,29 @@ type Controller struct {
 	DefaultFormat           imagery.Format
 }
 
-func (c *Controller) ImportIsRunning() bool { return atomic.LoadInt32(c.ImportRunning) == 1 }
-func (c *Controller) ImportSetRunning()     { atomic.StoreInt32(c.ImportRunning, 1) }
-func (c *Controller) ImportSetFinished()    { atomic.StoreInt32(c.ImportRunning, 0) }
-
-func (c *Controller) ReadAndIndexBytes(raw []byte) (*Screenshot, error) {
-	return c.ReadAndIndexBytesWithIDTime(raw, id.New(), time.Now())
+func (c *Controller) ReadAndIndex(raw []byte) (*Screenshot, error) {
+	return c.ReadAndIndexWithIDTime(raw, id.New(), time.Now())
 }
 
-func (c *Controller) ReadAndIndexBytesWithID(raw []byte, scrotID string) (*Screenshot, error) {
-	return c.ReadAndIndexBytesWithIDTime(raw, scrotID, time.Now())
+func (c *Controller) ReadAndIndexWithID(raw []byte, scrotID string) (*Screenshot, error) {
+	return c.ReadAndIndexWithIDTime(raw, scrotID, time.Now())
 }
 
-func (c *Controller) ReadAndIndexBytesWithTime(raw []byte, timestamp time.Time) (*Screenshot, error) {
-	return c.ReadAndIndexBytesWithIDTime(raw, id.New(), timestamp)
+func (c *Controller) ReadAndIndexWithTime(raw []byte, timestamp time.Time) (*Screenshot, error) {
+	return c.ReadAndIndexWithIDTime(raw, id.New(), timestamp)
 }
 
-func (c *Controller) ReadAndIndexBytesWithIDTime(raw []byte, scrotID string, timestamp time.Time) (*Screenshot, error) {
-	mime := http.DetectContentType(raw)
-	format, ok := imagery.FormatFromMIME(mime)
-	if !ok {
-		return nil, fmt.Errorf("unrecognised format: %s", mime)
-	}
-
-	scrotPath := filepath.Join(c.ScreenshotsPath, scrotID)
-	if err := ioutil.WriteFile(scrotPath, raw, 0644); err != nil {
-		return nil, fmt.Errorf("write processed bytes: %w", err)
-	}
-
-	rawReader := bytes.NewReader(raw)
-	image, err := format.Decode(rawReader)
+func (c *Controller) ReadAndIndexWithIDTime(raw []byte, scrotID string, timestamp time.Time) (*Screenshot, error) {
+	properties, err := imagery.Process(raw)
 	if err != nil {
-		return nil, fmt.Errorf("decoding: %s", mime)
-	}
-
-	imageGrey := imagery.GreyScale(image)
-	imageBig := imagery.Resize(imageGrey, imagery.ScaleFactor)
-	imageEncoded := &bytes.Buffer{}
-	if err := c.DefaultFormat.Encode(imageEncoded, imageBig); err != nil {
-		return nil, fmt.Errorf("encode scaled and greyed image: %w", err)
-	}
-
-	scrotBlocksOrig, err := imagery.ExtractText(imageEncoded.Bytes(), imagery.ScaleFactor)
-	if err != nil {
-		return nil, fmt.Errorf("extract image text: %w", err)
-	}
-
-	scrotBlocks := []*Block{}
-	for _, block := range scrotBlocksOrig {
-		scrotBlocks = append(scrotBlocks, &Block{
-			Position: imagery.ScaleDownRect(block.Box),
-			Text:     block.Word,
-		})
-	}
-
-	_, scrotDominantColour := imagery.DominantColour(image)
-	scrotBlurhash, err := imagery.CalculateBlurhash(image)
-	if err != nil {
-		return nil, fmt.Errorf("calculate blurhash: %w", err)
+		return nil, fmt.Errorf("getting image properties: %w", err)
 	}
 
 	screenshot := &Screenshot{
-		ID:       scrotID,
-		Filetype: format.Filetype,
-		Dimensions: Dimensions{
-			Width:  image.Bounds().Size().X,
-			Height: image.Bounds().Size().Y,
-		},
-		DominantColour: scrotDominantColour,
-		Blurhash:       scrotBlurhash,
-		Blocks:         scrotBlocks,
-		Timestamp:      timestamp,
-		Tags: []ScreenshotTag{
-			ScreenshotTagImported,
-		},
+		ID:         scrotID,
+		Filetype:   properties.Format.Filetype,
+		Timestamp:  timestamp,
+		Properties: properties,
 	}
 
 	if err := c.Index.Index(screenshot.ID, screenshot); err != nil {

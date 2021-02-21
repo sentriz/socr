@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	bleveHTTP "github.com/blevesearch/bleve/http"
@@ -16,6 +17,7 @@ import (
 	_ "go.senan.xyz/socr/assets"
 	"go.senan.xyz/socr/controller"
 	"go.senan.xyz/socr/imagery"
+	"go.senan.xyz/socr/importer"
 	"go.senan.xyz/socr/index"
 )
 
@@ -23,24 +25,25 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	confListenAddr := mustEnv("SOCR_LISTEN_ADDR")
-	confScreenshotsPath := mustEnv("SOCR_SCREENSHOTS_PATH")
 	confIndexPath := mustEnv("SOCR_INDEX_PATH")
 	confImportPath := mustEnv("SOCR_IMPORT_PATH")
 	confHMACSecret := mustEnv("SOCR_HMAC_SECRET")
 	confLoginUsername := mustEnv("SOCR_LOGIN_USERNAME")
 	confLoginPassword := mustEnv("SOCR_LOGIN_PASSWORD")
 	confAPIKey := mustEnv("SOCR_API_KEY")
+	confDirs := mustEnvDirs("SOCR_DIR_")
 
 	index, err := index.GetOrCreateIndex(confIndexPath)
 	if err != nil {
 		log.Fatalf("error getting index: %v", err)
 	}
 
+	importer := &importer.Importer{
+		Dirs: confDirs,
+	}
+
 	ctrl := &controller.Controller{
-		ScreenshotsPath: confScreenshotsPath,
-		ImportPath:      confImportPath,
-		ImportRunning:   new(int32),
-		Index:           index,
+		Index: index,
 		SocketUpgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				// TODO: this?
@@ -107,6 +110,24 @@ func mustEnv(key string) string {
 	}
 	log.Fatalf("please provide a %q", key)
 	return ""
+}
+
+func mustEnvDirs(prefix string) []string {
+	var folders []string
+	for _, env := range os.Environ() {
+		if !strings.HasPrefix(env, prefix) {
+			continue
+		}
+		parts := strings.SplitN(env, "=", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		folders = append(folders, parts[1])
+	}
+	if len(folders) == 0 {
+		log.Fatalf("please provide at least one folder")
+	}
+	return folders
 }
 
 // serve static frontend
