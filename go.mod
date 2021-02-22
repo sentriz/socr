@@ -23,6 +23,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/jmhodges/levigo v1.0.0 // indirect
+	github.com/lib/pq v1.9.0 // indirect
 	github.com/matryer/is v1.4.0
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/otiai10/gosseract/v2 v2.2.4

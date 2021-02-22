@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/handlers"
-	"go.senan.xyz/socr/controller/auth"
+	"go.senan.xyz/socr/backend/controller/auth"
 )
 
 func (c *Controller) WithCORS() func(http.Handler) http.Handler {

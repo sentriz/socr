@@ -32,6 +32,6 @@ RUN apt-get install -y -qq tesseract-ocr-eng
 COPY --from=builder-backend /socr/socr /
 ENV SOCR_LISTEN_ADDR :80
 ENV SOCR_SCREENSHOTS_PATH /screenshots
-ENV SOCR_INDEX_PATH /index
 ENV SOCR_IMPORT_PATH /import
+ENV SOCR_DB a
 ENTRYPOINT ["/socr"]

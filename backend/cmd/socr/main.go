@@ -1,52 +1,45 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"math/rand"
 	"net/http"
 	"os"
 	"regexp"
-	"time"
 
-	bleveHTTP "github.com/blevesearch/bleve/http"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-	"github.com/rakyll/statik/fs"
 
 	_ "github.com/lib/pq"
 
-	_ "go.senan.xyz/socr/assets"
-	"go.senan.xyz/socr/controller"
-	"go.senan.xyz/socr/imagery"
-	"go.senan.xyz/socr/importer"
-	"go.senan.xyz/socr/index"
-	"go.senan.xyz/socr/screenshot"
+	"go.senan.xyz/socr/backend/controller"
+	"go.senan.xyz/socr/backend/db"
+	"go.senan.xyz/socr/backend/imagery"
+	"go.senan.xyz/socr/backend/importer"
+	"go.senan.xyz/socr/frontend"
 )
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
-
 	confListenAddr := mustEnv("SOCR_LISTEN_ADDR")
-	confIndexPath := mustEnv("SOCR_INDEX_PATH")
+	confDB := mustEnv("SOCR_DB")
 	confHMACSecret := mustEnv("SOCR_HMAC_SECRET")
 	confLoginUsername := mustEnv("SOCR_LOGIN_USERNAME")
 	confLoginPassword := mustEnv("SOCR_LOGIN_PASSWORD")
 	confAPIKey := mustEnv("SOCR_API_KEY")
 	confDirs := mustEnvDirs("SOCR_DIR_")
 
-	index, err := index.GetOrCreateIndex(confIndexPath)
+	db, err := db.NewConn(confDB)
 	if err != nil {
-		log.Fatalf("error getting index: %v", err)
+		log.Fatalf("error creating database: %v", err)
 	}
 
 	importer := &importer.Importer{
 		Directories: confDirs,
-		Index:       index,
+		DB:          db,
 	}
 
+	_ = importer
+
 	ctrl := &controller.Controller{
-		Index:       index,
 		Directories: confDirs,
 		SocketUpgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
@@ -54,19 +47,19 @@ func main() {
 				return true
 			},
 		},
-		SocketClientsSettings:   map[*websocket.Conn]struct{}{},
-		SocketClientsScreenshot: map[string]map[*websocket.Conn]struct{}{},
-		SocketUpdatesSettings:   make(chan struct{}),
-		SocketUpdatesScreenshot: make(chan *screenshot.Screenshot),
-		HMACSecret:              confHMACSecret,
-		LoginUsername:           confLoginUsername,
-		LoginPassword:           confLoginPassword,
-		APIKey:                  confAPIKey,
-		DefaultFormat:           imagery.FormatPNG,
+		// SocketClientsSettings:   map[*websocket.Conn]struct{}{},
+		// SocketClientsScreenshot: map[string]map[*websocket.Conn]struct{}{},
+		// SocketUpdatesSettings:   make(chan struct{}),
+		// SocketUpdatesScreenshot: make(chan *screenshot.Screenshot),
+		HMACSecret:    confHMACSecret,
+		LoginUsername: confLoginUsername,
+		LoginPassword: confLoginPassword,
+		APIKey:        confAPIKey,
+		DefaultFormat: imagery.FormatPNG,
 	}
 
-	go ctrl.EmitUpdatesSettings()
-	go ctrl.EmitUpdatesScreenshot()
+	// go ctrl.EmitUpdatesSettings()
+	// go ctrl.EmitUpdatesScreenshot()
 
 	r := mux.NewRouter()
 	r.Use(ctrl.WithCORS())
@@ -76,11 +69,8 @@ func main() {
 	r.HandleFunc("/api/screenshot/{dir}/{id}", ctrl.ServeScreenshot)
 	r.HandleFunc("/api/websocket", ctrl.ServeWebSocket)
 
-	frontendHander, err := makeFrontendHandler()
-	if err != nil {
-		log.Fatalf("error making frontend handler: %v", err)
-	}
-	r.NotFoundHandler = frontendHander
+	frontendFS := http.FS(frontend.FS)
+	r.NotFoundHandler = http.FileServer(frontendFS)
 
 	// begin authenticated routes
 	rJWT := r.NewRoute().Subrouter()
@@ -90,10 +80,6 @@ func main() {
 	rJWT.HandleFunc("/api/about", ctrl.ServeAbout)
 	rJWT.HandleFunc("/api/import_status", ctrl.ServeImportStatus)
 	rJWT.HandleFunc("/api/search", ctrl.ServeSearch)
-
-	const indexName = "index"
-	bleveHTTP.RegisterIndexName(indexName, ctrl.Index)
-	rJWT.Handle("/api/search_bleve", bleveHTTP.NewSearchHandler(indexName))
 
 	rAPIKey := r.NewRoute().Subrouter()
 	rAPIKey.Use(ctrl.WithAPIKey())
@@ -116,7 +102,7 @@ func mustEnv(key string) string {
 	return ""
 }
 
-func mustEnvDirs(prefix string) screenshot.Directories {
+func mustEnvDirs(prefix string) map[string]string {
 	expr := regexp.MustCompile(`SOCR_DIR_(?P<Alias>[\w_]+)=(?P<Path>.*)`)
 	const (
 		partFull = iota
@@ -124,7 +110,7 @@ func mustEnvDirs(prefix string) screenshot.Directories {
 		partPath
 	)
 
-	dirs := screenshot.Directories{}
+	dirs := map[string]string{}
 	for _, env := range os.Environ() {
 		parts := expr.FindStringSubmatch(env)
 		if len(parts) != 3 {
@@ -133,23 +119,4 @@ func mustEnvDirs(prefix string) screenshot.Directories {
 		dirs[parts[partAlias]] = parts[partPath]
 	}
 	return dirs
-}
-
-// serve static frontend
-// statik -f -p assets -src ../frontend/dist/
-func makeFrontendHandler() (http.Handler, error) {
-	frontendFS, err := fs.New()
-	if err != nil {
-		return nil, fmt.Errorf("fs new: %w", err)
-	}
-
-	httpFS := http.FileServer(frontendFS)
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		// return index.html even if we can't find the asset in the fs
-		if _, err := frontendFS.Open(req.URL.Path); err != nil {
-			req.URL.Path = "/"
-		}
-
-		httpFS.ServeHTTP(w, req)
-	}), nil
 }

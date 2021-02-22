@@ -1,4 +1,4 @@
-FROM golang:1.15
+FROM golang:1.16
 
 RUN apt-get update -qq
 RUN apt-get install -y -qq libtesseract-dev libleptonica-dev
@@ -11,7 +11,7 @@ RUN go mod download
 
 ENV SOCR_LISTEN_ADDR :80
 ENV SOCR_SCREENSHOTS_PATH /screenshots
-ENV SOCR_INDEX_PATH /index
 ENV SOCR_IMPORT_PATH /import
+ENV SOCR_DB a
 
 CMD ["go", "run", "cmd/socr/main.go"]

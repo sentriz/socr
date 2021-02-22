@@ -10,7 +10,7 @@ import (
 	"github.com/blevesearch/bleve/search/query"
 	"github.com/gorilla/mux"
 
-	"go.senan.xyz/socr/controller/auth"
+	"go.senan.xyz/socr/backend/controller/auth"
 )
 
 func (c *Controller) ServePing(w http.ResponseWriter, r *http.Request) {

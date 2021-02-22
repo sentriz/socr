@@ -1,14 +1,12 @@
 package controller
 
 import (
-	"go.senan.xyz/socr/imagery"
+	"go.senan.xyz/socr/backend/imagery"
 
-	"github.com/blevesearch/bleve"
 	"github.com/gorilla/websocket"
 )
 
 type Controller struct {
-	Index          bleve.Index
 	Directories    map[string]string
 	SocketUpgrader websocket.Upgrader
 	// SocketClientsSettings   map[*websocket.Conn]struct{}

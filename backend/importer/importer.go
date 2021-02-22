@@ -16,18 +16,16 @@ import (
 	"time"
 
 	"github.com/araddon/dateparse"
-	"github.com/blevesearch/bleve"
 
-	"go.senan.xyz/socr/db"
-	"go.senan.xyz/socr/hasher"
-	"go.senan.xyz/socr/imagery"
+	"go.senan.xyz/socr/backend/db"
+	"go.senan.xyz/socr/backend/hasher"
+	"go.senan.xyz/socr/backend/imagery"
 )
 
 type Importer struct {
 	isRunning   *int32
-	DB          db.Queries
+	DB          *db.Conn
 	Hasher      hasher.Hasher
-	Index       bleve.Index
 	Directories map[string]string
 }
 
