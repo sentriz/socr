@@ -1,26 +1,24 @@
 package db
 
 import (
-	"database/sql"
-	_ "embed"
+	ssql "database/sql"
 	"fmt"
+
+	"go.senan.xyz/socr/backend/sql"
 )
 
-//go:embed sql/schema.sql
-var schema string
-
 type Conn struct {
-	Conn *sql.DB
+	Conn *ssql.DB
 	*Queries
 }
 
 func NewConn(connStr string) (*Conn, error) {
-	db, err := sql.Open("postgres", connStr)
+	db, err := ssql.Open("postgres", connStr)
 	if err != nil {
 		return nil, fmt.Errorf("opening engine: %w", err)
 	}
 
-	if _, err := db.Exec(schema); err != nil {
+	if _, err := db.Exec(sql.Schema); err != nil {
 		return nil, fmt.Errorf("executing schema: %w", err)
 	}
 
