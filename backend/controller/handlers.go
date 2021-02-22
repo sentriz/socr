@@ -6,8 +6,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/blevesearch/bleve"
-	"github.com/blevesearch/bleve/search/query"
 	"github.com/gorilla/mux"
 
 	"go.senan.xyz/socr/backend/controller/auth"
@@ -64,23 +62,17 @@ func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) ServeAbout(w http.ResponseWriter, r *http.Request) {
-	screenshotsIndexed, err := c.Index.DocCount()
-	if err != nil {
-		http.Error(w, fmt.Sprintf("counting screenshots indexed: %v", err), 500)
-		return
-	}
-
 	json.NewEncoder(w).Encode(struct {
-		Version            string `json:"version"`
-		ScreenshotsIndexed uint64 `json:"screenshots_indexed"`
-		APIKey             string `json:"api_key"`
+		Version string `json:"version"`
+		// ScreenshotsIndexed uint64 `json:"screenshots_indexed"`
+		APIKey string `json:"api_key"`
 		// SocketClients      int    `json:"socket_clients"`
 		ImportPath      string `json:"import_path"`
 		ScreenshotsPath string `json:"screenshots_path"`
 	}{
-		Version:            "development",
-		ScreenshotsIndexed: screenshotsIndexed,
-		APIKey:             c.APIKey,
+		Version: "development",
+		// ScreenshotsIndexed: screenshotsIndexed,
+		APIKey: c.APIKey,
 		// SocketClients:      len(c.SocketClientsSettings),
 	})
 }
@@ -89,12 +81,12 @@ func (c *Controller) ServeScreenshotRaw(w http.ResponseWriter, r *http.Request) 
 	vars := mux.Vars(r)
 	dirAlias, ok := vars["dir"]
 	if !ok {
-		http.Error(w, fmt.Sprintf("please provide a `dir` parameter"), http.StatusBadRequest)
+		http.Error(w, "please provide a `dir` parameter", http.StatusBadRequest)
 		return
 	}
 	id, ok := vars["id"]
 	if !ok {
-		http.Error(w, fmt.Sprintf("please provide an `id` parameter"), http.StatusBadRequest)
+		http.Error(w, "please provide an `id` parameter", http.StatusBadRequest)
 		return
 	}
 	dir, ok := c.Directories[dirAlias]
@@ -108,19 +100,19 @@ func (c *Controller) ServeScreenshotRaw(w http.ResponseWriter, r *http.Request) 
 }
 
 func (c *Controller) ServeScreenshot(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
+	// vars := mux.Vars(r)
 
-	query := bleve.NewDocIDQuery([]string{vars["id"]})
-	request := bleve.NewSearchRequest(query)
-	request.Fields = index.BaseSearchFields
+	// query := bleve.NewDocIDQuery([]string{vars["id"]})
+	// request := bleve.NewSearchRequest(query)
+	// request.Fields = index.BaseSearchFields
 
-	resp, err := c.Index.Search(request)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("searching index: %v", err), 500)
-		return
-	}
+	// resp, err := c.Index.Search(request)
+	// if err != nil {
+	// 	http.Error(w, fmt.Sprintf("searching index: %v", err), 500)
+	// 	return
+	// }
 
-	json.NewEncoder(w).Encode(resp)
+	// json.NewEncoder(w).Encode(resp)
 }
 
 type ServeSearchPayload struct {
@@ -131,37 +123,37 @@ type ServeSearchPayload struct {
 }
 
 func (c *Controller) ServeSearch(w http.ResponseWriter, r *http.Request) {
-	var payload ServeSearchPayload
-	json.NewDecoder(r.Body).Decode(&payload)
-	defer r.Body.Close()
+	// var payload ServeSearchPayload
+	// json.NewDecoder(r.Body).Decode(&payload)
+	// defer r.Body.Close()
 
-	var q query.Query = bleve.NewMatchAllQuery()
-	if payload.Term != "" {
-		match := bleve.NewMatchQuery(payload.Term)
-		match.Fuzziness = 1
-		q = match
-	}
+	// var q query.Query = bleve.NewMatchAllQuery()
+	// if payload.Term != "" {
+	// 	match := bleve.NewMatchQuery(payload.Term)
+	// 	match.Fuzziness = 1
+	// 	q = match
+	// }
 
-	request := bleve.NewSearchRequest(q)
-	request.SortBy(payload.Sort)
-	request.Size = payload.Size
-	request.From = payload.From
-	request.Fields = index.BaseSearchFields
-	request.IncludeLocations = true
+	// request := bleve.NewSearchRequest(q)
+	// request.SortBy(payload.Sort)
+	// request.Size = payload.Size
+	// request.From = payload.From
+	// request.Fields = index.BaseSearchFields
+	// request.IncludeLocations = true
 
-	if payload.Term != "" {
-		highlight := bleve.NewHighlight()
-		highlight.Fields = index.BaseHighlightFields
-		request.Highlight = highlight
-	}
+	// if payload.Term != "" {
+	// 	highlight := bleve.NewHighlight()
+	// 	highlight.Fields = index.BaseHighlightFields
+	// 	request.Highlight = highlight
+	// }
 
-	resp, err := c.Index.Search(request)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("searching index: %v", err), 500)
-		return
-	}
+	// resp, err := c.Index.Search(request)
+	// if err != nil {
+	// 	http.Error(w, fmt.Sprintf("searching index: %v", err), 500)
+	// 	return
+	// }
 
-	json.NewEncoder(w).Encode(resp)
+	// json.NewEncoder(w).Encode(resp)
 }
 
 func (c *Controller) ServeWebSocket(w http.ResponseWriter, r *http.Request) {

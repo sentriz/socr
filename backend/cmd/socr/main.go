@@ -15,7 +15,6 @@ import (
 	"go.senan.xyz/socr/backend/db"
 	"go.senan.xyz/socr/backend/imagery"
 	"go.senan.xyz/socr/backend/importer"
-	"go.senan.xyz/socr/backend/sql"
 	"go.senan.xyz/socr/frontend"
 )
 

@@ -60,7 +60,7 @@ func (i *Importer) Scan() error {
 		}
 
 		for _, file := range files {
-			existing, err := i.DB.GetScreenshotByPath(context.Background(), db.GetScreenshotByPathParams{
+			_, err := i.DB.GetScreenshotByPath(context.Background(), db.GetScreenshotByPathParams{
 				DirectoryAlias: alias,
 				Filename:       file.Name(),
 			})
@@ -71,9 +71,8 @@ func (i *Importer) Scan() error {
 				continue
 			}
 
-			fmt.Printf("+++ bbbbbbbbbb adding %v\n", file)
-
-			bytes, err := ioutil.ReadFile(file.Name())
+			filename := file.Name()
+			bytes, err := os.ReadFile(filename)
 			if err != nil {
 				return fmt.Errorf("reading from disk: %v", err)
 			}
@@ -83,16 +82,13 @@ func (i *Importer) Scan() error {
 				return fmt.Errorf("hashing screenshot: %v", err)
 			}
 
-			screenshotID := i.Hasher.Format(hash)
 			timestamp := guessFileCreated(file)
-			screenshot, err := screenshot.FromBytesWithHash(bytes, screenshotID, timestamp)
+			screenshot, err := i.importScreenshot(hash, timestamp, alias, filename, bytes)
 			if err != nil {
-				return fmt.Errorf("processing screenshot: %v", err)
+				return fmt.Errorf("importing screenshot: %v", err)
 			}
 
-			if err := i.Index.Index(screenshot.ID, screenshot); err != nil {
-				return fmt.Errorf("indexing screenshot: %w", err)
-			}
+			log.Printf("imported screenshot. id %s", screenshot.ID)
 		}
 	}
 
@@ -113,7 +109,7 @@ func guessFileCreated(file os.FileInfo) time.Time {
 	return guessed
 }
 
-func (i *Importer) importScreenshot(timestamp time.Time, dirAlias string, filename string, raw []byte) (*db.Screenshot, error) {
+func (i *Importer) importScreenshot(id uint64, timestamp time.Time, dirAlias string, filename string, raw []byte) (*db.Screenshot, error) {
 	mime := http.DetectContentType(raw)
 	format, ok := imagery.FormatFromMIME(mime)
 	if !ok {
@@ -146,6 +142,7 @@ func (i *Importer) importScreenshot(timestamp time.Time, dirAlias string, filena
 	}
 
 	screenshotArgs := db.CreateScreenshotParams{
+		ID:             int64(id),
 		Timestamp:      timestamp,
 		DirectoryAlias: dirAlias,
 		Filename:       filename,
