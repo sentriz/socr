@@ -14,6 +14,8 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/rakyll/statik/fs"
 
+	_ "github.com/lib/pq"
+
 	_ "go.senan.xyz/socr/assets"
 	"go.senan.xyz/socr/controller"
 	"go.senan.xyz/socr/imagery"

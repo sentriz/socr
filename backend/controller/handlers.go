@@ -3,19 +3,14 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
-	"path/filepath"
 
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/search/query"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/websocket"
 
 	"go.senan.xyz/socr/controller/auth"
-	"go.senan.xyz/socr/controller/id"
-	"go.senan.xyz/socr/index"
 )
 
 func (c *Controller) ServePing(w http.ResponseWriter, r *http.Request) {
@@ -35,35 +30,35 @@ func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 	}
 	defer infile.Close()
 
-	raw, err := ioutil.ReadAll(infile)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("read form bytes: %v", err), 500)
-		return
-	}
+	// raw, err := ioutil.ReadAll(infile)
+	// if err != nil {
+	// 	http.Error(w, fmt.Sprintf("read form bytes: %v", err), 500)
+	// 	return
+	// }
 
-	screenshotID := id.New()
+	// screenshotID := id.New()
 	go func() {
-		screenshot, err := c.ReadAndIndexBytesWithID(raw, screenshotID)
-		if err != nil {
-			log.Printf("error processing screenshot %s: %v", screenshotID, err)
-			return
-		}
+		// screenshot, err := c.ReadAndIndexBytesWithID(raw, screenshotID)
+		// if err != nil {
+		// 	log.Printf("error processing screenshot %s: %v", screenshotID, err)
+		// 	return
+		// }
 
-		c.SocketUpdatesScreenshot <- screenshot
+		// c.SocketUpdatesScreenshot <- screenshot
 	}()
 
 	json.NewEncoder(w).Encode(struct {
-		ID string `json:"id"`
+		// ID string `json:"id"`
 	}{
-		ID: screenshotID,
+		// ID: screenshotID,
 	})
 }
 
 func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
-	if err := c.IndexImportDirectory(); err != nil {
-		http.Error(w, fmt.Sprintf("start import: %v", err), 500)
-		return
-	}
+	// if err := c.IndexImportDirectory(); err != nil {
+	// 	http.Error(w, fmt.Sprintf("start import: %v", err), 500)
+	// 	return
+	// }
 
 	json.NewEncoder(w).Encode(struct{}{})
 }
@@ -79,22 +74,37 @@ func (c *Controller) ServeAbout(w http.ResponseWriter, r *http.Request) {
 		Version            string `json:"version"`
 		ScreenshotsIndexed uint64 `json:"screenshots_indexed"`
 		APIKey             string `json:"api_key"`
-		SocketClients      int    `json:"socket_clients"`
-		ImportPath         string `json:"import_path"`
-		ScreenshotsPath    string `json:"screenshots_path"`
+		// SocketClients      int    `json:"socket_clients"`
+		ImportPath      string `json:"import_path"`
+		ScreenshotsPath string `json:"screenshots_path"`
 	}{
 		Version:            "development",
 		ScreenshotsIndexed: screenshotsIndexed,
 		APIKey:             c.APIKey,
-		SocketClients:      len(c.SocketClientsSettings),
+		// SocketClients:      len(c.SocketClientsSettings),
 	})
 }
 
 func (c *Controller) ServeScreenshotRaw(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	dir := c.Directories[vars["dir"]]
-	id := vars["id"]
-	http.ServeFile(w, r, filepath.Join(dir, vars["id"]))
+	dirAlias, ok := vars["dir"]
+	if !ok {
+		http.Error(w, fmt.Sprintf("please provide a `dir` parameter"), http.StatusBadRequest)
+		return
+	}
+	id, ok := vars["id"]
+	if !ok {
+		http.Error(w, fmt.Sprintf("please provide an `id` parameter"), http.StatusBadRequest)
+		return
+	}
+	dir, ok := c.Directories[dirAlias]
+	if !ok {
+		http.Error(w, fmt.Sprintf("coudln't find a directory with alias %q", dirAlias), http.StatusNotFound)
+		return
+	}
+	_ = id
+	_ = dir
+	// http.ServeFile(w, r, filepath.Join(dir, vars["id"]))
 }
 
 func (c *Controller) ServeScreenshot(w http.ResponseWriter, r *http.Request) {
@@ -165,16 +175,19 @@ func (c *Controller) ServeWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if w := params.Get("want_screenshot_id"); w != "" {
-		if _, ok := c.SocketClientsScreenshot[w]; !ok {
-			c.SocketClientsScreenshot[w] = map[*websocket.Conn]struct{}{}
-		}
-		c.SocketClientsScreenshot[w][conn] = struct{}{}
-	}
+	_ = conn
+	_ = tokenValid
 
-	if w := params.Get("want_settings"); tokenValid && w != "" {
-		c.SocketClientsSettings[conn] = struct{}{}
-	}
+	// if w := params.Get("want_screenshot_id"); w != "" {
+	// 	if _, ok := c.SocketClientsScreenshot[w]; !ok {
+	// 		c.SocketClientsScreenshot[w] = map[*websocket.Conn]struct{}{}
+	// 	}
+	// 	c.SocketClientsScreenshot[w][conn] = struct{}{}
+	// }
+
+	// if w := params.Get("want_settings"); tokenValid && w != "" {
+	// 	c.SocketClientsSettings[conn] = struct{}{}
+	// }
 }
 
 func (c *Controller) ServeAuthenticate(w http.ResponseWriter, r *http.Request) {
@@ -210,10 +223,10 @@ func (c *Controller) ServeAuthenticate(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) ServeImportStatus(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(struct {
-		ImportStatus
-		Running bool `json:"running"`
+		// ImportStatus
+		// Running bool `json:"running"`
 	}{
-		ImportStatus: c.ImportStatus,
-		Running:      c.ImportIsRunning(),
+		// ImportStatus: c.ImportStatus,
+		// Running:      c.ImportIsRunning(),
 	})
 }

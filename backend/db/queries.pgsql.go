@@ -33,13 +33,14 @@ func (q *Queries) CreateBlock(ctx context.Context, arg CreateBlockParams) error 
 }
 
 const createScreenshot = `-- name: CreateScreenshot :one
-insert into screenshots (timestamp, directory_alias, filename, filetype, dim_width, dim_height, dominant_colour, blurhash)
-    values ($1, $2, $3, $4, $5, $6, $7, $8)
+insert into screenshots (id, timestamp, directory_alias, filename, filetype, dim_width, dim_height, dominant_colour, blurhash)
+    values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 returning
     id, timestamp, directory_alias, filename, filetype, dim_width, dim_height, dominant_colour, blurhash
 `
 
 type CreateScreenshotParams struct {
+	ID             int64     `json:"id"`
 	Timestamp      time.Time `json:"timestamp"`
 	DirectoryAlias string    `json:"directory_alias"`
 	Filename       string    `json:"filename"`
@@ -52,6 +53,7 @@ type CreateScreenshotParams struct {
 
 func (q *Queries) CreateScreenshot(ctx context.Context, arg CreateScreenshotParams) (Screenshot, error) {
 	row := q.queryRow(ctx, q.createScreenshotStmt, createScreenshot,
+		arg.ID,
 		arg.Timestamp,
 		arg.DirectoryAlias,
 		arg.Filename,
