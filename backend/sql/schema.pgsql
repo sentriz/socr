@@ -1,53 +1,46 @@
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
+create extension if not exists pg_trgm;
 
-
-CREATE TABLE IF NOT EXISTS directories (
-    id INT PRIMARY KEY,
-    alias TEXT NOT NULL,
-    rel_path TEXT NOT NULL
+create type filetype as enum (
+    'GIF',
+    'PNG',
+    'JPG'
 );
 
-
-CREATE TYPE filetype AS ENUM ('GIF', 'PNG', 'JPG');
-
-
-CREATE TABLE IF NOT EXISTS tags (id INT PRIMARY KEY, NAME TEXT NOT NULL);
-
-
-CREATE TABLE IF NOT EXISTS screenshot_properties (
-    id BIGINT PRIMARY KEY REFERENCES directories(id),
-    dim_width INT,
-    dim_height INT,
-    dominant_colour TEXT,
-    blurhash TEXT
+create table if not exists screenshots (
+    id bigint primary key,
+    timestamp timestamp not null,
+    directory_alias text not null,
+    filename text not null,
+    filetype filetype not null,
+    dim_width int not null,
+    dim_height int not null,
+    dominant_colour text not null,
+    blurhash text not null
 );
 
+create unique index if not exists idx_screenshots_directory_alias_filename on screenshots (directory_alias, filename);
 
-CREATE TABLE IF NOT EXISTS screenshots (
-    id BIGINT PRIMARY KEY,
-    stamp TIMESTAMP NOT NULL,
-    directory INT NOT NULL REFERENCES directories(id),
-    filename TEXT NOT NULL,
-    filetype filetype NOT NULL
+create table if not exists tags (
+    id int primary key,
+    name text not null
 );
 
-
-CREATE TABLE IF NOT EXISTS tag_screenshots (
-    tag_id BIGINT,
-    screenshot_id INT,
-    PRIMARY KEY (tag_id, screenshot_id)
+create table if not exists tag_screenshots (
+    tag_id bigint,
+    screenshot_id bigint,
+    primary key (tag_id, screenshot_id)
 );
 
-
-CREATE TABLE IF NOT EXISTS blocks (
-    screenshot_id BIGINT NOT NULL REFERENCES screenshot(id),
-    min_x INT NOT NULL,
-    min_y INT NOT NULL,
-    max_x INT NOT NULL,
-    max_y INT NOT NULL,
-    body TEXT NOT NULL
+create table if not exists blocks (
+    id int primary key,
+    screenshot_id bigint not null references screenshot (id),
+    index smallint not null,
+    min_x smallint not null,
+    min_y smallint not null,
+    max_x smallint not null,
+    max_y smallint not null,
+    body text not null
 );
 
-
-CREATE INDEX IF NOT EXISTS blocks_body ON blocks USING GIN(body gin_trgm_ops);
+create index if not exists idx_blocks_body on blocks using gin (body gin_trgm_ops);
 

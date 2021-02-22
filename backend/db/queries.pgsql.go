@@ -9,17 +9,15 @@ import (
 )
 
 const createBlock = `-- name: CreateBlock :exec
-INSERT INTO
-    blocks (min_x, min_y, max_x, max_y, body)
-VALUES
-    ($1, $2, $3, $4, $5)
+insert into blocks (min_x, min_y, max_x, max_y, body)
+    values ($1, $2, $3, $4, $5)
 `
 
 type CreateBlockParams struct {
-	MinX int32  `json:"min_x"`
-	MinY int32  `json:"min_y"`
-	MaxX int32  `json:"max_x"`
-	MaxY int32  `json:"max_y"`
+	MinX int16  `json:"min_x"`
+	MinY int16  `json:"min_y"`
+	MaxX int16  `json:"max_x"`
+	MaxY int16  `json:"max_y"`
 	Body string `json:"body"`
 }
 
@@ -34,34 +32,54 @@ func (q *Queries) CreateBlock(ctx context.Context, arg CreateBlockParams) error 
 	return err
 }
 
-const createScreenshot = `-- name: CreateScreenshot :exec
-INSERT INTO
-    screenshots (id, directory, filename, stamp)
-VALUES
-    ($1, $2, $3, $4)
+const createScreenshot = `-- name: CreateScreenshot :one
+insert into screenshots (timestamp, directory_alias, filename, filetype, dim_width, dim_height, dominant_colour, blurhash)
+    values ($1, $2, $3, $4, $5, $6, $7, $8)
+returning
+    id, timestamp, directory_alias, filename, filetype, dim_width, dim_height, dominant_colour, blurhash
 `
 
 type CreateScreenshotParams struct {
-	ID        int64     `json:"id"`
-	Directory int32     `json:"directory"`
-	Filename  string    `json:"filename"`
-	Stamp     time.Time `json:"stamp"`
+	Timestamp      time.Time `json:"timestamp"`
+	DirectoryAlias string    `json:"directory_alias"`
+	Filename       string    `json:"filename"`
+	Filetype       Filetype  `json:"filetype"`
+	DimWidth       int32     `json:"dim_width"`
+	DimHeight      int32     `json:"dim_height"`
+	DominantColour string    `json:"dominant_colour"`
+	Blurhash       string    `json:"blurhash"`
 }
 
-func (q *Queries) CreateScreenshot(ctx context.Context, arg CreateScreenshotParams) error {
-	_, err := q.exec(ctx, q.createScreenshotStmt, createScreenshot,
-		arg.ID,
-		arg.Directory,
+func (q *Queries) CreateScreenshot(ctx context.Context, arg CreateScreenshotParams) (Screenshot, error) {
+	row := q.queryRow(ctx, q.createScreenshotStmt, createScreenshot,
+		arg.Timestamp,
+		arg.DirectoryAlias,
 		arg.Filename,
-		arg.Stamp,
+		arg.Filetype,
+		arg.DimWidth,
+		arg.DimHeight,
+		arg.DominantColour,
+		arg.Blurhash,
 	)
-	return err
+	var i Screenshot
+	err := row.Scan(
+		&i.ID,
+		&i.Timestamp,
+		&i.DirectoryAlias,
+		&i.Filename,
+		&i.Filetype,
+		&i.DimWidth,
+		&i.DimHeight,
+		&i.DominantColour,
+		&i.Blurhash,
+	)
+	return i, err
 }
 
 const getAllScreenshots = `-- name: GetAllScreenshots :many
-SELECT
-    id, stamp, directory, filename, filetype
-FROM
+select
+    id, timestamp, directory_alias, filename, filetype, dim_width, dim_height, dominant_colour, blurhash
+from
     screenshots
 `
 
@@ -76,10 +94,14 @@ func (q *Queries) GetAllScreenshots(ctx context.Context) ([]Screenshot, error) {
 		var i Screenshot
 		if err := rows.Scan(
 			&i.ID,
-			&i.Stamp,
-			&i.Directory,
+			&i.Timestamp,
+			&i.DirectoryAlias,
 			&i.Filename,
 			&i.Filetype,
+			&i.DimWidth,
+			&i.DimHeight,
+			&i.DominantColour,
+			&i.Blurhash,
 		); err != nil {
 			return nil, err
 		}
@@ -95,14 +117,13 @@ func (q *Queries) GetAllScreenshots(ctx context.Context) ([]Screenshot, error) {
 }
 
 const getScreenshotByID = `-- name: GetScreenshotByID :one
-SELECT
-    id, stamp, directory, filename, filetype
-FROM
+select
+    id, timestamp, directory_alias, filename, filetype, dim_width, dim_height, dominant_colour, blurhash
+from
     screenshots
-WHERE
+where
     id = $1
-LIMIT
-    1
+limit 1
 `
 
 func (q *Queries) GetScreenshotByID(ctx context.Context, id int64) (Screenshot, error) {
@@ -110,23 +131,58 @@ func (q *Queries) GetScreenshotByID(ctx context.Context, id int64) (Screenshot, 
 	var i Screenshot
 	err := row.Scan(
 		&i.ID,
-		&i.Stamp,
-		&i.Directory,
+		&i.Timestamp,
+		&i.DirectoryAlias,
 		&i.Filename,
 		&i.Filetype,
+		&i.DimWidth,
+		&i.DimHeight,
+		&i.DominantColour,
+		&i.Blurhash,
+	)
+	return i, err
+}
+
+const getScreenshotByPath = `-- name: GetScreenshotByPath :one
+select
+    id, timestamp, directory_alias, filename, filetype, dim_width, dim_height, dominant_colour, blurhash
+from
+    screenshots
+where
+    directory_alias = $1
+    and filename = $2
+limit 1
+`
+
+type GetScreenshotByPathParams struct {
+	DirectoryAlias string `json:"directory_alias"`
+	Filename       string `json:"filename"`
+}
+
+func (q *Queries) GetScreenshotByPath(ctx context.Context, arg GetScreenshotByPathParams) (Screenshot, error) {
+	row := q.queryRow(ctx, q.getScreenshotByPathStmt, getScreenshotByPath, arg.DirectoryAlias, arg.Filename)
+	var i Screenshot
+	err := row.Scan(
+		&i.ID,
+		&i.Timestamp,
+		&i.DirectoryAlias,
+		&i.Filename,
+		&i.Filetype,
+		&i.DimWidth,
+		&i.DimHeight,
+		&i.DominantColour,
+		&i.Blurhash,
 	)
 	return i, err
 }
 
 const searchBlock = `-- name: SearchBlock :many
-SELECT
-    id, stamp, directory, filename, filetype
-FROM
+select
+    id, timestamp, directory_alias, filename, filetype, dim_width, dim_height, dominant_colour, blurhash
+from
     screenshots
-WHERE
-    $1 :: TEXT % body
-LIMIT
-    40
+where ($1::text) % body
+limit 40
 `
 
 func (q *Queries) SearchBlock(ctx context.Context, body string) ([]Screenshot, error) {
@@ -140,10 +196,14 @@ func (q *Queries) SearchBlock(ctx context.Context, body string) ([]Screenshot, e
 		var i Screenshot
 		if err := rows.Scan(
 			&i.ID,
-			&i.Stamp,
-			&i.Directory,
+			&i.Timestamp,
+			&i.DirectoryAlias,
 			&i.Filename,
 			&i.Filetype,
+			&i.DimWidth,
+			&i.DimHeight,
+			&i.DominantColour,
+			&i.Blurhash,
 		); err != nil {
 			return nil, err
 		}

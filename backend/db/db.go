@@ -34,6 +34,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getScreenshotByIDStmt, err = db.PrepareContext(ctx, getScreenshotByID); err != nil {
 		return nil, fmt.Errorf("error preparing query GetScreenshotByID: %w", err)
 	}
+	if q.getScreenshotByPathStmt, err = db.PrepareContext(ctx, getScreenshotByPath); err != nil {
+		return nil, fmt.Errorf("error preparing query GetScreenshotByPath: %w", err)
+	}
 	if q.searchBlockStmt, err = db.PrepareContext(ctx, searchBlock); err != nil {
 		return nil, fmt.Errorf("error preparing query SearchBlock: %w", err)
 	}
@@ -60,6 +63,11 @@ func (q *Queries) Close() error {
 	if q.getScreenshotByIDStmt != nil {
 		if cerr := q.getScreenshotByIDStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing getScreenshotByIDStmt: %w", cerr)
+		}
+	}
+	if q.getScreenshotByPathStmt != nil {
+		if cerr := q.getScreenshotByPathStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getScreenshotByPathStmt: %w", cerr)
 		}
 	}
 	if q.searchBlockStmt != nil {
@@ -104,23 +112,25 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 }
 
 type Queries struct {
-	db                    DBTX
-	tx                    *sql.Tx
-	createBlockStmt       *sql.Stmt
-	createScreenshotStmt  *sql.Stmt
-	getAllScreenshotsStmt *sql.Stmt
-	getScreenshotByIDStmt *sql.Stmt
-	searchBlockStmt       *sql.Stmt
+	db                      DBTX
+	tx                      *sql.Tx
+	createBlockStmt         *sql.Stmt
+	createScreenshotStmt    *sql.Stmt
+	getAllScreenshotsStmt   *sql.Stmt
+	getScreenshotByIDStmt   *sql.Stmt
+	getScreenshotByPathStmt *sql.Stmt
+	searchBlockStmt         *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
-		db:                    tx,
-		tx:                    tx,
-		createBlockStmt:       q.createBlockStmt,
-		createScreenshotStmt:  q.createScreenshotStmt,
-		getAllScreenshotsStmt: q.getAllScreenshotsStmt,
-		getScreenshotByIDStmt: q.getScreenshotByIDStmt,
-		searchBlockStmt:       q.searchBlockStmt,
+		db:                      tx,
+		tx:                      tx,
+		createBlockStmt:         q.createBlockStmt,
+		createScreenshotStmt:    q.createScreenshotStmt,
+		getAllScreenshotsStmt:   q.getAllScreenshotsStmt,
+		getScreenshotByIDStmt:   q.getScreenshotByIDStmt,
+		getScreenshotByPathStmt: q.getScreenshotByPathStmt,
+		searchBlockStmt:         q.searchBlockStmt,
 	}
 }

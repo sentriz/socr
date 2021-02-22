@@ -3,7 +3,6 @@
 package db
 
 import (
-	"database/sql"
 	"fmt"
 	"time"
 )
@@ -29,34 +28,26 @@ func (e *Filetype) Scan(src interface{}) error {
 }
 
 type Block struct {
+	ID           int32  `json:"id"`
 	ScreenshotID int64  `json:"screenshot_id"`
-	MinX         int32  `json:"min_x"`
-	MinY         int32  `json:"min_y"`
-	MaxX         int32  `json:"max_x"`
-	MaxY         int32  `json:"max_y"`
+	Index        int16  `json:"index"`
+	MinX         int16  `json:"min_x"`
+	MinY         int16  `json:"min_y"`
+	MaxX         int16  `json:"max_x"`
+	MaxY         int16  `json:"max_y"`
 	Body         string `json:"body"`
 }
 
-type Directory struct {
-	ID      int32  `json:"id"`
-	Alias   string `json:"alias"`
-	RelPath string `json:"rel_path"`
-}
-
 type Screenshot struct {
-	ID        int64     `json:"id"`
-	Stamp     time.Time `json:"stamp"`
-	Directory int32     `json:"directory"`
-	Filename  string    `json:"filename"`
-	Filetype  Filetype  `json:"filetype"`
-}
-
-type ScreenshotProperty struct {
-	ID             int64          `json:"id"`
-	DimWidth       sql.NullInt32  `json:"dim_width"`
-	DimHeight      sql.NullInt32  `json:"dim_height"`
-	DominantColour sql.NullString `json:"dominant_colour"`
-	Blurhash       sql.NullString `json:"blurhash"`
+	ID             int64     `json:"id"`
+	Timestamp      time.Time `json:"timestamp"`
+	DirectoryAlias string    `json:"directory_alias"`
+	Filename       string    `json:"filename"`
+	Filetype       Filetype  `json:"filetype"`
+	DimWidth       int32     `json:"dim_width"`
+	DimHeight      int32     `json:"dim_height"`
+	DominantColour string    `json:"dominant_colour"`
+	Blurhash       string    `json:"blurhash"`
 }
 
 type Tag struct {
@@ -66,5 +57,5 @@ type Tag struct {
 
 type TagScreenshot struct {
 	TagID        int64 `json:"tag_id"`
-	ScreenshotID int32 `json:"screenshot_id"`
+	ScreenshotID int64 `json:"screenshot_id"`
 }

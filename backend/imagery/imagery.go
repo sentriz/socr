@@ -1,7 +1,6 @@
 package imagery
 
 import (
-	"bytes"
 	"fmt"
 	"image"
 	"image/color"
@@ -9,7 +8,6 @@ import (
 	"image/jpeg"
 	"image/png"
 	"io"
-	"net/http"
 
 	"github.com/buckket/go-blurhash"
 	"github.com/cenkalti/dominantcolor"
@@ -134,55 +132,4 @@ type Properties struct {
 	DominantColour string     `json:"dominant_colour"`
 	Blurhash       string     `json:"blurhash"`
 	Blocks         []*Block   `json:"blocks"`
-}
-
-func Process(raw []byte) (*Properties, error) {
-	mime := http.DetectContentType(raw)
-	format, ok := FormatFromMIME(mime)
-	if !ok {
-		return nil, fmt.Errorf("unrecognised format: %s", mime)
-	}
-
-	rawReader := bytes.NewReader(raw)
-	image, err := format.Decode(rawReader)
-	if err != nil {
-		return nil, fmt.Errorf("decoding: %s", mime)
-	}
-
-	imageGrey := GreyScale(image)
-	imageBig := Resize(imageGrey, ScaleFactor)
-	imageEncoded := &bytes.Buffer{}
-	if err := FormatPNG.Encode(imageEncoded, imageBig); err != nil {
-		return nil, fmt.Errorf("encode scaled and greyed image: %w", err)
-	}
-
-	blocks, err := ExtractText(imageEncoded.Bytes(), ScaleFactor)
-	if err != nil {
-		return nil, fmt.Errorf("extract image text: %w", err)
-	}
-
-	propBlocks := []*Block{}
-	for _, block := range blocks {
-		propBlocks = append(propBlocks, &Block{
-			Position: ScaleDownRect(block.Box),
-			Text:     block.Word,
-		})
-	}
-
-	_, propDominantColour := DominantColour(image)
-
-	propBlurhash, err := CalculateBlurhash(image)
-	if err != nil {
-		return nil, fmt.Errorf("calculate blurhash: %w", err)
-	}
-
-	return &Properties{
-		Dimensions: Dimensions{
-			Width:  image.Bounds().Size().X,
-			Height: image.Bounds().Size().Y,
-		},
-		DominantColour: propDominantColour,
-		Blurhash:       propBlurhash,
-		Blocks:         propBlocks,
-	}, nil
 }
