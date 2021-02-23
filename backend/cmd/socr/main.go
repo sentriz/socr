@@ -20,14 +20,14 @@ import (
 
 func main() {
 	confListenAddr := mustEnv("SOCR_LISTEN_ADDR")
-	confDB := mustEnv("SOCR_DB")
+	confDBDSN := mustEnv("SOCR_DB_DSN")
 	confHMACSecret := mustEnv("SOCR_HMAC_SECRET")
 	confLoginUsername := mustEnv("SOCR_LOGIN_USERNAME")
 	confLoginPassword := mustEnv("SOCR_LOGIN_PASSWORD")
 	confAPIKey := mustEnv("SOCR_API_KEY")
 	confDirs := mustEnvDirs("SOCR_DIR_")
 
-	db, err := db.NewConn(confDB)
+	db, err := db.NewConn(confDBDSN)
 	if err != nil {
 		log.Fatalf("error creating database: %v", err)
 	}
@@ -103,7 +103,7 @@ func mustEnv(key string) string {
 }
 
 func mustEnvDirs(prefix string) map[string]string {
-	expr := regexp.MustCompile(`SOCR_DIR_(?P<Alias>[\w_]+)=(?P<Path>.*)`)
+	expr := regexp.MustCompile(prefix + `(?P<Alias>[\w_]+)=(?P<Path>.*)`)
 	const (
 		partFull = iota
 		partAlias
@@ -113,10 +113,9 @@ func mustEnvDirs(prefix string) map[string]string {
 	dirs := map[string]string{}
 	for _, env := range os.Environ() {
 		parts := expr.FindStringSubmatch(env)
-		if len(parts) != 3 {
-			log.Fatalf("invalid screenshot var %s", env)
+		if len(parts) == 3 {
+			dirs[parts[partAlias]] = parts[partPath]
 		}
-		dirs[parts[partAlias]] = parts[partPath]
 	}
 	return dirs
 }

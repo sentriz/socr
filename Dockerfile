@@ -33,5 +33,5 @@ COPY --from=builder-backend /socr/socr /
 ENV SOCR_LISTEN_ADDR :80
 ENV SOCR_SCREENSHOTS_PATH /screenshots
 ENV SOCR_IMPORT_PATH /import
-ENV SOCR_DB a
+ENV SOCR_DB_DSN postgres://socr:socr@db?sslmode=disable
 ENTRYPOINT ["/socr"]

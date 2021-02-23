@@ -12,10 +12,14 @@ type Conn struct {
 	*Queries
 }
 
-func NewConn(connStr string) (*Conn, error) {
-	db, err := ssql.Open("postgres", connStr)
+func NewConn(dsn string) (*Conn, error) {
+	db, err := ssql.Open("postgres", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("opening engine: %w", err)
+	}
+
+	if err := db.Ping(); err != nil {
+		return nil, fmt.Errorf("pinging: %w", err)
 	}
 
 	if _, err := db.Exec(sql.Schema); err != nil {
