@@ -25,7 +25,11 @@ func main() {
 	confLoginUsername := mustEnv("SOCR_LOGIN_USERNAME")
 	confLoginPassword := mustEnv("SOCR_LOGIN_PASSWORD")
 	confAPIKey := mustEnv("SOCR_API_KEY")
-	confDirs := mustEnvDirs("SOCR_DIR_")
+
+	confDirs := parseEnvDirs("SOCR_DIR_")
+	for alias, path := range confDirs {
+		log.Printf("using directory alias %q path %q", alias, path)
+	}
 
 	db, err := db.NewConn(confDBDSN)
 	if err != nil {
@@ -37,10 +41,9 @@ func main() {
 		DB:          db,
 	}
 
-	_ = importer
-
 	ctrl := &controller.Controller{
 		Directories: confDirs,
+		Importer:    importer,
 		SocketUpgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				// TODO: this?
@@ -102,7 +105,7 @@ func mustEnv(key string) string {
 	return ""
 }
 
-func mustEnvDirs(prefix string) map[string]string {
+func parseEnvDirs(prefix string) map[string]string {
 	expr := regexp.MustCompile(prefix + `(?P<Alias>[\w_]+)=(?P<Path>.*)`)
 	const (
 		partFull = iota

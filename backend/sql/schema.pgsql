@@ -1,17 +1,12 @@
 create extension if not exists pg_trgm;
 
-create type filetype as enum (
-    'GIF',
-    'PNG',
-    'JPG'
-);
+drop type if exists filetype;
 
 create table if not exists screenshots (
     id bigint primary key,
     timestamp timestamp not null,
     directory_alias text not null,
     filename text not null,
-    filetype filetype not null,
     dim_width int not null,
     dim_height int not null,
     dominant_colour text not null,

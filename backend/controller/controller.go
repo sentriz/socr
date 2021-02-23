@@ -2,6 +2,7 @@ package controller
 
 import (
 	"go.senan.xyz/socr/backend/imagery"
+	"go.senan.xyz/socr/backend/importer"
 
 	"github.com/gorilla/websocket"
 )
@@ -9,6 +10,7 @@ import (
 type Controller struct {
 	Directories    map[string]string
 	SocketUpgrader websocket.Upgrader
+	Importer       *importer.Importer
 	// SocketClientsSettings   map[*websocket.Conn]struct{}
 	// SocketClientsScreenshot map[string]map[*websocket.Conn]struct{}
 	// SocketUpdatesSettings   chan struct{}

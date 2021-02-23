@@ -18,8 +18,8 @@ where
 limit 1;
 
 -- name: CreateScreenshot :one
-insert into screenshots (id, timestamp, directory_alias, filename, filetype, dim_width, dim_height, dominant_colour, blurhash)
-    values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+insert into screenshots (id, timestamp, directory_alias, filename, dim_width, dim_height, dominant_colour, blurhash)
+    values ($1, $2, $3, $4, $5, $6, $7, $8)
 returning
     *;
 

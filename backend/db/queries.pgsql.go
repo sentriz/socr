@@ -33,10 +33,10 @@ func (q *Queries) CreateBlock(ctx context.Context, arg CreateBlockParams) error 
 }
 
 const createScreenshot = `-- name: CreateScreenshot :one
-insert into screenshots (id, timestamp, directory_alias, filename, filetype, dim_width, dim_height, dominant_colour, blurhash)
-    values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+insert into screenshots (id, timestamp, directory_alias, filename, dim_width, dim_height, dominant_colour, blurhash)
+    values ($1, $2, $3, $4, $5, $6, $7, $8)
 returning
-    id, timestamp, directory_alias, filename, filetype, dim_width, dim_height, dominant_colour, blurhash
+    id, timestamp, directory_alias, filename, dim_width, dim_height, dominant_colour, blurhash
 `
 
 type CreateScreenshotParams struct {
@@ -44,7 +44,6 @@ type CreateScreenshotParams struct {
 	Timestamp      time.Time `json:"timestamp"`
 	DirectoryAlias string    `json:"directory_alias"`
 	Filename       string    `json:"filename"`
-	Filetype       Filetype  `json:"filetype"`
 	DimWidth       int32     `json:"dim_width"`
 	DimHeight      int32     `json:"dim_height"`
 	DominantColour string    `json:"dominant_colour"`
@@ -57,7 +56,6 @@ func (q *Queries) CreateScreenshot(ctx context.Context, arg CreateScreenshotPara
 		arg.Timestamp,
 		arg.DirectoryAlias,
 		arg.Filename,
-		arg.Filetype,
 		arg.DimWidth,
 		arg.DimHeight,
 		arg.DominantColour,
@@ -69,7 +67,6 @@ func (q *Queries) CreateScreenshot(ctx context.Context, arg CreateScreenshotPara
 		&i.Timestamp,
 		&i.DirectoryAlias,
 		&i.Filename,
-		&i.Filetype,
 		&i.DimWidth,
 		&i.DimHeight,
 		&i.DominantColour,
@@ -80,7 +77,7 @@ func (q *Queries) CreateScreenshot(ctx context.Context, arg CreateScreenshotPara
 
 const getAllScreenshots = `-- name: GetAllScreenshots :many
 select
-    id, timestamp, directory_alias, filename, filetype, dim_width, dim_height, dominant_colour, blurhash
+    id, timestamp, directory_alias, filename, dim_width, dim_height, dominant_colour, blurhash
 from
     screenshots
 `
@@ -99,7 +96,6 @@ func (q *Queries) GetAllScreenshots(ctx context.Context) ([]Screenshot, error) {
 			&i.Timestamp,
 			&i.DirectoryAlias,
 			&i.Filename,
-			&i.Filetype,
 			&i.DimWidth,
 			&i.DimHeight,
 			&i.DominantColour,
@@ -120,7 +116,7 @@ func (q *Queries) GetAllScreenshots(ctx context.Context) ([]Screenshot, error) {
 
 const getScreenshotByID = `-- name: GetScreenshotByID :one
 select
-    id, timestamp, directory_alias, filename, filetype, dim_width, dim_height, dominant_colour, blurhash
+    id, timestamp, directory_alias, filename, dim_width, dim_height, dominant_colour, blurhash
 from
     screenshots
 where
@@ -136,7 +132,6 @@ func (q *Queries) GetScreenshotByID(ctx context.Context, id int64) (Screenshot, 
 		&i.Timestamp,
 		&i.DirectoryAlias,
 		&i.Filename,
-		&i.Filetype,
 		&i.DimWidth,
 		&i.DimHeight,
 		&i.DominantColour,
@@ -147,7 +142,7 @@ func (q *Queries) GetScreenshotByID(ctx context.Context, id int64) (Screenshot, 
 
 const getScreenshotByPath = `-- name: GetScreenshotByPath :one
 select
-    id, timestamp, directory_alias, filename, filetype, dim_width, dim_height, dominant_colour, blurhash
+    id, timestamp, directory_alias, filename, dim_width, dim_height, dominant_colour, blurhash
 from
     screenshots
 where
@@ -169,7 +164,6 @@ func (q *Queries) GetScreenshotByPath(ctx context.Context, arg GetScreenshotByPa
 		&i.Timestamp,
 		&i.DirectoryAlias,
 		&i.Filename,
-		&i.Filetype,
 		&i.DimWidth,
 		&i.DimHeight,
 		&i.DominantColour,
@@ -180,7 +174,7 @@ func (q *Queries) GetScreenshotByPath(ctx context.Context, arg GetScreenshotByPa
 
 const searchBlock = `-- name: SearchBlock :many
 select
-    id, timestamp, directory_alias, filename, filetype, dim_width, dim_height, dominant_colour, blurhash
+    id, timestamp, directory_alias, filename, dim_width, dim_height, dominant_colour, blurhash
 from
     screenshots
 where ($1::text) % body
@@ -201,7 +195,6 @@ func (q *Queries) SearchBlock(ctx context.Context, body string) ([]Screenshot, e
 			&i.Timestamp,
 			&i.DirectoryAlias,
 			&i.Filename,
-			&i.Filetype,
 			&i.DimWidth,
 			&i.DimHeight,
 			&i.DominantColour,

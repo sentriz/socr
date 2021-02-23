@@ -3,29 +3,8 @@
 package db
 
 import (
-	"fmt"
 	"time"
 )
-
-type Filetype string
-
-const (
-	FiletypeGIF Filetype = "GIF"
-	FiletypePNG Filetype = "PNG"
-	FiletypeJPG Filetype = "JPG"
-)
-
-func (e *Filetype) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = Filetype(s)
-	case string:
-		*e = Filetype(s)
-	default:
-		return fmt.Errorf("unsupported scan type for Filetype: %T", src)
-	}
-	return nil
-}
 
 type Block struct {
 	ID           int32  `json:"id"`
@@ -43,7 +22,6 @@ type Screenshot struct {
 	Timestamp      time.Time `json:"timestamp"`
 	DirectoryAlias string    `json:"directory_alias"`
 	Filename       string    `json:"filename"`
-	Filetype       Filetype  `json:"filetype"`
 	DimWidth       int32     `json:"dim_width"`
 	DimHeight      int32     `json:"dim_height"`
 	DominantColour string    `json:"dominant_colour"`

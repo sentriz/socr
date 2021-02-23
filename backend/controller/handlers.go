@@ -53,10 +53,10 @@ func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
-	// if err := c.IndexImportDirectory(); err != nil {
-	// 	http.Error(w, fmt.Sprintf("start import: %v", err), 500)
-	// 	return
-	// }
+	if err := c.Importer.Import(); err != nil {
+		http.Error(w, fmt.Sprintf("start import: %v", err), 500)
+		return
+	}
 
 	json.NewEncoder(w).Encode(struct{}{})
 }
@@ -189,7 +189,7 @@ func (c *Controller) ServeAuthenticate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		http.Error(w, fmt.Sprintf("parse payload: %v", err), 200)
+		http.Error(w, fmt.Sprintf("parse payload: %v", err), http.StatusBadRequest)
 		return
 	}
 

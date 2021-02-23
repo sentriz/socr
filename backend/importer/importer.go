@@ -52,7 +52,7 @@ func (i *Importer) IsRunning() bool { return atomic.LoadInt32(i.isRunning) == 1 
 func (i *Importer) SetRunning()     { atomic.StoreInt32(i.isRunning, 1) }
 func (i *Importer) SetFinished()    { atomic.StoreInt32(i.isRunning, 0) }
 
-func (i *Importer) Scan() error {
+func (i *Importer) Import() error {
 	for alias, dir := range i.Directories {
 		files, err := ioutil.ReadDir(dir)
 		if err != nil {
@@ -88,7 +88,7 @@ func (i *Importer) Scan() error {
 				return fmt.Errorf("importing screenshot: %v", err)
 			}
 
-			log.Printf("imported screenshot. id %s", screenshot.ID)
+			log.Printf("imported screenshot. id %q filename %q", screenshot.ID, screenshot.Filename)
 		}
 	}
 
@@ -150,7 +150,6 @@ func (i *Importer) importScreenshot(id uint64, timestamp time.Time, dirAlias str
 		DimHeight:      0,
 		DominantColour: propDominantColour,
 		Blurhash:       propBlurhash,
-		Filetype:       db.Filetype(format.Filetype),
 	}
 
 	screenshost, err := i.DB.CreateScreenshot(context.Background(), screenshotArgs)
