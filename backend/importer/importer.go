@@ -71,8 +71,9 @@ func (i *Importer) Import() error {
 				continue
 			}
 
-			filename := file.Name()
-			bytes, err := os.ReadFile(filename)
+			fileName := file.Name()
+			filePath := filepath.Join(dir, fileName)
+			bytes, err := os.ReadFile(filePath)
 			if err != nil {
 				return fmt.Errorf("reading from disk: %v", err)
 			}
@@ -83,7 +84,7 @@ func (i *Importer) Import() error {
 			}
 
 			timestamp := guessFileCreated(file)
-			screenshot, err := i.importScreenshot(hash, timestamp, alias, filename, bytes)
+			screenshot, err := i.importScreenshot(hash, timestamp, alias, fileName, bytes)
 			if err != nil {
 				return fmt.Errorf("importing screenshot: %v", err)
 			}
@@ -93,20 +94,6 @@ func (i *Importer) Import() error {
 	}
 
 	return nil
-}
-
-func guessFileCreated(file os.FileInfo) time.Time {
-	filename := file.Name()
-	filename = strings.TrimSuffix(filename, filepath.Ext(filename))
-	filename = strings.ReplaceAll(filename, "_", "")
-
-	guessed, err := dateparse.ParseLocal(filename)
-	if err != nil {
-		log.Printf("couldn't guess timestamp of %q, using mod time", file.Name())
-		return file.ModTime()
-	}
-
-	return guessed
 }
 
 func (i *Importer) importScreenshot(id uint64, timestamp time.Time, dirAlias string, filename string, raw []byte) (*db.Screenshot, error) {
@@ -170,4 +157,20 @@ func (i *Importer) importScreenshot(id uint64, timestamp time.Time, dirAlias str
 	}
 
 	return &screenshost, nil
+}
+
+func guessFileCreated(file os.FileInfo) time.Time {
+	filename := file.Name()
+	filename = strings.ToLower(filename)
+	filename = strings.TrimPrefix(filename, "img_")
+	filename = strings.TrimSuffix(filename, filepath.Ext(filename))
+	filename = strings.ReplaceAll(filename, "_", "")
+
+	guessed, err := dateparse.ParseLocal(filename)
+	if err != nil {
+		log.Printf("couldn't guess timestamp of %q, using mod time", file.Name())
+		return file.ModTime()
+	}
+
+	return guessed
 }

@@ -53,10 +53,11 @@ func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
-	if err := c.Importer.Import(); err != nil {
-		http.Error(w, fmt.Sprintf("start import: %v", err), 500)
-		return
-	}
+	go func() {
+		if err := c.Importer.Import(); err != nil {
+			log.Printf("error importing: %v", err)
+		}
+	}()
 
 	json.NewEncoder(w).Encode(struct{}{})
 }
