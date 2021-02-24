@@ -54,7 +54,7 @@ func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
 	go func() {
-		if err := c.Importer.Import(); err != nil {
+		if err := c.Importer.ScanDirectories(); err != nil {
 			log.Printf("error importing: %v", err)
 		}
 	}()

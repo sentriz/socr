@@ -9,20 +9,24 @@ import (
 )
 
 const createBlock = `-- name: CreateBlock :exec
-insert into blocks (min_x, min_y, max_x, max_y, body)
-    values ($1, $2, $3, $4, $5)
+insert into blocks (screenshot_id, index, min_x, min_y, max_x, max_y, body)
+        values ($1, $2, $3, $4, $5, $6, $7)
 `
 
 type CreateBlockParams struct {
-	MinX int16  `json:"min_x"`
-	MinY int16  `json:"min_y"`
-	MaxX int16  `json:"max_x"`
-	MaxY int16  `json:"max_y"`
-	Body string `json:"body"`
+	ScreenshotID int64  `json:"screenshot_id"`
+	Index        int16  `json:"index"`
+	MinX         int16  `json:"min_x"`
+	MinY         int16  `json:"min_y"`
+	MaxX         int16  `json:"max_x"`
+	MaxY         int16  `json:"max_y"`
+	Body         string `json:"body"`
 }
 
 func (q *Queries) CreateBlock(ctx context.Context, arg CreateBlockParams) error {
 	_, err := q.exec(ctx, q.createBlockStmt, createBlock,
+		arg.ScreenshotID,
+		arg.Index,
 		arg.MinX,
 		arg.MinY,
 		arg.MaxX,

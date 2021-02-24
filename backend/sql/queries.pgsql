@@ -30,8 +30,8 @@ from
     screenshots;
 
 -- name: CreateBlock :exec
-insert into blocks (min_x, min_y, max_x, max_y, body)
-    values ($1, $2, $3, $4, $5);
+insert into blocks (screenshot_id, index, min_x, min_y, max_x, max_y, body)
+        values ($1, $2, $3, $4, $5, $6, $7);
 
 -- name: SearchBlock :many
 select

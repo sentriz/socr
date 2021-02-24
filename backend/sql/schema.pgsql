@@ -27,7 +27,7 @@ create table if not exists tag_screenshots (
 );
 
 create table if not exists blocks (
-    id int primary key,
+    id serial primary key,
     screenshot_id bigint not null references screenshots (id),
     index smallint not null,
     min_x smallint not null,
