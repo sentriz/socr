@@ -24,10 +24,12 @@ import (
 )
 
 type Importer struct {
-	isRunning   *int32
-	DB          *db.Conn
-	Hasher      hasher.Hasher
-	Directories map[string]string
+	isRunning     *int32
+	DB            *db.Conn
+	Hasher        hasher.Hasher
+	Directories   map[string]string
+	Status        Status
+	StatusUpdates chan struct{}
 }
 
 type StatusError struct {
@@ -37,7 +39,7 @@ type StatusError struct {
 
 type Status struct {
 	Errors         []StatusError `json:"errors,omitempty"`
-	LastID         string        `json:"last_id,omitempty"`
+	LastID         hasher.ID     `json:"last_id,omitempty"`
 	CountProcessed int           `json:"count_processed"`
 	CountTotal     int           `json:"count_total"`
 }
@@ -54,31 +56,62 @@ func (i *Importer) SetRunning()     { atomic.StoreInt32(i.isRunning, 1) }
 func (i *Importer) SetFinished()    { atomic.StoreInt32(i.isRunning, 0) }
 
 func (i *Importer) ScanDirectories() error {
-	start := time.Now()
+	i.SetRunning()
+	defer i.SetFinished()
 
-	for alias, dir := range i.Directories {
-		files, err := ioutil.ReadDir(dir)
-		if err != nil {
-			return fmt.Errorf("listing dir: %w", err)
-		}
-		for _, file := range files {
-			filename := file.Name()
-			screenshot, err := i.scanDirectoryItem(alias, dir, file)
-			if err != nil {
-				return fmt.Errorf("import or skip %q: %w", filename, err)
-			}
-			log.Printf("imported screenshot. id %d filename %q", screenshot.ID, filename)
-		}
+	i.Status = Status{}
+	i.StatusUpdates <- struct{}{}
+
+	directoryItems, err := i.collectDirectoryItems()
+	if err != nil {
+		return fmt.Errorf("collecting directory items: %w", err)
 	}
 
-	log.Printf("finished import in %v", time.Since(start))
+	for _, item := range directoryItems {
+		screenshot, err := i.scanDirectoryItem(item)
+		if err != nil {
+			i.Status.AddError(err)
+			i.StatusUpdates <- struct{}{}
+			continue
+		}
+
+		i.Status.LastID = hasher.ID(screenshot.ID)
+		i.Status.CountProcessed++
+		i.Status.CountTotal = len(directoryItems)
+		i.StatusUpdates <- struct{}{}
+	}
+
 	return nil
 }
 
-func (i *Importer) scanDirectoryItem(alias, dir string, file fs.FileInfo) (*db.Screenshot, error) {
+type collectDirectoryItem struct {
+	dirAlias string
+	dir      string
+	file     fs.FileInfo
+}
+
+func (i *Importer) collectDirectoryItems() ([]*collectDirectoryItem, error) {
+	var collected []*collectDirectoryItem
+	for alias, dir := range i.Directories {
+		files, err := ioutil.ReadDir(dir)
+		if err != nil {
+			return nil, fmt.Errorf("listing dir: %w", err)
+		}
+		for _, file := range files {
+			collected = append(collected, &collectDirectoryItem{
+				dirAlias: alias,
+				dir:      dir,
+				file:     file,
+			})
+		}
+	}
+	return collected, nil
+}
+
+func (i *Importer) scanDirectoryItem(item *collectDirectoryItem) (*db.Screenshot, error) {
 	screenshot, err := i.DB.GetScreenshotByPath(context.Background(), db.GetScreenshotByPathParams{
-		DirectoryAlias: alias,
-		Filename:       file.Name(),
+		DirectoryAlias: item.dirAlias,
+		Filename:       item.file.Name(),
 	})
 	switch {
 	case err != nil && !errors.Is(err, sql.ErrNoRows):
@@ -87,8 +120,8 @@ func (i *Importer) scanDirectoryItem(alias, dir string, file fs.FileInfo) (*db.S
 		return &screenshot, nil
 	}
 
-	fileName := file.Name()
-	filePath := filepath.Join(dir, fileName)
+	fileName := item.file.Name()
+	filePath := filepath.Join(item.dir, fileName)
 	bytes, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("reading from disk: %v", err)
@@ -99,8 +132,8 @@ func (i *Importer) scanDirectoryItem(alias, dir string, file fs.FileInfo) (*db.S
 		return nil, fmt.Errorf("hashing screenshot: %v", err)
 	}
 
-	timestamp := guessFileCreated(file)
-	imported, err := i.ImportScreenshot(hash, timestamp, alias, fileName, bytes)
+	timestamp := guessFileCreated(item.file)
+	imported, err := i.ImportScreenshot(hash, timestamp, item.dirAlias, fileName, bytes)
 	if err != nil {
 		return nil, fmt.Errorf("importing screenshot: %v", err)
 	}
@@ -108,7 +141,7 @@ func (i *Importer) scanDirectoryItem(alias, dir string, file fs.FileInfo) (*db.S
 	return imported, nil
 }
 
-func (i *Importer) ImportScreenshot(id uint64, timestamp time.Time, dirAlias string, filename string, raw []byte) (*db.Screenshot, error) {
+func (i *Importer) ImportScreenshot(id hasher.ID, timestamp time.Time, dirAlias string, filename string, raw []byte) (*db.Screenshot, error) {
 	mime := http.DetectContentType(raw)
 	format, ok := imagery.FormatFromMIME(mime)
 	if !ok {
