@@ -52,12 +52,12 @@ func (s *Status) AddError(err error) {
 }
 
 func (i *Importer) IsRunning() bool { return atomic.LoadInt32(i.isRunning) == 1 }
-func (i *Importer) SetRunning()     { atomic.StoreInt32(i.isRunning, 1) }
-func (i *Importer) SetFinished()    { atomic.StoreInt32(i.isRunning, 0) }
+func (i *Importer) setRunning()     { atomic.StoreInt32(i.isRunning, 1) }
+func (i *Importer) setFinished()    { atomic.StoreInt32(i.isRunning, 0) }
 
 func (i *Importer) ScanDirectories() error {
-	i.SetRunning()
-	defer i.SetFinished()
+	i.setRunning()
+	defer i.setFinished()
 
 	i.Status = Status{}
 	i.StatusUpdates <- struct{}{}
