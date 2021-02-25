@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -12,16 +13,17 @@ import (
 	"github.com/gorilla/websocket"
 
 	"go.senan.xyz/socr/backend/controller/auth"
+	"go.senan.xyz/socr/backend/db"
 	"go.senan.xyz/socr/backend/hasher"
 	"go.senan.xyz/socr/backend/imagery"
 	"go.senan.xyz/socr/backend/importer"
 )
 
 type Controller struct {
+	DB                      *db.Conn
 	Directories             map[string]string
 	SocketUpgrader          websocket.Upgrader
 	Importer                *importer.Importer
-	Hasher                  *hasher.Hasher
 	SocketClientsSettings   map[*websocket.Conn]struct{}
 	SocketClientsScreenshot map[hasher.ID]map[*websocket.Conn]struct{}
 	HMACSecret              string
@@ -82,7 +84,7 @@ func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hash, err := c.Hasher.Hash(raw)
+	hash, err := hasher.Hash(raw)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("hash screenshot: %v", err), 500)
 		return
@@ -112,18 +114,24 @@ func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) ServeAbout(w http.ResponseWriter, r *http.Request) {
+	screenshotsCount, err := c.DB.CountDirectoriesByAlias(context.Background())
+	if err != nil {
+		http.Error(w, fmt.Sprintf("counting directories by alias: %v", err), 500)
+		return
+	}
+
 	json.NewEncoder(w).Encode(struct {
-		Version string `json:"version"`
-		// ScreenshotsIndexed uint64 `json:"screenshots_indexed"`
-		APIKey          string `json:"api_key"`
-		SocketClients   int    `json:"socket_clients"`
-		ImportPath      string `json:"import_path"`
-		ScreenshotsPath string `json:"screenshots_path"`
+		Version          string                        `json:"version"`
+		APIKey           string                        `json:"api_key"`
+		SocketClients    int                           `json:"socket_clients"`
+		ImportPath       string                        `json:"import_path"`
+		ScreenshotsPath  string                        `json:"screenshots_path"`
+		ScreenshotsCount db.CountDirectoriesByAliasRow `json:"screenshots_indexed"`
 	}{
-		Version: "development",
-		// ScreenshotsIndexed: screenshotsIndexed,
-		APIKey:        c.APIKey,
-		SocketClients: len(c.SocketClientsSettings),
+		Version:          "development",
+		APIKey:           c.APIKey,
+		SocketClients:    len(c.SocketClientsSettings),
+		ScreenshotsCount: screenshotsCount,
 	})
 }
 
@@ -224,7 +232,7 @@ func (c *Controller) ServeWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if w := params.Get("want_screenshot_id"); w != "" {
-		id, err := c.Hasher.Parse(w)
+		id, err := hasher.Parse(w)
 		if err != nil {
 			return
 		}

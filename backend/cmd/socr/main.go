@@ -44,13 +44,10 @@ func main() {
 		log.Fatalf("error creating database: %v", err)
 	}
 
-	hashr := hasher.Hasher{}
-
 	importr := &importer.Importer{
 		Running:               new(int32),
 		Directories:           confDirs,
 		DirectoriesUploadsKey: uploadsKey,
-		Hasher:                hashr,
 		DB:                    dbConn,
 		UpdatesScan:           make(chan struct{}),
 		UpdatesScreenshot:     make(chan *db.Screenshot),
@@ -58,6 +55,7 @@ func main() {
 
 	ctrl := &controller.Controller{
 		Directories: confDirs,
+		DB:          dbConn,
 		Importer:    importr,
 		SocketUpgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {

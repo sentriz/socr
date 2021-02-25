@@ -6,7 +6,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"io/fs"
+	"image"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -26,7 +26,6 @@ import (
 type Importer struct {
 	Running               *int32
 	DB                    *db.Conn
-	Hasher                hasher.Hasher
 	Directories           map[string]string
 	DirectoriesUploadsKey string
 	Status                Status
@@ -84,50 +83,42 @@ func (i *Importer) ScanDirectories() error {
 		i.Status.CountProcessed++
 		i.Status.CountTotal = len(directoryItems)
 		i.UpdatesScan <- struct{}{}
-
-		fmt.Printf("+++ added\n")
 	}
-	fmt.Printf("+++ finished\n")
 
+	log.Println("finished import")
 	return nil
 }
 
-type collectDirectoryItem struct {
+type collected struct {
 	dirAlias string
 	dir      string
-	file     fs.FileInfo
+	fileName string
+	modTime  time.Time
 }
 
-func (i *Importer) collectDirectoryItems() ([]*collectDirectoryItem, error) {
-	var collected []*collectDirectoryItem
+func (i *Importer) collectDirectoryItems() ([]*collected, error) {
+	var items []*collected
 	for alias, dir := range i.Directories {
 		files, err := ioutil.ReadDir(dir)
 		if err != nil {
 			return nil, fmt.Errorf("listing dir: %w", err)
 		}
 		for _, file := range files {
-			if alias == "test_b" && file.Name() == "Screenshot_8_Ball_Pool_20181002-203145.png" {
-				collected = append(collected, &collectDirectoryItem{
-					dirAlias: alias,
-					dir:      dir,
-					file:     file,
-				})
-			}
+			items = append(items, &collected{
+				dirAlias: alias,
+				dir:      dir,
+				fileName: file.Name(),
+			})
 		}
 	}
-	return collected, nil
+	return items, nil
 }
 
-func (i *Importer) scanDirectoryItem(item *collectDirectoryItem) (*db.Screenshot, error) {
+func (i *Importer) scanDirectoryItem(item *collected) (*db.Screenshot, error) {
 	screenshot, err := i.DB.GetScreenshotByPath(context.Background(), db.GetScreenshotByPathParams{
 		DirectoryAlias: item.dirAlias,
-		Filename:       item.file.Name(),
+		Filename:       item.fileName,
 	})
-	fmt.Printf("+++ al %v\n", item.dirAlias)
-	fmt.Printf("+++ name %v\n", item.file.Name())
-	fmt.Printf("+++ sc %v\n", screenshot)
-	fmt.Printf("+++ err %v\n", err)
-	fmt.Println()
 	switch {
 	case err != nil && !errors.Is(err, sql.ErrNoRows):
 		return nil, fmt.Errorf("getting screenshot by path: %v", err)
@@ -135,21 +126,19 @@ func (i *Importer) scanDirectoryItem(item *collectDirectoryItem) (*db.Screenshot
 		return &screenshot, nil
 	}
 
-	fmt.Printf("+++ new\n")
-	fileName := item.file.Name()
-	filePath := filepath.Join(item.dir, fileName)
+	filePath := filepath.Join(item.dir, item.fileName)
 	bytes, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("reading from disk: %v", err)
 	}
 
-	hash, err := i.Hasher.Hash(bytes)
+	hash, err := hasher.Hash(bytes)
 	if err != nil {
 		return nil, fmt.Errorf("hashing screenshot: %v", err)
 	}
 
-	timestamp := guessFileCreated(item.file)
-	imported, err := i.ImportScreenshot(hash, timestamp, item.dirAlias, fileName, bytes)
+	timestamp := guessFileCreated(item.fileName, item.modTime)
+	imported, err := i.ImportScreenshot(hash, timestamp, item.dirAlias, item.fileName, bytes)
 	if err != nil {
 		return nil, fmt.Errorf("importing screenshot: %v", err)
 	}
@@ -157,7 +146,7 @@ func (i *Importer) scanDirectoryItem(item *collectDirectoryItem) (*db.Screenshot
 	return imported, nil
 }
 
-func (i *Importer) ImportScreenshot(id hasher.ID, timestamp time.Time, dirAlias string, filename string, raw []byte) (*db.Screenshot, error) {
+func (i *Importer) ImportScreenshot(id hasher.ID, timestamp time.Time, dirAlias, fileName string, raw []byte) (*db.Screenshot, error) {
 	mime := http.DetectContentType(raw)
 	format, ok := imagery.FormatFromMIME(mime)
 	if !ok {
@@ -170,23 +159,29 @@ func (i *Importer) ImportScreenshot(id hasher.ID, timestamp time.Time, dirAlias 
 		return nil, fmt.Errorf("decoding: %s", mime)
 	}
 
-	imageGrey := imagery.GreyScale(image)
-	imageBig := imagery.Resize(imageGrey, imagery.ScaleFactor)
-	imageEncoded := &bytes.Buffer{}
-	if err := imagery.FormatPNG.Encode(imageEncoded, imageBig); err != nil {
-		return nil, fmt.Errorf("encode scaled and greyed image: %w", err)
+	// insert to screenshots
+	screenshot, err := i.importScreenshotProperties(id, image, timestamp, dirAlias, fileName)
+	if err != nil {
+		return nil, fmt.Errorf("import screenshot props: %w", err)
 	}
 
+	// insert to blocks
+	err = i.importScreenshotBlocks(id, image)
+	if err != nil {
+		return nil, fmt.Errorf("import screenshot props: %w", err)
+	}
+
+	i.UpdatesScreenshot <- screenshot
+
+	return screenshot, nil
+}
+
+func (i *Importer) importScreenshotProperties(id hasher.ID, image image.Image, timestamp time.Time, dirAlias, filename string) (*db.Screenshot, error) {
 	_, propDominantColour := imagery.DominantColour(image)
 
 	propBlurhash, err := imagery.CalculateBlurhash(image)
 	if err != nil {
 		return nil, fmt.Errorf("calculate blurhash: %w", err)
-	}
-
-	blocks, err := imagery.ExtractText(imageEncoded.Bytes())
-	if err != nil {
-		return nil, fmt.Errorf("extract image text: %w", err)
 	}
 
 	size := image.Bounds().Size()
@@ -200,24 +195,38 @@ func (i *Importer) ImportScreenshot(id hasher.ID, timestamp time.Time, dirAlias 
 		DominantColour: propDominantColour,
 		Blurhash:       propBlurhash,
 	}
-	fmt.Printf("+++ adding %v\n", screenshotArgs)
 
 	screenshot, err := i.DB.CreateScreenshot(context.Background(), screenshotArgs)
 	if err != nil {
-		fmt.Printf("+++ ffffffffff %v\n", err)
 		return nil, fmt.Errorf("inserting screenshot: %w", err)
 	}
-	fmt.Printf("+++ gggggggggg\n")
+
+	return &screenshot, nil
+}
+
+func (i *Importer) importScreenshotBlocks(screenshotID hasher.ID, image image.Image) error {
+	imageGrey := imagery.GreyScale(image)
+	imageBig := imagery.Resize(imageGrey, imagery.ScaleFactor)
+	imageEncoded := &bytes.Buffer{}
+	if err := imagery.FormatPNG.Encode(imageEncoded, imageBig); err != nil {
+		return fmt.Errorf("encode scaled and greyed image: %w", err)
+	}
+
+	blocks, err := imagery.ExtractText(imageEncoded.Bytes())
+	if err != nil {
+		return fmt.Errorf("extract image text: %w", err)
+	}
 
 	tx, err := i.DB.Conn.Begin()
 	if err != nil {
-		return nil, fmt.Errorf("begin transaction: %w", err)
+		return fmt.Errorf("begin transaction: %w", err)
 	}
+
 	q := i.DB.WithTx(tx)
 	for idx, block := range blocks {
 		rect := imagery.ScaleDownRect(block.Box)
 		err := q.CreateBlock(context.Background(), db.CreateBlockParams{
-			ScreenshotID: screenshot.ID,
+			ScreenshotID: screenshotID,
 			Index:        int16(idx),
 			MinX:         int16(rect[0]),
 			MinY:         int16(rect[1]),
@@ -226,29 +235,27 @@ func (i *Importer) ImportScreenshot(id hasher.ID, timestamp time.Time, dirAlias 
 			Body:         block.Word,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("inserting block: %w", err)
+			return fmt.Errorf("inserting block: %w", err)
 		}
 	}
+
 	if err := tx.Commit(); err != nil {
-		return nil, fmt.Errorf("end transaction: %w", err)
+		return fmt.Errorf("end transaction: %w", err)
 	}
 
-	i.UpdatesScreenshot <- &screenshot
-
-	return &screenshot, nil
+	return nil
 }
 
-func guessFileCreated(file os.FileInfo) time.Time {
-	filename := file.Name()
-	filename = strings.ToLower(filename)
-	filename = strings.TrimPrefix(filename, "img_")
-	filename = strings.TrimSuffix(filename, filepath.Ext(filename))
-	filename = strings.ReplaceAll(filename, "_", "")
+func guessFileCreated(fileName string, modTime time.Time) time.Time {
+	fileName = strings.ToLower(fileName)
+	fileName = strings.TrimPrefix(fileName, "img_")
+	fileName = strings.TrimSuffix(fileName, filepath.Ext(fileName))
+	fileName = strings.ReplaceAll(fileName, "_", "")
 
-	guessed, err := dateparse.ParseLocal(filename)
+	guessed, err := dateparse.ParseLocal(fileName)
 	if err != nil {
-		log.Printf("couldn't guess timestamp of %q, using mod time", file.Name())
-		return file.ModTime()
+		log.Printf("couldn't guess timestamp of %q, using mod time", fileName)
+		return modTime
 	}
 
 	return guessed
