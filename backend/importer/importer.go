@@ -68,6 +68,9 @@ func (i *Importer) ScanDirectories() error {
 		return fmt.Errorf("collecting directory items: %w", err)
 	}
 
+	start := time.Now()
+	log.Printf("starting import at %v", start)
+
 	for _, item := range directoryItems {
 		screenshot, err := i.scanDirectoryItem(item)
 		if screenshot == nil {
@@ -85,7 +88,7 @@ func (i *Importer) ScanDirectories() error {
 		i.UpdatesScan <- struct{}{}
 	}
 
-	log.Println("finished import")
+	log.Printf("finished import in %v", time.Since(start))
 	return nil
 }
 
@@ -125,6 +128,8 @@ func (i *Importer) scanDirectoryItem(item *collected) (*db.Screenshot, error) {
 	case err == nil:
 		return &screenshot, nil
 	}
+
+	log.Printf("importing new screenshot. alias %q, filename %q", item.dirAlias, item.fileName)
 
 	filePath := filepath.Join(item.dir, item.fileName)
 	bytes, err := os.ReadFile(filePath)
