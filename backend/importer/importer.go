@@ -24,12 +24,13 @@ import (
 )
 
 type Importer struct {
-	isRunning     *int32
-	DB            *db.Conn
-	Hasher        hasher.Hasher
-	Directories   map[string]string
-	Status        Status
-	StatusUpdates chan struct{}
+	isRunning         *int32
+	DB                *db.Conn
+	Hasher            hasher.Hasher
+	Directories       map[string]string
+	Status            Status
+	UpdatesScan       chan struct{}
+	UpdatesScreenshot chan *db.Screenshot
 }
 
 type StatusError struct {
@@ -60,7 +61,7 @@ func (i *Importer) ScanDirectories() error {
 	defer i.setFinished()
 
 	i.Status = Status{}
-	i.StatusUpdates <- struct{}{}
+	i.UpdatesScan <- struct{}{}
 
 	directoryItems, err := i.collectDirectoryItems()
 	if err != nil {
@@ -71,14 +72,14 @@ func (i *Importer) ScanDirectories() error {
 		screenshot, err := i.scanDirectoryItem(item)
 		if err != nil {
 			i.Status.AddError(err)
-			i.StatusUpdates <- struct{}{}
+			i.UpdatesScan <- struct{}{}
 			continue
 		}
 
 		i.Status.LastID = hasher.ID(screenshot.ID)
 		i.Status.CountProcessed++
 		i.Status.CountTotal = len(directoryItems)
-		i.StatusUpdates <- struct{}{}
+		i.UpdatesScan <- struct{}{}
 	}
 
 	return nil
@@ -185,7 +186,7 @@ func (i *Importer) ImportScreenshot(id hasher.ID, timestamp time.Time, dirAlias 
 		Blurhash:       propBlurhash,
 	}
 
-	screenshost, err := i.DB.CreateScreenshot(context.Background(), screenshotArgs)
+	screenshot, err := i.DB.CreateScreenshot(context.Background(), screenshotArgs)
 	if err != nil {
 		return nil, fmt.Errorf("inserting screenshot: %w", err)
 	}
@@ -198,7 +199,7 @@ func (i *Importer) ImportScreenshot(id hasher.ID, timestamp time.Time, dirAlias 
 	for idx, block := range blocks {
 		rect := imagery.ScaleDownRect(block.Box)
 		err := q.CreateBlock(context.Background(), db.CreateBlockParams{
-			ScreenshotID: screenshost.ID,
+			ScreenshotID: screenshot.ID,
 			Index:        int16(idx),
 			MinX:         int16(rect[0]),
 			MinY:         int16(rect[1]),
@@ -214,7 +215,9 @@ func (i *Importer) ImportScreenshot(id hasher.ID, timestamp time.Time, dirAlias 
 		return nil, fmt.Errorf("end transaction: %w", err)
 	}
 
-	return &screenshost, nil
+	i.UpdatesScreenshot <- &screenshot
+
+	return &screenshot, nil
 }
 
 func guessFileCreated(file os.FileInfo) time.Time {

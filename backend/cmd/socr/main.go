@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -13,6 +14,7 @@ import (
 
 	"go.senan.xyz/socr/backend/controller"
 	"go.senan.xyz/socr/backend/db"
+	"go.senan.xyz/socr/backend/hasher"
 	"go.senan.xyz/socr/backend/imagery"
 	"go.senan.xyz/socr/backend/importer"
 	"go.senan.xyz/socr/frontend"
@@ -25,20 +27,29 @@ func main() {
 	confLoginUsername := mustEnv("SOCR_LOGIN_USERNAME")
 	confLoginPassword := mustEnv("SOCR_LOGIN_PASSWORD")
 	confAPIKey := mustEnv("SOCR_API_KEY")
-
 	confDirs := parseEnvDirs("SOCR_DIR_")
+
+	if _, ok := confDirs["SOCR_DIR_UPLOADS"]; !ok {
+		log.Fatalf("please provide an uploads directory")
+	}
+
 	for alias, path := range confDirs {
 		log.Printf("using directory alias %q path %q", alias, path)
 	}
 
-	db, err := db.NewConn(confDBDSN)
+	dbConn, err := db.NewConn(confDBDSN)
 	if err != nil {
 		log.Fatalf("error creating database: %v", err)
 	}
 
+	hasher := hasher.Hasher{}
+
 	importer := &importer.Importer{
-		Directories: confDirs,
-		DB:          db,
+		Directories:       confDirs,
+		Hasher:            hasher,
+		DB:                dbConn,
+		UpdatesScan:       make(chan struct{}),
+		UpdatesScreenshot: make(chan *db.Screenshot),
 	}
 
 	ctrl := &controller.Controller{
@@ -50,19 +61,17 @@ func main() {
 				return true
 			},
 		},
-		// SocketClientsSettings:   map[*websocket.Conn]struct{}{},
-		// SocketClientsScreenshot: map[string]map[*websocket.Conn]struct{}{},
-		// SocketUpdatesSettings:   make(chan struct{}),
-		// SocketUpdatesScreenshot: make(chan *screenshot.Screenshot),
-		HMACSecret:    confHMACSecret,
-		LoginUsername: confLoginUsername,
-		LoginPassword: confLoginPassword,
-		APIKey:        confAPIKey,
-		DefaultFormat: imagery.FormatPNG,
+		SocketClientsSettings:   map[*websocket.Conn]struct{}{},
+		SocketClientsScreenshot: map[int64]map[*websocket.Conn]struct{}{},
+		HMACSecret:              confHMACSecret,
+		LoginUsername:           confLoginUsername,
+		LoginPassword:           confLoginPassword,
+		APIKey:                  confAPIKey,
+		DefaultFormat:           imagery.FormatPNG,
 	}
 
-	// go ctrl.EmitUpdatesSettings()
-	// go ctrl.EmitUpdatesScreenshot()
+	go ctrl.EmitUpdatesSettings()
+	go ctrl.EmitUpdatesScreenshot()
 
 	r := mux.NewRouter()
 	r.Use(ctrl.WithCORS())
@@ -112,13 +121,14 @@ func parseEnvDirs(prefix string) map[string]string {
 		partAlias
 		partPath
 	)
-
 	dirs := map[string]string{}
 	for _, env := range os.Environ() {
 		parts := expr.FindStringSubmatch(env)
-		if len(parts) == 3 {
-			dirs[parts[partAlias]] = parts[partPath]
+		if len(parts) != 3 {
+			continue
 		}
+		alias := strings.ToLower(parts[partAlias])
+		dirs[alias] = parts[partPath]
 	}
 	return dirs
 }
