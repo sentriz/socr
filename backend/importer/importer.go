@@ -71,6 +71,9 @@ func (i *Importer) ScanDirectories() error {
 
 	for _, item := range directoryItems {
 		screenshot, err := i.scanDirectoryItem(item)
+		if screenshot == nil {
+			continue
+		}
 		if err != nil {
 			i.Status.AddError(err)
 			i.UpdatesScan <- struct{}{}
@@ -81,7 +84,10 @@ func (i *Importer) ScanDirectories() error {
 		i.Status.CountProcessed++
 		i.Status.CountTotal = len(directoryItems)
 		i.UpdatesScan <- struct{}{}
+
+		fmt.Printf("+++ added\n")
 	}
+	fmt.Printf("+++ finished\n")
 
 	return nil
 }
@@ -100,11 +106,13 @@ func (i *Importer) collectDirectoryItems() ([]*collectDirectoryItem, error) {
 			return nil, fmt.Errorf("listing dir: %w", err)
 		}
 		for _, file := range files {
-			collected = append(collected, &collectDirectoryItem{
-				dirAlias: alias,
-				dir:      dir,
-				file:     file,
-			})
+			if alias == "test_b" && file.Name() == "Screenshot_8_Ball_Pool_20181002-203145.png" {
+				collected = append(collected, &collectDirectoryItem{
+					dirAlias: alias,
+					dir:      dir,
+					file:     file,
+				})
+			}
 		}
 	}
 	return collected, nil
@@ -115,6 +123,11 @@ func (i *Importer) scanDirectoryItem(item *collectDirectoryItem) (*db.Screenshot
 		DirectoryAlias: item.dirAlias,
 		Filename:       item.file.Name(),
 	})
+	fmt.Printf("+++ al %v\n", item.dirAlias)
+	fmt.Printf("+++ name %v\n", item.file.Name())
+	fmt.Printf("+++ sc %v\n", screenshot)
+	fmt.Printf("+++ err %v\n", err)
+	fmt.Println()
 	switch {
 	case err != nil && !errors.Is(err, sql.ErrNoRows):
 		return nil, fmt.Errorf("getting screenshot by path: %v", err)
@@ -122,6 +135,7 @@ func (i *Importer) scanDirectoryItem(item *collectDirectoryItem) (*db.Screenshot
 		return &screenshot, nil
 	}
 
+	fmt.Printf("+++ new\n")
 	fileName := item.file.Name()
 	filePath := filepath.Join(item.dir, fileName)
 	bytes, err := os.ReadFile(filePath)
@@ -186,11 +200,14 @@ func (i *Importer) ImportScreenshot(id hasher.ID, timestamp time.Time, dirAlias 
 		DominantColour: propDominantColour,
 		Blurhash:       propBlurhash,
 	}
+	fmt.Printf("+++ adding %v\n", screenshotArgs)
 
 	screenshot, err := i.DB.CreateScreenshot(context.Background(), screenshotArgs)
 	if err != nil {
+		fmt.Printf("+++ ffffffffff %v\n", err)
 		return nil, fmt.Errorf("inserting screenshot: %w", err)
 	}
+	fmt.Printf("+++ gggggggggg\n")
 
 	tx, err := i.DB.Conn.Begin()
 	if err != nil {

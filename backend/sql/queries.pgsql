@@ -41,3 +41,12 @@ from
 where (@body::text) % body
 limit 40;
 
+-- name: CountDirectoriesByAlias :one
+select
+    directory_alias,
+    count(1)
+from
+    screenshots
+group by
+    directory_alias;
+

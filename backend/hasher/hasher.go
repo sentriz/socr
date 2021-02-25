@@ -13,7 +13,7 @@ const (
 	bits = 64
 )
 
-type ID uint64
+type ID int64
 
 func (id ID) String() string {
 	return strconv.FormatUint(uint64(id), base)

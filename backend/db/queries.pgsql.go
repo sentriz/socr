@@ -10,6 +10,28 @@ import (
 	"go.senan.xyz/socr/backend/hasher"
 )
 
+const countDirectoriesByAlias = `-- name: CountDirectoriesByAlias :one
+select
+    directory_alias,
+    count(1)
+from
+    screenshots
+group by
+    directory_alias
+`
+
+type CountDirectoriesByAliasRow struct {
+	DirectoryAlias string `json:"directory_alias"`
+	Count          int64  `json:"count"`
+}
+
+func (q *Queries) CountDirectoriesByAlias(ctx context.Context) (CountDirectoriesByAliasRow, error) {
+	row := q.queryRow(ctx, q.countDirectoriesByAliasStmt, countDirectoriesByAlias)
+	var i CountDirectoriesByAliasRow
+	err := row.Scan(&i.DirectoryAlias, &i.Count)
+	return i, err
+}
+
 const createBlock = `-- name: CreateBlock :exec
 insert into blocks (screenshot_id, index, min_x, min_y, max_x, max_y, body)
         values ($1, $2, $3, $4, $5, $6, $7)
