@@ -10,7 +10,7 @@ import (
 	"go.senan.xyz/socr/backend/hasher"
 )
 
-const countDirectoriesByAlias = `-- name: CountDirectoriesByAlias :one
+const countDirectoriesByAlias = `-- name: CountDirectoriesByAlias :many
 select
     directory_alias,
     count(1)
@@ -25,11 +25,27 @@ type CountDirectoriesByAliasRow struct {
 	Count          int64  `json:"count"`
 }
 
-func (q *Queries) CountDirectoriesByAlias(ctx context.Context) (CountDirectoriesByAliasRow, error) {
-	row := q.queryRow(ctx, q.countDirectoriesByAliasStmt, countDirectoriesByAlias)
-	var i CountDirectoriesByAliasRow
-	err := row.Scan(&i.DirectoryAlias, &i.Count)
-	return i, err
+func (q *Queries) CountDirectoriesByAlias(ctx context.Context) ([]CountDirectoriesByAliasRow, error) {
+	rows, err := q.query(ctx, q.countDirectoriesByAliasStmt, countDirectoriesByAlias)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []CountDirectoriesByAliasRow
+	for rows.Next() {
+		var i CountDirectoriesByAliasRow
+		if err := rows.Scan(&i.DirectoryAlias, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const createBlock = `-- name: CreateBlock :exec

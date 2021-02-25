@@ -121,12 +121,12 @@ func (c *Controller) ServeAbout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(struct {
-		Version          string                        `json:"version"`
-		APIKey           string                        `json:"api_key"`
-		SocketClients    int                           `json:"socket_clients"`
-		ImportPath       string                        `json:"import_path"`
-		ScreenshotsPath  string                        `json:"screenshots_path"`
-		ScreenshotsCount db.CountDirectoriesByAliasRow `json:"screenshots_indexed"`
+		Version          string                          `json:"version"`
+		APIKey           string                          `json:"api_key"`
+		SocketClients    int                             `json:"socket_clients"`
+		ImportPath       string                          `json:"import_path"`
+		ScreenshotsPath  string                          `json:"screenshots_path"`
+		ScreenshotsCount []db.CountDirectoriesByAliasRow `json:"screenshots_indexed"`
 	}{
 		Version:          "development",
 		APIKey:           c.APIKey,

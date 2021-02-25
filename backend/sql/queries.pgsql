@@ -41,7 +41,7 @@ from
 where (@body::text) % body
 limit 40;
 
--- name: CountDirectoriesByAlias :one
+-- name: CountDirectoriesByAlias :many
 select
     directory_alias,
     count(1)
