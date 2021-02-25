@@ -21,6 +21,8 @@ import (
 )
 
 func main() {
+	const uploadsKey = "uploads"
+
 	confListenAddr := mustEnv("SOCR_LISTEN_ADDR")
 	confDBDSN := mustEnv("SOCR_DB_DSN")
 	confHMACSecret := mustEnv("SOCR_HMAC_SECRET")
@@ -29,7 +31,7 @@ func main() {
 	confAPIKey := mustEnv("SOCR_API_KEY")
 	confDirs := parseEnvDirs("SOCR_DIR_")
 
-	if _, ok := confDirs["SOCR_DIR_UPLOADS"]; !ok {
+	if _, ok := confDirs["uploads"]; !ok {
 		log.Fatalf("please provide an uploads directory")
 	}
 
@@ -42,19 +44,21 @@ func main() {
 		log.Fatalf("error creating database: %v", err)
 	}
 
-	hasher := hasher.Hasher{}
+	hashr := hasher.Hasher{}
 
-	importer := &importer.Importer{
-		Directories:       confDirs,
-		Hasher:            hasher,
-		DB:                dbConn,
-		UpdatesScan:       make(chan struct{}),
-		UpdatesScreenshot: make(chan *db.Screenshot),
+	importr := &importer.Importer{
+		Running:               new(int32),
+		Directories:           confDirs,
+		DirectoriesUploadsKey: uploadsKey,
+		Hasher:                hashr,
+		DB:                    dbConn,
+		UpdatesScan:           make(chan struct{}),
+		UpdatesScreenshot:     make(chan *db.Screenshot),
 	}
 
 	ctrl := &controller.Controller{
 		Directories: confDirs,
-		Importer:    importer,
+		Importer:    importr,
 		SocketUpgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				// TODO: this?
@@ -62,7 +66,7 @@ func main() {
 			},
 		},
 		SocketClientsSettings:   map[*websocket.Conn]struct{}{},
-		SocketClientsScreenshot: map[int64]map[*websocket.Conn]struct{}{},
+		SocketClientsScreenshot: map[hasher.ID]map[*websocket.Conn]struct{}{},
 		HMACSecret:              confHMACSecret,
 		LoginUsername:           confLoginUsername,
 		LoginPassword:           confLoginPassword,

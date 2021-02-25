@@ -10,3 +10,8 @@ packages:
     emit_interface: false
     emit_exact_table_names: false
     emit_empty_slices: false
+overrides:
+  - column: "screenshots.id"
+    go_type: "go.senan.xyz/socr/backend/hasher.ID"
+  - column: "blocks.screenshot_id"
+    go_type: "go.senan.xyz/socr/backend/hasher.ID"

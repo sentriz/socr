@@ -6,6 +6,8 @@ package db
 import (
 	"context"
 	"time"
+
+	"go.senan.xyz/socr/backend/hasher"
 )
 
 const createBlock = `-- name: CreateBlock :exec
@@ -14,13 +16,13 @@ insert into blocks (screenshot_id, index, min_x, min_y, max_x, max_y, body)
 `
 
 type CreateBlockParams struct {
-	ScreenshotID int64  `json:"screenshot_id"`
-	Index        int16  `json:"index"`
-	MinX         int16  `json:"min_x"`
-	MinY         int16  `json:"min_y"`
-	MaxX         int16  `json:"max_x"`
-	MaxY         int16  `json:"max_y"`
-	Body         string `json:"body"`
+	ScreenshotID hasher.ID `json:"screenshot_id"`
+	Index        int16     `json:"index"`
+	MinX         int16     `json:"min_x"`
+	MinY         int16     `json:"min_y"`
+	MaxX         int16     `json:"max_x"`
+	MaxY         int16     `json:"max_y"`
+	Body         string    `json:"body"`
 }
 
 func (q *Queries) CreateBlock(ctx context.Context, arg CreateBlockParams) error {
@@ -44,7 +46,7 @@ returning
 `
 
 type CreateScreenshotParams struct {
-	ID             int64     `json:"id"`
+	ID             hasher.ID `json:"id"`
 	Timestamp      time.Time `json:"timestamp"`
 	DirectoryAlias string    `json:"directory_alias"`
 	Filename       string    `json:"filename"`
@@ -128,7 +130,7 @@ where
 limit 1
 `
 
-func (q *Queries) GetScreenshotByID(ctx context.Context, id int64) (Screenshot, error) {
+func (q *Queries) GetScreenshotByID(ctx context.Context, id hasher.ID) (Screenshot, error) {
 	row := q.queryRow(ctx, q.getScreenshotByIDStmt, getScreenshotByID, id)
 	var i Screenshot
 	err := row.Scan(

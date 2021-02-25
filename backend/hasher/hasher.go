@@ -38,12 +38,12 @@ func (h *Hasher) Parse(hash string) (ID, error) {
 	return ID(id), err
 }
 
-func (h *Hasher) ToBytes(hash ID) []byte {
+func (h *Hasher) Serialise(hash ID) []byte {
 	b := make([]byte, 8)
 	binary.BigEndian.PutUint64(b, uint64(hash))
 	return b
 }
 
-func (h *Hasher) FromBytes(hash []byte) ID {
+func (h *Hasher) Deserialise(hash []byte) ID {
 	return ID(binary.BigEndian.Uint64(hash))
 }

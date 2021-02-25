@@ -24,13 +24,14 @@ import (
 )
 
 type Importer struct {
-	isRunning         *int32
-	DB                *db.Conn
-	Hasher            hasher.Hasher
-	Directories       map[string]string
-	Status            Status
-	UpdatesScan       chan struct{}
-	UpdatesScreenshot chan *db.Screenshot
+	Running               *int32
+	DB                    *db.Conn
+	Hasher                hasher.Hasher
+	Directories           map[string]string
+	DirectoriesUploadsKey string
+	Status                Status
+	UpdatesScan           chan struct{}
+	UpdatesScreenshot     chan *db.Screenshot
 }
 
 type StatusError struct {
@@ -52,9 +53,9 @@ func (s *Status) AddError(err error) {
 	})
 }
 
-func (i *Importer) IsRunning() bool { return atomic.LoadInt32(i.isRunning) == 1 }
-func (i *Importer) setRunning()     { atomic.StoreInt32(i.isRunning, 1) }
-func (i *Importer) setFinished()    { atomic.StoreInt32(i.isRunning, 0) }
+func (i *Importer) IsRunning() bool { return atomic.LoadInt32(i.Running) == 1 }
+func (i *Importer) setRunning()     { atomic.StoreInt32(i.Running, 1) }
+func (i *Importer) setFinished()    { atomic.StoreInt32(i.Running, 0) }
 
 func (i *Importer) ScanDirectories() error {
 	i.setRunning()
@@ -76,7 +77,7 @@ func (i *Importer) ScanDirectories() error {
 			continue
 		}
 
-		i.Status.LastID = hasher.ID(screenshot.ID)
+		i.Status.LastID = screenshot.ID
 		i.Status.CountProcessed++
 		i.Status.CountTotal = len(directoryItems)
 		i.UpdatesScan <- struct{}{}
@@ -176,7 +177,7 @@ func (i *Importer) ImportScreenshot(id hasher.ID, timestamp time.Time, dirAlias 
 
 	size := image.Bounds().Size()
 	screenshotArgs := db.CreateScreenshotParams{
-		ID:             int64(id),
+		ID:             id,
 		Timestamp:      timestamp,
 		DirectoryAlias: dirAlias,
 		Filename:       filename,
