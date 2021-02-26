@@ -33,14 +33,6 @@ from
 insert into blocks (screenshot_id, index, min_x, min_y, max_x, max_y, body)
         values ($1, $2, $3, $4, $5, $6, $7);
 
--- name: SearchBlock :many
-select
-    *
-from
-    screenshots
-where (@body::text) % body
-limit 40;
-
 -- name: CountDirectoriesByAlias :many
 select
     directory_alias,
@@ -49,4 +41,16 @@ from
     screenshots
 group by
     directory_alias;
+
+-- name: SearchScreenshots :many
+select
+    screenshots.*,
+    json_agg(blocks) blocks
+from
+    screenshots
+    join blocks on blocks.screenshot_id = screenshots.id
+where (@body::text) % blocks.body
+group by
+    screenshots.id
+limit @lim offset @off;
 

@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"path/filepath"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -137,24 +138,31 @@ func (c *Controller) ServeAbout(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) ServeScreenshotRaw(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	dirAlias, ok := vars["dir"]
-	if !ok {
-		http.Error(w, "please provide a `dir` parameter", http.StatusBadRequest)
-		return
-	}
-	id, ok := vars["id"]
+	strID, ok := vars["id"]
 	if !ok {
 		http.Error(w, "please provide an `id` parameter", http.StatusBadRequest)
 		return
 	}
-	dir, ok := c.Directories[dirAlias]
+
+	id, err := hasher.Parse(strID)
 	if !ok {
-		http.Error(w, fmt.Sprintf("coudln't find a directory with alias %q", dirAlias), http.StatusNotFound)
+		http.Error(w, fmt.Sprintf("couldn't parse provided id. %v", err), http.StatusBadRequest)
 		return
 	}
-	_ = id
-	_ = dir
-	// http.ServeFile(w, r, filepath.Join(dir, vars["id"]))
+
+	screenshot, err := c.DB.GetScreenshotByID(context.Background(), id)
+	if !ok {
+		http.Error(w, fmt.Sprintf("provided screenshot not found. %v", err), http.StatusNotFound)
+		return
+	}
+
+	directory, ok := c.Directories[screenshot.DirectoryAlias]
+	if !ok {
+		http.Error(w, fmt.Sprintf("screenshot has invalid alias %q", screenshot.DirectoryAlias), http.StatusInternalServerError)
+		return
+	}
+
+	http.ServeFile(w, r, filepath.Join(directory, screenshot.Filename))
 }
 
 func (c *Controller) ServeScreenshot(w http.ResponseWriter, r *http.Request) {
@@ -181,37 +189,21 @@ type ServeSearchPayload struct {
 }
 
 func (c *Controller) ServeSearch(w http.ResponseWriter, r *http.Request) {
-	// var payload ServeSearchPayload
-	// json.NewDecoder(r.Body).Decode(&payload)
-	// defer r.Body.Close()
+	var payload ServeSearchPayload
+	json.NewDecoder(r.Body).Decode(&payload)
+	defer r.Body.Close()
 
-	// var q query.Query = bleve.NewMatchAllQuery()
-	// if payload.Term != "" {
-	// 	match := bleve.NewMatchQuery(payload.Term)
-	// 	match.Fuzziness = 1
-	// 	q = match
-	// }
+	screenshots, err := c.DB.SearchScreenshots(context.Background(), db.SearchScreenshotsParams{
+		Body: payload.Term,
+		Off:  int32(payload.From),
+		Lim:  int32(payload.Size),
+	})
+	if err != nil {
+		http.Error(w, fmt.Sprintf("searching screenshots: %v", err), http.StatusInternalServerError)
+		return
+	}
 
-	// request := bleve.NewSearchRequest(q)
-	// request.SortBy(payload.Sort)
-	// request.Size = payload.Size
-	// request.From = payload.From
-	// request.Fields = index.BaseSearchFields
-	// request.IncludeLocations = true
-
-	// if payload.Term != "" {
-	// 	highlight := bleve.NewHighlight()
-	// 	highlight.Fields = index.BaseHighlightFields
-	// 	request.Highlight = highlight
-	// }
-
-	// resp, err := c.Index.Search(request)
-	// if err != nil {
-	// 	http.Error(w, fmt.Sprintf("searching index: %v", err), 500)
-	// 	return
-	// }
-
-	// json.NewEncoder(w).Encode(resp)
+	json.NewEncoder(w).Encode(screenshots)
 }
 
 func (c *Controller) ServeWebSocket(w http.ResponseWriter, r *http.Request) {

@@ -43,6 +43,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("error creating database: %v", err)
 	}
+	defer dbConn.Close()
 
 	importr := &importer.Importer{
 		Running:               new(int32),
@@ -79,8 +80,8 @@ func main() {
 	r.Use(ctrl.WithCORS())
 	r.Use(ctrl.WithLogging())
 	r.HandleFunc("/api/authenticate", ctrl.ServeAuthenticate)
-	r.HandleFunc("/api/screenshot/{dir}/{id}/raw", ctrl.ServeScreenshotRaw)
-	r.HandleFunc("/api/screenshot/{dir}/{id}", ctrl.ServeScreenshot)
+	r.HandleFunc("/api/screenshot/{id}/raw", ctrl.ServeScreenshotRaw)
+	r.HandleFunc("/api/screenshot/{id}", ctrl.ServeScreenshot)
 	r.HandleFunc("/api/websocket", ctrl.ServeWebSocket)
 
 	frontendFS := http.FS(frontend.FS)

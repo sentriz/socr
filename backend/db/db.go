@@ -40,8 +40,8 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getScreenshotByPathStmt, err = db.PrepareContext(ctx, getScreenshotByPath); err != nil {
 		return nil, fmt.Errorf("error preparing query GetScreenshotByPath: %w", err)
 	}
-	if q.searchBlockStmt, err = db.PrepareContext(ctx, searchBlock); err != nil {
-		return nil, fmt.Errorf("error preparing query SearchBlock: %w", err)
+	if q.searchScreenshotsStmt, err = db.PrepareContext(ctx, searchScreenshots); err != nil {
+		return nil, fmt.Errorf("error preparing query SearchScreenshots: %w", err)
 	}
 	return &q, nil
 }
@@ -78,9 +78,9 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getScreenshotByPathStmt: %w", cerr)
 		}
 	}
-	if q.searchBlockStmt != nil {
-		if cerr := q.searchBlockStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing searchBlockStmt: %w", cerr)
+	if q.searchScreenshotsStmt != nil {
+		if cerr := q.searchScreenshotsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing searchScreenshotsStmt: %w", cerr)
 		}
 	}
 	return err
@@ -128,7 +128,7 @@ type Queries struct {
 	getAllScreenshotsStmt       *sql.Stmt
 	getScreenshotByIDStmt       *sql.Stmt
 	getScreenshotByPathStmt     *sql.Stmt
-	searchBlockStmt             *sql.Stmt
+	searchScreenshotsStmt       *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
@@ -141,6 +141,6 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getAllScreenshotsStmt:       q.getAllScreenshotsStmt,
 		getScreenshotByIDStmt:       q.getScreenshotByIDStmt,
 		getScreenshotByPathStmt:     q.getScreenshotByPathStmt,
-		searchBlockStmt:             q.searchBlockStmt,
+		searchScreenshotsStmt:       q.searchScreenshotsStmt,
 	}
 }

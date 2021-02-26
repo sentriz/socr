@@ -5,6 +5,7 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"go.senan.xyz/socr/backend/hasher"
@@ -216,24 +217,46 @@ func (q *Queries) GetScreenshotByPath(ctx context.Context, arg GetScreenshotByPa
 	return i, err
 }
 
-const searchBlock = `-- name: SearchBlock :many
+const searchScreenshots = `-- name: SearchScreenshots :many
 select
-    id, timestamp, directory_alias, filename, dim_width, dim_height, dominant_colour, blurhash
+    screenshots.id, screenshots.timestamp, screenshots.directory_alias, screenshots.filename, screenshots.dim_width, screenshots.dim_height, screenshots.dominant_colour, screenshots.blurhash,
+    json_agg(blocks) blocks
 from
     screenshots
-where ($1::text) % body
-limit 40
+    join blocks on blocks.screenshot_id = screenshots.id
+where ($1::text) % blocks.body
+group by
+    screenshots.id
+limit $3 offset $2
 `
 
-func (q *Queries) SearchBlock(ctx context.Context, body string) ([]Screenshot, error) {
-	rows, err := q.query(ctx, q.searchBlockStmt, searchBlock, body)
+type SearchScreenshotsParams struct {
+	Body string `json:"body"`
+	Off  int32  `json:"off"`
+	Lim  int32  `json:"lim"`
+}
+
+type SearchScreenshotsRow struct {
+	ID             hasher.ID       `json:"id"`
+	Timestamp      time.Time       `json:"timestamp"`
+	DirectoryAlias string          `json:"directory_alias"`
+	Filename       string          `json:"filename"`
+	DimWidth       int32           `json:"dim_width"`
+	DimHeight      int32           `json:"dim_height"`
+	DominantColour string          `json:"dominant_colour"`
+	Blurhash       string          `json:"blurhash"`
+	Blocks         json.RawMessage `json:"blocks"`
+}
+
+func (q *Queries) SearchScreenshots(ctx context.Context, arg SearchScreenshotsParams) ([]SearchScreenshotsRow, error) {
+	rows, err := q.query(ctx, q.searchScreenshotsStmt, searchScreenshots, arg.Body, arg.Off, arg.Lim)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Screenshot
+	var items []SearchScreenshotsRow
 	for rows.Next() {
-		var i Screenshot
+		var i SearchScreenshotsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Timestamp,
@@ -243,6 +266,7 @@ func (q *Queries) SearchBlock(ctx context.Context, body string) ([]Screenshot, e
 			&i.DimHeight,
 			&i.DominantColour,
 			&i.Blurhash,
+			&i.Blocks,
 		); err != nil {
 			return nil, err
 		}
