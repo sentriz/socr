@@ -4,38 +4,36 @@ package db
 
 import (
 	"time"
-
-	"go.senan.xyz/socr/backend/hasher"
 )
 
 type Block struct {
-	ID           int32     `json:"id"`
-	ScreenshotID hasher.ID `json:"screenshot_id"`
-	Index        int16     `json:"index"`
-	MinX         int16     `json:"min_x"`
-	MinY         int16     `json:"min_y"`
-	MaxX         int16     `json:"max_x"`
-	MaxY         int16     `json:"max_y"`
-	Body         string    `json:"body"`
+	ID           int32
+	ScreenshotID int64
+	Index        int16
+	MinX         int16
+	MinY         int16
+	MaxX         int16
+	MaxY         int16
+	Body         string
 }
 
 type Screenshot struct {
-	ID             hasher.ID `json:"id"`
-	Timestamp      time.Time `json:"timestamp"`
-	DirectoryAlias string    `json:"directory_alias"`
-	Filename       string    `json:"filename"`
-	DimWidth       int32     `json:"dim_width"`
-	DimHeight      int32     `json:"dim_height"`
-	DominantColour string    `json:"dominant_colour"`
-	Blurhash       string    `json:"blurhash"`
+	ID             int64
+	Timestamp      time.Time
+	DirectoryAlias string
+	Filename       string
+	DimWidth       int32
+	DimHeight      int32
+	DominantColour string
+	Blurhash       string
 }
 
 type Tag struct {
-	ID   int32  `json:"id"`
-	Name string `json:"name"`
+	ID   int32
+	Name string
 }
 
 type TagScreenshot struct {
-	TagID        int64 `json:"tag_id"`
-	ScreenshotID int64 `json:"screenshot_id"`
+	TagID        int64
+	ScreenshotID int64
 }

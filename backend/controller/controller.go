@@ -3,7 +3,6 @@ package controller
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -14,6 +13,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"go.senan.xyz/socr/backend/controller/auth"
+	"go.senan.xyz/socr/backend/controller/resp"
 	"go.senan.xyz/socr/backend/db"
 	"go.senan.xyz/socr/backend/hasher"
 	"go.senan.xyz/socr/backend/imagery"
@@ -63,31 +63,27 @@ func (c *Controller) EmitUpdatesScreenshot() error {
 }
 
 func (c *Controller) ServePing(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode(struct {
-		Status string `json:"status"`
-	}{
-		Status: "ok",
-	})
+	resp.Write(w, resp.Status{Status: "ok"})
 }
 
 func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(32 << 20)
 	infile, _, err := r.FormFile("i")
 	if err != nil {
-		http.Error(w, fmt.Sprintf("read form: %v", err), 500)
+		resp.Error(w, 500, "read form: %v", err)
 		return
 	}
 	defer infile.Close()
 
 	raw, err := ioutil.ReadAll(infile)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("read form bytes: %v", err), 500)
+		resp.Error(w, 500, "read form bytes: %v", err)
 		return
 	}
 
 	hash, err := hasher.Hash(raw)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("hash screenshot: %v", err), 500)
+		resp.Error(w, 500, "hash screenshot: %v", err)
 		return
 	}
 
@@ -99,11 +95,7 @@ func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	json.NewEncoder(w).Encode(struct {
-		ID hasher.ID `json:"id"`
-	}{
-		ID: hash,
-	})
+	resp.Write(w, resp.ID{ID: hash})
 }
 
 func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
@@ -117,18 +109,11 @@ func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
 func (c *Controller) ServeAbout(w http.ResponseWriter, r *http.Request) {
 	screenshotsCount, err := c.DB.CountDirectoriesByAlias(context.Background())
 	if err != nil {
-		http.Error(w, fmt.Sprintf("counting directories by alias: %v", err), 500)
+		resp.Error(w, 500, "counting directories by alias: %v", err)
 		return
 	}
 
-	json.NewEncoder(w).Encode(struct {
-		Version          string                          `json:"version"`
-		APIKey           string                          `json:"api_key"`
-		SocketClients    int                             `json:"socket_clients"`
-		ImportPath       string                          `json:"import_path"`
-		ScreenshotsPath  string                          `json:"screenshots_path"`
-		ScreenshotsCount []db.CountDirectoriesByAliasRow `json:"screenshots_indexed"`
-	}{
+	resp.Write(w, resp.About{
 		Version:          "development",
 		APIKey:           c.APIKey,
 		SocketClients:    len(c.SocketClientsSettings),
@@ -140,25 +125,25 @@ func (c *Controller) ServeScreenshotRaw(w http.ResponseWriter, r *http.Request) 
 	vars := mux.Vars(r)
 	strID, ok := vars["id"]
 	if !ok {
-		http.Error(w, "please provide an `id` parameter", http.StatusBadRequest)
+		resp.Error(w, http.StatusBadRequest, "please provide an `id` parameter")
 		return
 	}
 
 	id, err := hasher.Parse(strID)
 	if !ok {
-		http.Error(w, fmt.Sprintf("couldn't parse provided id. %v", err), http.StatusBadRequest)
+		resp.Error(w, http.StatusBadRequest, "couldn't parse provided id. %v", err)
 		return
 	}
 
 	screenshot, err := c.DB.GetScreenshotByID(context.Background(), id)
 	if !ok {
-		http.Error(w, fmt.Sprintf("provided screenshot not found. %v", err), http.StatusNotFound)
+		resp.Error(w, http.StatusBadRequest, "provided screenshot not found. %v")
 		return
 	}
 
 	directory, ok := c.Directories[screenshot.DirectoryAlias]
 	if !ok {
-		http.Error(w, fmt.Sprintf("screenshot has invalid alias %q", screenshot.DirectoryAlias), http.StatusInternalServerError)
+		resp.Error(w, 500, "screenshot has invalid alias %q", screenshot.DirectoryAlias)
 		return
 	}
 
@@ -174,7 +159,7 @@ func (c *Controller) ServeScreenshot(w http.ResponseWriter, r *http.Request) {
 
 	// resp, err := c.Index.Search(request)
 	// if err != nil {
-	// 	http.Error(w, fmt.Sprintf("searching index: %v", err), 500)
+	// 	resp.Error(w, fmt.Sprintf("searching index: %v", err), 500)
 	// 	return
 	// }
 
@@ -199,11 +184,11 @@ func (c *Controller) ServeSearch(w http.ResponseWriter, r *http.Request) {
 		Lim:  int32(payload.Size),
 	})
 	if err != nil {
-		http.Error(w, fmt.Sprintf("searching screenshots: %v", err), http.StatusInternalServerError)
+		resp.Error(w, 500, "searching screenshots: %v", err)
 		return
 	}
 
-	json.NewEncoder(w).Encode(screenshots)
+	resp.Write(w, screenshots)
 }
 
 func (c *Controller) ServeWebSocket(w http.ResponseWriter, r *http.Request) {
@@ -242,35 +227,30 @@ func (c *Controller) ServeAuthenticate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		http.Error(w, fmt.Sprintf("parse payload: %v", err), http.StatusBadRequest)
+		resp.Error(w, http.StatusBadRequest, "parse payload: %v", err)
 		return
 	}
 
 	hasUsername := (payload.Username == c.LoginUsername)
 	hasPassword := (payload.Password == c.LoginPassword)
 	if !(hasUsername && hasPassword) {
-		http.Error(w, "unauthorised", http.StatusUnauthorized)
+		resp.Error(w, http.StatusUnauthorized, "unauthorised")
 		return
 	}
 
 	token, err := auth.TokenNew(c.HMACSecret)
 	if err != nil {
-		http.Error(w, "generating token", 500)
+		resp.Error(w, 500, "generating token")
 		return
 	}
 
-	json.NewEncoder(w).Encode(struct {
-		Token string `json:"token"`
-	}{
+	resp.Write(w, resp.Token{
 		Token: token,
 	})
 }
 
 func (c *Controller) ServeImportStatus(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode(struct {
-		// ImportStatus
-		// Running bool `json:"running"`
-	}{
+	resp.Write(w, resp.ImportStatus{
 		// ImportStatus: c.ImportStatus,
 		// Running:      c.ImportIsRunning(),
 	})

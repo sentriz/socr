@@ -5,10 +5,7 @@ package db
 
 import (
 	"context"
-	"encoding/json"
 	"time"
-
-	"go.senan.xyz/socr/backend/hasher"
 )
 
 const countDirectoriesByAlias = `-- name: CountDirectoriesByAlias :many
@@ -22,8 +19,8 @@ group by
 `
 
 type CountDirectoriesByAliasRow struct {
-	DirectoryAlias string `json:"directory_alias"`
-	Count          int64  `json:"count"`
+	DirectoryAlias string
+	Count          int64
 }
 
 func (q *Queries) CountDirectoriesByAlias(ctx context.Context) ([]CountDirectoriesByAliasRow, error) {
@@ -55,13 +52,13 @@ insert into blocks (screenshot_id, index, min_x, min_y, max_x, max_y, body)
 `
 
 type CreateBlockParams struct {
-	ScreenshotID hasher.ID `json:"screenshot_id"`
-	Index        int16     `json:"index"`
-	MinX         int16     `json:"min_x"`
-	MinY         int16     `json:"min_y"`
-	MaxX         int16     `json:"max_x"`
-	MaxY         int16     `json:"max_y"`
-	Body         string    `json:"body"`
+	ScreenshotID int64
+	Index        int16
+	MinX         int16
+	MinY         int16
+	MaxX         int16
+	MaxY         int16
+	Body         string
 }
 
 func (q *Queries) CreateBlock(ctx context.Context, arg CreateBlockParams) error {
@@ -85,14 +82,14 @@ returning
 `
 
 type CreateScreenshotParams struct {
-	ID             hasher.ID `json:"id"`
-	Timestamp      time.Time `json:"timestamp"`
-	DirectoryAlias string    `json:"directory_alias"`
-	Filename       string    `json:"filename"`
-	DimWidth       int32     `json:"dim_width"`
-	DimHeight      int32     `json:"dim_height"`
-	DominantColour string    `json:"dominant_colour"`
-	Blurhash       string    `json:"blurhash"`
+	ID             int64
+	Timestamp      time.Time
+	DirectoryAlias string
+	Filename       string
+	DimWidth       int32
+	DimHeight      int32
+	DominantColour string
+	Blurhash       string
 }
 
 func (q *Queries) CreateScreenshot(ctx context.Context, arg CreateScreenshotParams) (Screenshot, error) {
@@ -169,7 +166,7 @@ where
 limit 1
 `
 
-func (q *Queries) GetScreenshotByID(ctx context.Context, id hasher.ID) (Screenshot, error) {
+func (q *Queries) GetScreenshotByID(ctx context.Context, id int64) (Screenshot, error) {
 	row := q.queryRow(ctx, q.getScreenshotByIDStmt, getScreenshotByID, id)
 	var i Screenshot
 	err := row.Scan(
@@ -197,8 +194,8 @@ limit 1
 `
 
 type GetScreenshotByPathParams struct {
-	DirectoryAlias string `json:"directory_alias"`
-	Filename       string `json:"filename"`
+	DirectoryAlias string
+	Filename       string
 }
 
 func (q *Queries) GetScreenshotByPath(ctx context.Context, arg GetScreenshotByPathParams) (Screenshot, error) {
@@ -220,7 +217,7 @@ func (q *Queries) GetScreenshotByPath(ctx context.Context, arg GetScreenshotByPa
 const searchScreenshots = `-- name: SearchScreenshots :many
 select
     screenshots.id, screenshots.timestamp, screenshots.directory_alias, screenshots.filename, screenshots.dim_width, screenshots.dim_height, screenshots.dominant_colour, screenshots.blurhash,
-    json_agg(blocks) blocks
+    array_agg(blocks) blocks
 from
     screenshots
     join blocks on blocks.screenshot_id = screenshots.id
@@ -231,21 +228,21 @@ limit $3 offset $2
 `
 
 type SearchScreenshotsParams struct {
-	Body string `json:"body"`
-	Off  int32  `json:"off"`
-	Lim  int32  `json:"lim"`
+	Body string
+	Off  int32
+	Lim  int32
 }
 
 type SearchScreenshotsRow struct {
-	ID             hasher.ID       `json:"id"`
-	Timestamp      time.Time       `json:"timestamp"`
-	DirectoryAlias string          `json:"directory_alias"`
-	Filename       string          `json:"filename"`
-	DimWidth       int32           `json:"dim_width"`
-	DimHeight      int32           `json:"dim_height"`
-	DominantColour string          `json:"dominant_colour"`
-	Blurhash       string          `json:"blurhash"`
-	Blocks         json.RawMessage `json:"blocks"`
+	ID             int64
+	Timestamp      time.Time
+	DirectoryAlias string
+	Filename       string
+	DimWidth       int32
+	DimHeight      int32
+	DominantColour string
+	Blurhash       string
+	Blocks         interface{}
 }
 
 func (q *Queries) SearchScreenshots(ctx context.Context, arg SearchScreenshotsParams) ([]SearchScreenshotsRow, error) {

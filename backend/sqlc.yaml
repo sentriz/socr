@@ -5,13 +5,8 @@ packages:
     queries: "./sql/queries.pgsql"
     schema: "./sql/schema.pgsql"
     engine: "postgresql"
-    emit_json_tags: true
+    emit_json_tags: false
     emit_prepared_queries: true
     emit_interface: false
     emit_exact_table_names: false
     emit_empty_slices: false
-overrides:
-  - column: "screenshots.id"
-    go_type: "go.senan.xyz/socr/backend/hasher.ID"
-  - column: "blocks.screenshot_id"
-    go_type: "go.senan.xyz/socr/backend/hasher.ID"
