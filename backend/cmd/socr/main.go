@@ -14,7 +14,6 @@ import (
 
 	"go.senan.xyz/socr/backend/controller"
 	"go.senan.xyz/socr/backend/db"
-	"go.senan.xyz/socr/backend/hasher"
 	"go.senan.xyz/socr/backend/imagery"
 	"go.senan.xyz/socr/backend/importer"
 	"go.senan.xyz/socr/frontend"
@@ -65,7 +64,7 @@ func main() {
 			},
 		},
 		SocketClientsSettings:   map[*websocket.Conn]struct{}{},
-		SocketClientsScreenshot: map[hasher.ID]map[*websocket.Conn]struct{}{},
+		SocketClientsScreenshot: map[int64]map[*websocket.Conn]struct{}{},
 		HMACSecret:              confHMACSecret,
 		LoginUsername:           confLoginUsername,
 		LoginPassword:           confLoginPassword,

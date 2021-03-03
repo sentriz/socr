@@ -26,7 +26,7 @@ type Controller struct {
 	SocketUpgrader          websocket.Upgrader
 	Importer                *importer.Importer
 	SocketClientsSettings   map[*websocket.Conn]struct{}
-	SocketClientsScreenshot map[hasher.ID]map[*websocket.Conn]struct{}
+	SocketClientsScreenshot map[int64]map[*websocket.Conn]struct{}
 	HMACSecret              string
 	LoginUsername           string
 	LoginPassword           string
@@ -90,12 +90,12 @@ func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		timestamp := time.Now()
 		if _, err := c.Importer.ImportScreenshot(hash, timestamp, "", "", raw); err != nil {
-			log.Printf("error processing screenshot %s: %v", hash, err)
+			log.Printf("error processing screenshot %d: %v", hash, err)
 			return
 		}
 	}()
 
-	resp.Write(w, resp.ID{ID: hash})
+	resp.Write(w, resp.ID{ID: hasher.ID(hash)})
 }
 
 func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {

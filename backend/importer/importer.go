@@ -39,10 +39,10 @@ type StatusError struct {
 }
 
 type Status struct {
-	Errors         []StatusError `json:"errors,omitempty"`
-	LastID         hasher.ID     `json:"last_id,omitempty"`
-	CountProcessed int           `json:"count_processed"`
-	CountTotal     int           `json:"count_total"`
+	Errors         []StatusError
+	LastID         int64
+	CountProcessed int
+	CountTotal     int
 }
 
 func (s *Status) AddError(err error) {
@@ -151,7 +151,7 @@ func (i *Importer) scanDirectoryItem(item *collected) (*db.Screenshot, error) {
 	return imported, nil
 }
 
-func (i *Importer) ImportScreenshot(id hasher.ID, timestamp time.Time, dirAlias, fileName string, raw []byte) (*db.Screenshot, error) {
+func (i *Importer) ImportScreenshot(id int64, timestamp time.Time, dirAlias, fileName string, raw []byte) (*db.Screenshot, error) {
 	mime := http.DetectContentType(raw)
 	format, ok := imagery.FormatFromMIME(mime)
 	if !ok {
@@ -181,7 +181,7 @@ func (i *Importer) ImportScreenshot(id hasher.ID, timestamp time.Time, dirAlias,
 	return screenshot, nil
 }
 
-func (i *Importer) importScreenshotProperties(id hasher.ID, image image.Image, timestamp time.Time, dirAlias, filename string) (*db.Screenshot, error) {
+func (i *Importer) importScreenshotProperties(id int64, image image.Image, timestamp time.Time, dirAlias, filename string) (*db.Screenshot, error) {
 	_, propDominantColour := imagery.DominantColour(image)
 
 	propBlurhash, err := imagery.CalculateBlurhash(image)
@@ -209,7 +209,7 @@ func (i *Importer) importScreenshotProperties(id hasher.ID, image image.Image, t
 	return &screenshot, nil
 }
 
-func (i *Importer) importScreenshotBlocks(screenshotID hasher.ID, image image.Image) error {
+func (i *Importer) importScreenshotBlocks(screenshotID int64, image image.Image) error {
 	imageGrey := imagery.GreyScale(image)
 	imageBig := imagery.Resize(imageGrey, imagery.ScaleFactor)
 	imageEncoded := &bytes.Buffer{}

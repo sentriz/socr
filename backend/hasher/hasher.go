@@ -26,11 +26,11 @@ func (id ID) MarshalText() ([]byte, error) {
 	return []byte(id.String()), nil
 }
 
-func Hash(bytes []byte) (ID, error) {
-	return ID(xxhash.Sum64(bytes)), nil
+func Hash(bytes []byte) (int64, error) {
+	return int64(xxhash.Sum64(bytes)), nil
 }
 
-func Parse(hash string) (ID, error) {
+func Parse(hash string) (int64, error) {
 	id, err := strconv.ParseInt(hash, base, bits)
-	return ID(id), err
+	return int64(id), err
 }
