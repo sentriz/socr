@@ -34,8 +34,8 @@ type Importer struct {
 }
 
 type StatusError struct {
-	Time  time.Time `json:"time"`
-	Error string    `json:"error"`
+	Time  time.Time
+	Error string
 }
 
 type Status struct {

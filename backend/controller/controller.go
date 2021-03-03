@@ -136,8 +136,8 @@ func (c *Controller) ServeScreenshotRaw(w http.ResponseWriter, r *http.Request) 
 	}
 
 	screenshot, err := c.DB.GetScreenshotByID(context.Background(), id)
-	if !ok {
-		resp.Error(w, http.StatusBadRequest, "provided screenshot not found. %v")
+	if err != nil {
+		resp.Error(w, http.StatusBadRequest, "provided screenshot not found. %v", err)
 		return
 	}
 

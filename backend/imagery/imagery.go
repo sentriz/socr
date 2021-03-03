@@ -114,22 +114,3 @@ func DominantColour(img image.Image) (color.Color, string) {
 	hex := dominantcolor.Hex(colour)
 	return colour, hex
 }
-
-type Dimensions struct {
-	Height int `json:"height"`
-	Width  int `json:"width"`
-}
-
-type Block struct {
-	// [x1 y1 x2 y2]
-	Position [4]int `json:"position"`
-	Text     string `json:"text"`
-}
-
-type Properties struct {
-	Format         Format     `json:"-"`
-	Dimensions     Dimensions `json:"dimensions"`
-	DominantColour string     `json:"dominant_colour"`
-	Blurhash       string     `json:"blurhash"`
-	Blocks         []*Block   `json:"blocks"`
-}
