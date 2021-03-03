@@ -53,31 +53,30 @@ type Screenshot struct {
 // TODO: try use db.Screenshot here instead of db.SearchScreenshotsRow
 // perhaps https://github.com/kyleconroy/sqlc/issues/755 ?
 // perhaps https://github.com/kyleconroy/sqlc/issues/643 ?
-func NewScreenshot(screenshot db.SearchScreenshotsRow) (*Screenshot, error) {
-	r := &Screenshot{
-		ID:             hasher.ID(screenshot.ID),
-		Timestamp:      screenshot.Timestamp,
-		DirectoryAlias: screenshot.DirectoryAlias,
-		Filename:       screenshot.Filename,
-		DimWidth:       int(screenshot.DimWidth),
-		DimHeight:      int(screenshot.DimHeight),
-		DominantColour: screenshot.DominantColour,
-		Blurhash:       screenshot.Blurhash,
-		Blocks:         []*Block{},
+func NewScreenshot(dbScreenshot db.SearchScreenshotsRow) (*Screenshot, error) {
+	screenshot := &Screenshot{
+		ID:             hasher.ID(dbScreenshot.ID),
+		Timestamp:      dbScreenshot.Timestamp,
+		DirectoryAlias: dbScreenshot.DirectoryAlias,
+		Filename:       dbScreenshot.Filename,
+		DimWidth:       int(dbScreenshot.DimWidth),
+		DimHeight:      int(dbScreenshot.DimHeight),
+		DominantColour: dbScreenshot.DominantColour,
+		Blurhash:       dbScreenshot.Blurhash,
 	}
 
-	var rawBlocks []*db.Block
-	if err := json.Unmarshal(screenshot.Blocks, &rawBlocks); err != nil {
+	var dbBlocks []*db.Block
+	if err := json.Unmarshal(dbScreenshot.Blocks, &dbBlocks); err != nil {
 		return nil, fmt.Errorf("unmarshal blocks: %w", err)
 	}
-	for _, rawBlock := range rawBlocks {
-		block, err := NewBlock(rawBlock)
+	for _, dbBlock := range dbBlocks {
+		block, err := NewBlock(dbBlock)
 		if err != nil {
 			return nil, fmt.Errorf("convert block: %w", err)
 		}
-		r.Blocks = append(r.Blocks, block)
+		screenshot.Blocks = append(screenshot.Blocks, block)
 	}
-	return r, nil
+	return screenshot, nil
 }
 
 type Block struct {
@@ -86,17 +85,29 @@ type Block struct {
 	Body     string `json:"body"`
 }
 
-func NewBlock(block *db.Block) (*Block, error) {
+func NewBlock(dbBlock *db.Block) (*Block, error) {
 	return &Block{
-		Index: int(block.Index),
+		Index: int(dbBlock.Index),
 		Position: [...]int{
-			int(block.MinX),
-			int(block.MinY),
-			int(block.MaxX),
-			int(block.MaxY),
+			int(dbBlock.MinX),
+			int(dbBlock.MinY),
+			int(dbBlock.MaxX),
+			int(dbBlock.MaxY),
 		},
-		Body: block.Body,
+		Body: dbBlock.Body,
 	}, nil
+}
+
+func NewScreenshots(dbScreenshots []db.SearchScreenshotsRow) ([]*Screenshot, error) {
+	var screenshots []*Screenshot
+	for _, dbScreenshot := range dbScreenshots {
+		screenshot, err := NewScreenshot(dbScreenshot)
+		if err != nil {
+			return nil, fmt.Errorf("convert screenshot: %w", err)
+		}
+		screenshots = append(screenshots, screenshot)
+	}
+	return screenshots, nil
 }
 
 type About struct {

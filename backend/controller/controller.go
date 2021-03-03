@@ -188,7 +188,12 @@ func (c *Controller) ServeSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp.Write(w, screenshots)
+	response, err := resp.NewScreenshots(screenshots)
+	if err != nil {
+		resp.Error(w, 500, "create response: %v", err)
+	}
+
+	resp.Write(w, response)
 }
 
 func (c *Controller) ServeWebSocket(w http.ResponseWriter, r *http.Request) {
