@@ -45,7 +45,7 @@ group by
 -- name: SearchScreenshots :many
 select
     screenshots.*,
-    array_agg(blocks) blocks
+    json_agg(blocks) blocks
 from
     screenshots
     join blocks on blocks.screenshot_id = screenshots.id

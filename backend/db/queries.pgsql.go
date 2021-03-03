@@ -5,6 +5,7 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 )
 
@@ -217,7 +218,7 @@ func (q *Queries) GetScreenshotByPath(ctx context.Context, arg GetScreenshotByPa
 const searchScreenshots = `-- name: SearchScreenshots :many
 select
     screenshots.id, screenshots.timestamp, screenshots.directory_alias, screenshots.filename, screenshots.dim_width, screenshots.dim_height, screenshots.dominant_colour, screenshots.blurhash,
-    array_agg(blocks) blocks
+    json_agg(blocks) blocks
 from
     screenshots
     join blocks on blocks.screenshot_id = screenshots.id
@@ -242,7 +243,7 @@ type SearchScreenshotsRow struct {
 	DimHeight      int32
 	DominantColour string
 	Blurhash       string
-	Blocks         interface{}
+	Blocks         json.RawMessage
 }
 
 func (q *Queries) SearchScreenshots(ctx context.Context, arg SearchScreenshotsParams) ([]SearchScreenshotsRow, error) {
