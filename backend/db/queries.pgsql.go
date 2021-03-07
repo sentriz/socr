@@ -58,6 +58,7 @@ type Querier interface {
 	// CountDirectoriesByAliasScan scans the result of an executed CountDirectoriesByAliasBatch query.
 	CountDirectoriesByAliasScan(results pgx.BatchResults) ([]CountDirectoriesByAliasRow, error)
 
+	// https://www.postgresql.org/docs/current/pgtrgm.html
 	SearchScreenshots(ctx context.Context, params SearchScreenshotsParams) ([]SearchScreenshotsRow, error)
 	// SearchScreenshotsBatch enqueues a SearchScreenshots query into batch to be executed
 	// later by the batch.

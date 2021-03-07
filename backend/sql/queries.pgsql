@@ -42,6 +42,7 @@ from
 group by
     directory_alias;
 
+-- https://www.postgresql.org/docs/current/pgtrgm.html
 -- name: SearchScreenshots :many
 select
     screenshots.*,
