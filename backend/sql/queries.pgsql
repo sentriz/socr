@@ -4,8 +4,8 @@ select
 from
     screenshots
 where
-    directory_alias = pggen.arg ('DirectoryAlias')
-    and filename = pggen.arg ('Filename')
+    directory_alias = pggen.arg ('directory_alias')
+    and filename = pggen.arg ('filename')
 limit 1;
 
 -- name: GetScreenshotByID :one
@@ -14,12 +14,12 @@ select
 from
     screenshots
 where
-    id = pggen.arg ('ID')
+    id = pggen.arg ('id')
 limit 1;
 
 -- name: CreateScreenshot :one
 insert into screenshots (id, timestamp, directory_alias, filename, dim_width, dim_height, dominant_colour, blurhash)
-    values (pggen.arg ('Id'), pggen.arg ('Timestamp'), pggen.arg ('DirectoryAlias'), pggen.arg ('Filename'), pggen.arg ('DimWidth'), pggen.arg ('DimHeight'), pggen.arg ('DominantColour'), pggen.arg ('Blurhash'))
+    values (pggen.arg ('id'), pggen.arg ('timestamp'), pggen.arg ('directory_alias'), pggen.arg ('filename'), pggen.arg ('dim_width'), pggen.arg ('dim_height'), pggen.arg ('dominant_colour'), pggen.arg ('blurhash'))
 returning
     *;
 
@@ -31,7 +31,7 @@ from
 
 -- name: CreateBlock :exec
 insert into blocks (screenshot_id, index, min_x, min_y, max_x, max_y, body)
-        values (pggen.arg ('ScreenshotId'), pggen.arg ('Index'), pggen.arg ('MinX'), pggen.arg ('MinY'), pggen.arg ('MaxX'), pggen.arg ('MaxY'), pggen.arg ('Body'));
+        values (pggen.arg ('screenshot_id'), pggen.arg ('index'), pggen.arg ('min_x'), pggen.arg ('min_y'), pggen.arg ('max_x'), pggen.arg ('max_y'), pggen.arg ('body'));
 
 -- name: CountDirectoriesByAlias :many
 select
@@ -46,15 +46,15 @@ group by
 select
     screenshots.*,
     array_agg(blocks order by blocks.index) as blocks,
-    avg(similarity (blocks.body, pggen.arg ('Body'))) as similarity
+    avg(similarity (blocks.body, pggen.arg ('body'))) as similarity
 from
     screenshots
     join blocks on blocks.screenshot_id = screenshots.id
 where
-    blocks.body % pggen.arg ('Body')
+    blocks.body % pggen.arg ('body')
 group by
     screenshots.id
 order by
     similarity desc
-limit pggen.arg ('Limit') offset pggen.arg ('Offset');
+limit pggen.arg ('limit') offset pggen.arg ('offset');
 
