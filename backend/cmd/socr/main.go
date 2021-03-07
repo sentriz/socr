@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -9,8 +10,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-
-	_ "github.com/lib/pq"
 
 	"go.senan.xyz/socr/backend/controller"
 	"go.senan.xyz/socr/backend/db"
@@ -38,11 +37,11 @@ func main() {
 		log.Printf("using directory alias %q path %q", alias, path)
 	}
 
-	dbConn, err := db.NewConn(confDBDSN)
+	dbConn, err := db.New(confDBDSN)
 	if err != nil {
 		log.Fatalf("error creating database: %v", err)
 	}
-	defer dbConn.Close()
+	defer dbConn.Close(context.Background())
 
 	importr := &importer.Importer{
 		Running:               new(int32),
@@ -50,7 +49,7 @@ func main() {
 		DirectoriesUploadsKey: uploadsKey,
 		DB:                    dbConn,
 		UpdatesScan:           make(chan struct{}),
-		UpdatesScreenshot:     make(chan *db.Screenshot),
+		UpdatesScreenshot:     make(chan int64),
 	}
 
 	ctrl := &controller.Controller{

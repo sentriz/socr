@@ -17,6 +17,8 @@ import (
 	"time"
 
 	"github.com/araddon/dateparse"
+	"github.com/jackc/pgtype"
+	"github.com/jackc/pgx/v4"
 
 	"go.senan.xyz/socr/backend/db"
 	"go.senan.xyz/socr/backend/hasher"
@@ -25,12 +27,12 @@ import (
 
 type Importer struct {
 	Running               *int32
-	DB                    *db.Conn
+	DB                    *db.DB
 	Directories           map[string]string
 	DirectoriesUploadsKey string
 	Status                Status
 	UpdatesScan           chan struct{}
-	UpdatesScreenshot     chan *db.Screenshot
+	UpdatesScreenshot     chan int64
 }
 
 type StatusError struct {
@@ -72,17 +74,14 @@ func (i *Importer) ScanDirectories() error {
 	log.Printf("starting import at %v", start)
 
 	for _, item := range directoryItems {
-		screenshot, err := i.scanDirectoryItem(item)
-		if screenshot == nil {
-			continue
-		}
+		id, err := i.scanDirectoryItem(item)
 		if err != nil {
 			i.Status.AddError(err)
 			i.UpdatesScan <- struct{}{}
 			continue
 		}
 
-		i.Status.LastID = screenshot.ID
+		i.Status.LastID = id
 		i.Status.CountProcessed++
 		i.Status.CountTotal = len(directoryItems)
 		i.UpdatesScan <- struct{}{}
@@ -117,16 +116,13 @@ func (i *Importer) collectDirectoryItems() ([]*collected, error) {
 	return items, nil
 }
 
-func (i *Importer) scanDirectoryItem(item *collected) (*db.Screenshot, error) {
-	screenshot, err := i.DB.GetScreenshotByPath(context.Background(), db.GetScreenshotByPathParams{
-		DirectoryAlias: item.dirAlias,
-		Filename:       item.fileName,
-	})
+func (i *Importer) scanDirectoryItem(item *collected) (int64, error) {
+	row, err := i.DB.GetScreenshotByPath(context.Background(), item.dirAlias, item.fileName)
 	switch {
 	case err != nil && !errors.Is(err, sql.ErrNoRows):
-		return nil, fmt.Errorf("getting screenshot by path: %v", err)
+		return 0, fmt.Errorf("getting screenshot by path: %v", err)
 	case err == nil:
-		return &screenshot, nil
+		return row.ID.Int, nil
 	}
 
 	log.Printf("importing new screenshot. alias %q, filename %q", item.dirAlias, item.fileName)
@@ -134,65 +130,62 @@ func (i *Importer) scanDirectoryItem(item *collected) (*db.Screenshot, error) {
 	filePath := filepath.Join(item.dir, item.fileName)
 	bytes, err := os.ReadFile(filePath)
 	if err != nil {
-		return nil, fmt.Errorf("reading from disk: %v", err)
+		return 0, fmt.Errorf("reading from disk: %v", err)
 	}
 
-	hash, err := hasher.Hash(bytes)
+	id, err := hasher.Hash(bytes)
 	if err != nil {
-		return nil, fmt.Errorf("hashing screenshot: %v", err)
+		return 0, fmt.Errorf("hashing screenshot: %v", err)
 	}
 
 	timestamp := guessFileCreated(item.fileName, item.modTime)
-	imported, err := i.ImportScreenshot(hash, timestamp, item.dirAlias, item.fileName, bytes)
-	if err != nil {
-		return nil, fmt.Errorf("importing screenshot: %v", err)
+	if err := i.ImportScreenshot(id, timestamp, item.dirAlias, item.fileName, bytes); err != nil {
+		return 0, fmt.Errorf("importing screenshot: %v", err)
 	}
 
-	return imported, nil
+	return id, nil
 }
 
-func (i *Importer) ImportScreenshot(id int64, timestamp time.Time, dirAlias, fileName string, raw []byte) (*db.Screenshot, error) {
+func (i *Importer) ImportScreenshot(id int64, timestamp time.Time, dirAlias, fileName string, raw []byte) error {
 	mime := http.DetectContentType(raw)
 	format, ok := imagery.FormatFromMIME(mime)
 	if !ok {
-		return nil, fmt.Errorf("unrecognised format: %s", mime)
+		return fmt.Errorf("unrecognised format: %s", mime)
 	}
 
 	rawReader := bytes.NewReader(raw)
 	image, err := format.Decode(rawReader)
 	if err != nil {
-		return nil, fmt.Errorf("decoding: %s", mime)
+		return fmt.Errorf("decoding: %s", mime)
 	}
 
 	// insert to screenshots
-	screenshot, err := i.importScreenshotProperties(id, image, timestamp, dirAlias, fileName)
-	if err != nil {
-		return nil, fmt.Errorf("import screenshot props: %w", err)
+	if err := i.importScreenshotProperties(id, image, timestamp, dirAlias, fileName); err != nil {
+		return fmt.Errorf("import screenshot props: %w", err)
 	}
 
 	// insert to blocks
-	err = i.importScreenshotBlocks(id, image)
-	if err != nil {
-		return nil, fmt.Errorf("import screenshot props: %w", err)
+	if err := i.importScreenshotBlocks(id, image); err != nil {
+		return fmt.Errorf("import screenshot props: %w", err)
 	}
 
-	i.UpdatesScreenshot <- screenshot
+	i.UpdatesScreenshot <- id
 
-	return screenshot, nil
+	return nil
 }
 
-func (i *Importer) importScreenshotProperties(id int64, image image.Image, timestamp time.Time, dirAlias, filename string) (*db.Screenshot, error) {
+func (i *Importer) importScreenshotProperties(id int64, image image.Image, timestamp time.Time, dirAlias, filename string) error {
 	_, propDominantColour := imagery.DominantColour(image)
 
 	propBlurhash, err := imagery.CalculateBlurhash(image)
 	if err != nil {
-		return nil, fmt.Errorf("calculate blurhash: %w", err)
+		return fmt.Errorf("calculate blurhash: %w", err)
 	}
 
 	size := image.Bounds().Size()
 	screenshotArgs := db.CreateScreenshotParams{
-		ID:             id,
-		Timestamp:      timestamp,
+		ID:             int(id),
+		Timestamp:      pgtype.Timestamp{Time: timestamp},
 		DirectoryAlias: dirAlias,
 		Filename:       filename,
 		DimWidth:       int32(size.X),
@@ -201,12 +194,11 @@ func (i *Importer) importScreenshotProperties(id int64, image image.Image, times
 		Blurhash:       propBlurhash,
 	}
 
-	screenshot, err := i.DB.CreateScreenshot(context.Background(), screenshotArgs)
-	if err != nil {
-		return nil, fmt.Errorf("inserting screenshot: %w", err)
+	if _, err := i.DB.CreateScreenshot(context.Background(), screenshotArgs); err != nil {
+		return fmt.Errorf("inserting screenshot: %w", err)
 	}
 
-	return &screenshot, nil
+	return nil
 }
 
 func (i *Importer) importScreenshotBlocks(screenshotID int64, image image.Image) error {
@@ -222,16 +214,11 @@ func (i *Importer) importScreenshotBlocks(screenshotID int64, image image.Image)
 		return fmt.Errorf("extract image text: %w", err)
 	}
 
-	tx, err := i.DB.Conn.Begin()
-	if err != nil {
-		return fmt.Errorf("begin transaction: %w", err)
-	}
-
-	q := i.DB.WithTx(tx)
+	batch := &pgx.Batch{}
 	for idx, block := range blocks {
 		rect := imagery.ScaleDownRect(block.Box)
-		err := q.CreateBlock(context.Background(), db.CreateBlockParams{
-			ScreenshotID: screenshotID,
+		i.DB.CreateBlockBatch(batch, db.CreateBlockParams{
+			ScreenshotID: int(screenshotID),
 			Index:        int16(idx),
 			MinX:         int16(rect[0]),
 			MinY:         int16(rect[1]),
@@ -239,12 +226,10 @@ func (i *Importer) importScreenshotBlocks(screenshotID int64, image image.Image)
 			MaxY:         int16(rect[3]),
 			Body:         block.Word,
 		})
-		if err != nil {
-			return fmt.Errorf("inserting block: %w", err)
-		}
 	}
 
-	if err := tx.Commit(); err != nil {
+	results := i.DB.SendBatch(context.Background(), batch)
+	if err := results.Close(); err != nil {
 		return fmt.Errorf("end transaction: %w", err)
 	}
 

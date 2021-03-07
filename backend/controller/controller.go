@@ -21,7 +21,7 @@ import (
 )
 
 type Controller struct {
-	DB                      *db.Conn
+	DB                      *db.DB
 	Directories             map[string]string
 	SocketUpgrader          websocket.Upgrader
 	Importer                *importer.Importer
@@ -49,12 +49,12 @@ func (c *Controller) EmitUpdatesSettings() error {
 }
 
 func (c *Controller) EmitUpdatesScreenshot() error {
-	for screenshot := range c.Importer.UpdatesScreenshot {
-		for client := range c.SocketClientsScreenshot[screenshot.ID] {
+	for id := range c.Importer.UpdatesScreenshot {
+		for client := range c.SocketClientsScreenshot[id] {
 			if err := client.WriteMessage(websocket.TextMessage, []byte(nil)); err != nil {
 				log.Printf("error writing to socket client: %v", err)
 				client.Close()
-				delete(c.SocketClientsScreenshot[screenshot.ID], client)
+				delete(c.SocketClientsScreenshot[id], client)
 				continue
 			}
 		}
@@ -89,7 +89,7 @@ func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		timestamp := time.Now()
-		if _, err := c.Importer.ImportScreenshot(hash, timestamp, "", "", raw); err != nil {
+		if err := c.Importer.ImportScreenshot(hash, timestamp, "", "", raw); err != nil {
 			log.Printf("error processing screenshot %d: %v", hash, err)
 			return
 		}
@@ -135,19 +135,19 @@ func (c *Controller) ServeScreenshotRaw(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	screenshot, err := c.DB.GetScreenshotByID(context.Background(), id)
+	screenshot, err := c.DB.GetScreenshotByID(context.Background(), int(id))
 	if err != nil {
 		resp.Error(w, http.StatusBadRequest, "provided screenshot not found. %v", err)
 		return
 	}
 
-	directory, ok := c.Directories[screenshot.DirectoryAlias]
+	directory, ok := c.Directories[screenshot.DirectoryAlias.String]
 	if !ok {
 		resp.Error(w, 500, "screenshot has invalid alias %q", screenshot.DirectoryAlias)
 		return
 	}
 
-	http.ServeFile(w, r, filepath.Join(directory, screenshot.Filename))
+	http.ServeFile(w, r, filepath.Join(directory, screenshot.Filename.String))
 }
 
 func (c *Controller) ServeScreenshot(w http.ResponseWriter, r *http.Request) {
@@ -179,21 +179,16 @@ func (c *Controller) ServeSearch(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	screenshots, err := c.DB.SearchScreenshots(context.Background(), db.SearchScreenshotsParams{
-		Body: payload.Term,
-		Off:  int32(payload.From),
-		Lim:  int32(payload.Size),
+		Body:   payload.Term,
+		Offset: payload.From,
+		Limit:  payload.Size,
 	})
 	if err != nil {
 		resp.Error(w, 500, "searching screenshots: %v", err)
 		return
 	}
 
-	response, err := resp.NewScreenshots(screenshots)
-	if err != nil {
-		resp.Error(w, 500, "create response: %v", err)
-	}
-
-	resp.Write(w, response)
+	resp.Write(w, resp.NewScreenshots(screenshots))
 }
 
 func (c *Controller) ServeWebSocket(w http.ResponseWriter, r *http.Request) {

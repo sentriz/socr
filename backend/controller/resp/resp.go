@@ -38,6 +38,25 @@ type Status struct {
 	Status string `json:"status"`
 }
 
+type Block struct {
+	Index    int    `json:"index"`
+	Position [4]int `json:"position"`
+	Body     string `json:"body"`
+}
+
+func NewBlock(dbBlock *db.Blocks) *Block {
+	return &Block{
+		Index: int(dbBlock.Index.Int),
+		Position: [...]int{
+			int(dbBlock.MinX.Int),
+			int(dbBlock.MinY.Int),
+			int(dbBlock.MaxX.Int),
+			int(dbBlock.MaxY.Int),
+		},
+		Body: dbBlock.Body.String,
+	}
+}
+
 type Screenshot struct {
 	ID             hasher.ID `json:"id"`
 	Timestamp      time.Time `json:"timestamp"`
@@ -53,61 +72,41 @@ type Screenshot struct {
 // TODO: try use db.Screenshot here instead of db.SearchScreenshotsRow
 // perhaps https://github.com/kyleconroy/sqlc/issues/755 ?
 // perhaps https://github.com/kyleconroy/sqlc/issues/643 ?
-func NewScreenshot(dbScreenshot db.SearchScreenshotsRow) (*Screenshot, error) {
+func NewScreenshot(dbScreenshot db.SearchScreenshotsRow) *Screenshot {
 	screenshot := &Screenshot{
-		ID:             hasher.ID(dbScreenshot.ID),
-		Timestamp:      dbScreenshot.Timestamp,
-		DirectoryAlias: dbScreenshot.DirectoryAlias,
-		Filename:       dbScreenshot.Filename,
-		DimWidth:       int(dbScreenshot.DimWidth),
-		DimHeight:      int(dbScreenshot.DimHeight),
-		DominantColour: dbScreenshot.DominantColour,
-		Blurhash:       dbScreenshot.Blurhash,
+		ID:             hasher.ID(dbScreenshot.ID.Int),
+		Timestamp:      dbScreenshot.Timestamp.Time,
+		DirectoryAlias: dbScreenshot.DirectoryAlias.String,
+		Filename:       dbScreenshot.Filename.String,
+		DimWidth:       int(dbScreenshot.DimWidth.Int),
+		DimHeight:      int(dbScreenshot.DimHeight.Int),
+		DominantColour: dbScreenshot.DominantColour.String,
+		Blurhash:       dbScreenshot.Blurhash.String,
 	}
-
-	var dbBlocks []*db.Block
-	if err := json.Unmarshal(dbScreenshot.Blocks, &dbBlocks); err != nil {
-		return nil, fmt.Errorf("unmarshal blocks: %w", err)
+	for _, dbBlock := range dbScreenshot.Blocks {
+		screenshot.Blocks = append(screenshot.Blocks, NewBlock(&dbBlock))
 	}
-	for _, dbBlock := range dbBlocks {
-		block, err := NewBlock(dbBlock)
-		if err != nil {
-			return nil, fmt.Errorf("convert block: %w", err)
-		}
-		screenshot.Blocks = append(screenshot.Blocks, block)
-	}
-	return screenshot, nil
+	return screenshot
 }
 
-type Block struct {
-	Index    int    `json:"index"`
-	Position [4]int `json:"position"`
-	Body     string `json:"body"`
-}
-
-func NewBlock(dbBlock *db.Block) (*Block, error) {
-	return &Block{
-		Index: int(dbBlock.Index),
-		Position: [...]int{
-			int(dbBlock.MinX),
-			int(dbBlock.MinY),
-			int(dbBlock.MaxX),
-			int(dbBlock.MaxY),
-		},
-		Body: dbBlock.Body,
-	}, nil
-}
-
-func NewScreenshots(dbScreenshots []db.SearchScreenshotsRow) ([]*Screenshot, error) {
+func NewScreenshots(dbScreenshots []db.SearchScreenshotsRow) []*Screenshot {
 	var screenshots []*Screenshot
 	for _, dbScreenshot := range dbScreenshots {
-		screenshot, err := NewScreenshot(dbScreenshot)
-		if err != nil {
-			return nil, fmt.Errorf("convert screenshot: %w", err)
-		}
-		screenshots = append(screenshots, screenshot)
+		screenshots = append(screenshots, NewScreenshot(dbScreenshot))
 	}
-	return screenshots, nil
+	return screenshots
+}
+
+type ScreenshotCount struct {
+	DirectoryAlias string
+	Count          int
+}
+
+func NewScreenshotCount(dbScreenshotCount db.CountDirectoriesByAliasRow) *ScreenshotCount {
+	return &ScreenshotCount{
+		DirectoryAlias: dbScreenshotCount.DirectoryAlias.String,
+		Count:          int(dbScreenshotCount.Count.Int),
+	}
 }
 
 type About struct {

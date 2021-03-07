@@ -4,7 +4,7 @@ drop type if exists filetype;
 
 create table if not exists screenshots (
     id bigint primary key,
-    timestamp timestamp not null,
+    timestamp timestamptz not null,
     directory_alias text not null,
     filename text not null,
     dim_width int not null,
