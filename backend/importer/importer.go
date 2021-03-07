@@ -120,7 +120,7 @@ func (i *Importer) scanDirectoryItem(item *collected) (hasher.ID, error) {
 	row, err := i.DB.GetScreenshotByPath(context.Background(), item.dirAlias, item.fileName)
 	switch {
 	case err != nil && !errors.Is(err, sql.ErrNoRows):
-		return 0, fmt.Errorf("getting screenshot by path: %v", err)
+		return hasher.ID{}, fmt.Errorf("getting screenshot by path: %v", err)
 	case err == nil:
 		return row.ID, nil
 	}
@@ -130,17 +130,17 @@ func (i *Importer) scanDirectoryItem(item *collected) (hasher.ID, error) {
 	filePath := filepath.Join(item.dir, item.fileName)
 	bytes, err := os.ReadFile(filePath)
 	if err != nil {
-		return 0, fmt.Errorf("reading from disk: %v", err)
+		return hasher.ID{}, fmt.Errorf("reading from disk: %v", err)
 	}
 
 	id, err := hasher.Hash(bytes)
 	if err != nil {
-		return 0, fmt.Errorf("hashing screenshot: %v", err)
+		return hasher.ID{}, fmt.Errorf("hashing screenshot: %v", err)
 	}
 
 	timestamp := guessFileCreated(item.fileName, item.modTime)
 	if err := i.ImportScreenshot(id, timestamp, item.dirAlias, item.fileName, bytes); err != nil {
-		return 0, fmt.Errorf("importing screenshot: %v", err)
+		return hasher.ID{}, fmt.Errorf("importing screenshot: %v", err)
 	}
 
 	return id, nil
@@ -185,7 +185,7 @@ func (i *Importer) importScreenshotProperties(id hasher.ID, image image.Image, t
 	size := image.Bounds().Size()
 	screenshotArgs := db.CreateScreenshotParams{
 		ID:             id,
-		Timestamp:      pgtype.Timestamp{Time: timestamp},
+		Timestamp:      pgtype.Timestamptz{Time: timestamp},
 		DirectoryAlias: dirAlias,
 		Filename:       filename,
 		DimWidth:       int32(size.X),

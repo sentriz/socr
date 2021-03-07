@@ -63,7 +63,11 @@ func (c *Controller) EmitUpdatesScreenshot() error {
 }
 
 func (c *Controller) ServePing(w http.ResponseWriter, r *http.Request) {
-	resp.Write(w, resp.Status{Status: "ok"})
+	resp.Write(w, struct {
+		Status string `json:"status"`
+	}{
+		Status: "ok",
+	})
 }
 
 func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
@@ -95,7 +99,11 @@ func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	resp.Write(w, resp.ID{ID: hasher.ID(id)})
+	resp.Write(w, struct {
+		ID hasher.ID `json:"id"`
+	}{
+		ID: id,
+	})
 }
 
 func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
@@ -113,7 +121,14 @@ func (c *Controller) ServeAbout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp.Write(w, resp.About{
+	resp.Write(w, struct {
+		Version          string                          `json:"version"`
+		APIKey           string                          `json:"api_key"`
+		SocketClients    int                             `json:"socket_clients"`
+		ImportPath       string                          `json:"import_path"`
+		ScreenshotsPath  string                          `json:"screenshots_path"`
+		ScreenshotsCount []db.CountDirectoriesByAliasRow `json:"screenshots_indexed"`
+	}{
 		Version:          "development",
 		APIKey:           c.APIKey,
 		SocketClients:    len(c.SocketClientsSettings),
@@ -129,7 +144,7 @@ func (c *Controller) ServeScreenshotRaw(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	screenshot, err := c.DB.GetScreenshotByID(context.Background(), int(id))
+	screenshot, err := c.DB.GetScreenshotByID(context.Background(), id)
 	if err != nil {
 		resp.Error(w, http.StatusBadRequest, "provided screenshot not found. %v", err)
 		return
@@ -151,13 +166,13 @@ func (c *Controller) ServeScreenshot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	screenshot, err := c.DB.GetScreenshotByID(context.Background(), int(id))
+	screenshot, err := c.DB.GetScreenshotByID(context.Background(), id)
 	if err != nil {
 		resp.Error(w, http.StatusBadRequest, "looking up screenshot: %v", err)
 		return
 	}
 
-	json.NewEncoder(w).Encode(resp)
+	resp.Write(w, screenshot)
 }
 
 type ServeSearchPayload struct {
@@ -182,7 +197,7 @@ func (c *Controller) ServeSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp.Write(w, resp.NewScreenshots(screenshots))
+	resp.Write(w, screenshots)
 }
 
 func (c *Controller) ServeWebSocket(w http.ResponseWriter, r *http.Request) {
@@ -238,7 +253,9 @@ func (c *Controller) ServeAuthenticate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp.Write(w, resp.Token{
+	resp.Write(w, struct {
+		Token string `json:"token"`
+	}{
 		Token: token,
 	})
 }
