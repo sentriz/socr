@@ -32,19 +32,19 @@ type Importer struct {
 	DirectoriesUploadsKey string
 	Status                Status
 	UpdatesScan           chan struct{}
-	UpdatesScreenshot     chan int64
+	UpdatesScreenshot     chan hasher.ID
 }
 
 type StatusError struct {
-	Time  time.Time
-	Error string
+	Time  time.Time `json:"time"`
+	Error string    `json:"error"`
 }
 
 type Status struct {
-	Errors         []StatusError
-	LastID         int64
-	CountProcessed int
-	CountTotal     int
+	Errors         []StatusError `json:"errors"`
+	LastID         hasher.ID     `json:"last_id"`
+	CountProcessed int           `json:"count_processed"`
+	CountTotal     int           `json:"count_total"`
 }
 
 func (s *Status) AddError(err error) {
@@ -116,13 +116,13 @@ func (i *Importer) collectDirectoryItems() ([]*collected, error) {
 	return items, nil
 }
 
-func (i *Importer) scanDirectoryItem(item *collected) (int64, error) {
+func (i *Importer) scanDirectoryItem(item *collected) (hasher.ID, error) {
 	row, err := i.DB.GetScreenshotByPath(context.Background(), item.dirAlias, item.fileName)
 	switch {
 	case err != nil && !errors.Is(err, sql.ErrNoRows):
 		return 0, fmt.Errorf("getting screenshot by path: %v", err)
 	case err == nil:
-		return row.ID.Int, nil
+		return row.ID, nil
 	}
 
 	log.Printf("importing new screenshot. alias %q, filename %q", item.dirAlias, item.fileName)
@@ -146,7 +146,7 @@ func (i *Importer) scanDirectoryItem(item *collected) (int64, error) {
 	return id, nil
 }
 
-func (i *Importer) ImportScreenshot(id int64, timestamp time.Time, dirAlias, fileName string, raw []byte) error {
+func (i *Importer) ImportScreenshot(id hasher.ID, timestamp time.Time, dirAlias, fileName string, raw []byte) error {
 	mime := http.DetectContentType(raw)
 	format, ok := imagery.FormatFromMIME(mime)
 	if !ok {
@@ -174,7 +174,7 @@ func (i *Importer) ImportScreenshot(id int64, timestamp time.Time, dirAlias, fil
 	return nil
 }
 
-func (i *Importer) importScreenshotProperties(id int64, image image.Image, timestamp time.Time, dirAlias, filename string) error {
+func (i *Importer) importScreenshotProperties(id hasher.ID, image image.Image, timestamp time.Time, dirAlias, filename string) error {
 	_, propDominantColour := imagery.DominantColour(image)
 
 	propBlurhash, err := imagery.CalculateBlurhash(image)
@@ -184,7 +184,7 @@ func (i *Importer) importScreenshotProperties(id int64, image image.Image, times
 
 	size := image.Bounds().Size()
 	screenshotArgs := db.CreateScreenshotParams{
-		ID:             int(id),
+		ID:             id,
 		Timestamp:      pgtype.Timestamp{Time: timestamp},
 		DirectoryAlias: dirAlias,
 		Filename:       filename,
@@ -201,7 +201,7 @@ func (i *Importer) importScreenshotProperties(id int64, image image.Image, times
 	return nil
 }
 
-func (i *Importer) importScreenshotBlocks(screenshotID int64, image image.Image) error {
+func (i *Importer) importScreenshotBlocks(id hasher.ID, image image.Image) error {
 	imageGrey := imagery.GreyScale(image)
 	imageBig := imagery.Resize(imageGrey, imagery.ScaleFactor)
 	imageEncoded := &bytes.Buffer{}
@@ -218,7 +218,7 @@ func (i *Importer) importScreenshotBlocks(screenshotID int64, image image.Image)
 	for idx, block := range blocks {
 		rect := imagery.ScaleDownRect(block.Box)
 		i.DB.CreateBlockBatch(batch, db.CreateBlockParams{
-			ScreenshotID: int(screenshotID),
+			ScreenshotID: id,
 			Index:        int16(idx),
 			MinX:         int16(rect[0]),
 			MinY:         int16(rect[1]),

@@ -2,6 +2,7 @@ package hasher
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 
 	"github.com/cespare/xxhash"
@@ -12,7 +13,7 @@ const (
 	bits = 64
 )
 
-type ID int64
+type ID uint64
 
 func (id ID) String() string {
 	return strconv.FormatInt(int64(id), base)
@@ -26,11 +27,14 @@ func (id ID) MarshalText() ([]byte, error) {
 	return []byte(id.String()), nil
 }
 
-func Hash(bytes []byte) (int64, error) {
-	return int64(xxhash.Sum64(bytes)), nil
+func Hash(bytes []byte) (ID, error) {
+	return ID(xxhash.Sum64(bytes)), nil
 }
 
-func Parse(hash string) (int64, error) {
-	id, err := strconv.ParseInt(hash, base, bits)
-	return int64(id), err
+func Parse(hash string) (ID, error) {
+	if hash == "" {
+		return 0, fmt.Errorf("invalid hash")
+	}
+	i, err := strconv.ParseInt(hash, base, bits)
+	return ID(i), err
 }

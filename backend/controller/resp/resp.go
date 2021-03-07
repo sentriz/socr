@@ -123,7 +123,3 @@ type About struct {
 type Token struct {
 	Token string `json:"token"`
 }
-
-type ImportStatus struct {
-	Running bool `json:"running"`
-}

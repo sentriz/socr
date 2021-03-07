@@ -26,7 +26,7 @@ type Controller struct {
 	SocketUpgrader          websocket.Upgrader
 	Importer                *importer.Importer
 	SocketClientsSettings   map[*websocket.Conn]struct{}
-	SocketClientsScreenshot map[int64]map[*websocket.Conn]struct{}
+	SocketClientsScreenshot map[hasher.ID]map[*websocket.Conn]struct{}
 	HMACSecret              string
 	LoginUsername           string
 	LoginPassword           string
@@ -81,7 +81,7 @@ func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hash, err := hasher.Hash(raw)
+	id, err := hasher.Hash(raw)
 	if err != nil {
 		resp.Error(w, 500, "hash screenshot: %v", err)
 		return
@@ -89,13 +89,13 @@ func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		timestamp := time.Now()
-		if err := c.Importer.ImportScreenshot(hash, timestamp, "", "", raw); err != nil {
-			log.Printf("error processing screenshot %d: %v", hash, err)
+		if err := c.Importer.ImportScreenshot(id, timestamp, "", "", raw); err != nil {
+			log.Printf("error processing screenshot %d: %v", id, err)
 			return
 		}
 	}()
 
-	resp.Write(w, resp.ID{ID: hasher.ID(hash)})
+	resp.Write(w, resp.ID{ID: hasher.ID(id)})
 }
 
 func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
@@ -123,15 +123,9 @@ func (c *Controller) ServeAbout(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) ServeScreenshotRaw(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	strID, ok := vars["id"]
-	if !ok {
-		resp.Error(w, http.StatusBadRequest, "please provide an `id` parameter")
-		return
-	}
-
-	id, err := hasher.Parse(strID)
-	if !ok {
-		resp.Error(w, http.StatusBadRequest, "couldn't parse provided id. %v", err)
+	id, err := hasher.Parse(vars["id"])
+	if err != nil {
+		resp.Error(w, http.StatusBadRequest, "couldn't parse provided id: %v", err)
 		return
 	}
 
@@ -140,7 +134,6 @@ func (c *Controller) ServeScreenshotRaw(w http.ResponseWriter, r *http.Request) 
 		resp.Error(w, http.StatusBadRequest, "provided screenshot not found. %v", err)
 		return
 	}
-
 	directory, ok := c.Directories[screenshot.DirectoryAlias.String]
 	if !ok {
 		resp.Error(w, 500, "screenshot has invalid alias %q", screenshot.DirectoryAlias)
@@ -151,19 +144,20 @@ func (c *Controller) ServeScreenshotRaw(w http.ResponseWriter, r *http.Request) 
 }
 
 func (c *Controller) ServeScreenshot(w http.ResponseWriter, r *http.Request) {
-	// vars := mux.Vars(r)
+	vars := mux.Vars(r)
+	id, err := hasher.Parse(vars["id"])
+	if err != nil {
+		resp.Error(w, http.StatusBadRequest, "couldn't parse provided id: %v", err)
+		return
+	}
 
-	// query := bleve.NewDocIDQuery([]string{vars["id"]})
-	// request := bleve.NewSearchRequest(query)
-	// request.Fields = index.BaseSearchFields
+	screenshot, err := c.DB.GetScreenshotByID(context.Background(), int(id))
+	if err != nil {
+		resp.Error(w, http.StatusBadRequest, "looking up screenshot: %v", err)
+		return
+	}
 
-	// resp, err := c.Index.Search(request)
-	// if err != nil {
-	// 	resp.Error(w, fmt.Sprintf("searching index: %v", err), 500)
-	// 	return
-	// }
-
-	// json.NewEncoder(w).Encode(resp)
+	json.NewEncoder(w).Encode(resp)
 }
 
 type ServeSearchPayload struct {
@@ -250,8 +244,11 @@ func (c *Controller) ServeAuthenticate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) ServeImportStatus(w http.ResponseWriter, r *http.Request) {
-	resp.Write(w, resp.ImportStatus{
-		// ImportStatus: c.ImportStatus,
-		// Running:      c.ImportIsRunning(),
+	resp.Write(w, struct {
+		ImportStatus importer.Status `json:"status"`
+		Running      bool            `json:"running"`
+	}{
+		ImportStatus: c.Importer.Status,
+		Running:      c.Importer.IsRunning(),
 	})
 }
