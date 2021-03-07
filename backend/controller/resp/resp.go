@@ -67,6 +67,7 @@ type Screenshot struct {
 	DominantColour string    `json:"dominant_colour"`
 	Blurhash       string    `json:"blurhash"`
 	Blocks         []*Block  `json:"blocks"`
+	Similarity     float64   `json:"similarity"`
 }
 
 // TODO: try use db.Screenshot here instead of db.SearchScreenshotsRow
@@ -82,6 +83,7 @@ func NewScreenshot(dbScreenshot db.SearchScreenshotsRow) *Screenshot {
 		DimHeight:      int(dbScreenshot.DimHeight.Int),
 		DominantColour: dbScreenshot.DominantColour.String,
 		Blurhash:       dbScreenshot.Blurhash.String,
+		Similarity:     dbScreenshot.Similarity.Float,
 	}
 	for _, dbBlock := range dbScreenshot.Blocks {
 		screenshot.Blocks = append(screenshot.Blocks, NewBlock(&dbBlock))

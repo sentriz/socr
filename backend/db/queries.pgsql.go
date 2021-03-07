@@ -424,14 +424,17 @@ func (q *DBQuerier) CountDirectoriesByAliasScan(results pgx.BatchResults) ([]Cou
 
 const searchScreenshotsSQL = `select
     screenshots.*,
-    array_agg(blocks) as blocks
+    array_agg(blocks order by blocks.index) as blocks,
+    avg(similarity (blocks.body, $1)) as similarity
 from
     screenshots
     join blocks on blocks.screenshot_id = screenshots.id
 where
-    $1 % blocks.body
+    blocks.body % $1
 group by
     screenshots.id
+order by
+    similarity desc
 limit $2 offset $3;`
 
 type SearchScreenshotsParams struct {
@@ -450,6 +453,7 @@ type SearchScreenshotsRow struct {
 	DominantColour pgtype.Text      `json:"dominant_colour"`
 	Blurhash       pgtype.Text      `json:"blurhash"`
 	Blocks         []Blocks         `json:"blocks"`
+	Similarity     pgtype.Float8    `json:"similarity"`
 }
 
 // SearchScreenshots implements Querier.SearchScreenshots.
@@ -484,7 +488,7 @@ func (q *DBQuerier) SearchScreenshots(ctx context.Context, params SearchScreensh
 	})
 	for rows.Next() {
 		var item SearchScreenshotsRow
-		if err := rows.Scan(&item.ID, &item.Timestamp, &item.DirectoryAlias, &item.Filename, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash, blocksArray); err != nil {
+		if err := rows.Scan(&item.ID, &item.Timestamp, &item.DirectoryAlias, &item.Filename, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash, blocksArray, &item.Similarity); err != nil {
 			return nil, fmt.Errorf("scan SearchScreenshots row: %w", err)
 		}
 		blocksArray.AssignTo(&item.Blocks)
@@ -533,7 +537,7 @@ func (q *DBQuerier) SearchScreenshotsScan(results pgx.BatchResults) ([]SearchScr
 	})
 	for rows.Next() {
 		var item SearchScreenshotsRow
-		if err := rows.Scan(&item.ID, &item.Timestamp, &item.DirectoryAlias, &item.Filename, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash, blocksArray); err != nil {
+		if err := rows.Scan(&item.ID, &item.Timestamp, &item.DirectoryAlias, &item.Filename, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash, blocksArray, &item.Similarity); err != nil {
 			return nil, fmt.Errorf("scan SearchScreenshotsBatch row: %w", err)
 		}
 		blocksArray.AssignTo(&item.Blocks)

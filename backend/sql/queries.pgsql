@@ -45,13 +45,16 @@ group by
 -- name: SearchScreenshots :many
 select
     screenshots.*,
-    array_agg(blocks) as blocks
+    array_agg(blocks order by blocks.index) as blocks,
+    avg(similarity (blocks.body, pggen.arg ('Body'))) as similarity
 from
     screenshots
     join blocks on blocks.screenshot_id = screenshots.id
 where
-    pggen.arg ('Body') % blocks.body
+    blocks.body % pggen.arg ('Body')
 group by
     screenshots.id
+order by
+    similarity desc
 limit pggen.arg ('Limit') offset pggen.arg ('Offset');
 
