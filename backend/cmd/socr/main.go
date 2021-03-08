@@ -13,7 +13,6 @@ import (
 
 	"go.senan.xyz/socr/backend/controller"
 	"go.senan.xyz/socr/backend/db"
-	"go.senan.xyz/socr/backend/hasher"
 	"go.senan.xyz/socr/backend/imagery"
 	"go.senan.xyz/socr/backend/importer"
 	"go.senan.xyz/socr/frontend"
@@ -50,7 +49,7 @@ func main() {
 		DirectoriesUploadsKey: uploadsKey,
 		DB:                    dbConn,
 		UpdatesScan:           make(chan struct{}),
-		UpdatesScreenshot:     make(chan hasher.ID),
+		UpdatesScreenshot:     make(chan string),
 	}
 
 	ctrl := &controller.Controller{
@@ -64,7 +63,7 @@ func main() {
 			},
 		},
 		SocketClientsSettings:   map[*websocket.Conn]struct{}{},
-		SocketClientsScreenshot: map[hasher.ID]map[*websocket.Conn]struct{}{},
+		SocketClientsScreenshot: map[string]map[*websocket.Conn]struct{}{},
 		HMACSecret:              confHMACSecret,
 		LoginUsername:           confLoginUsername,
 		LoginPassword:           confLoginPassword,
@@ -79,8 +78,8 @@ func main() {
 	r.Use(ctrl.WithCORS())
 	r.Use(ctrl.WithLogging())
 	r.HandleFunc("/api/authenticate", ctrl.ServeAuthenticate)
-	r.HandleFunc("/api/screenshot/{id}/raw", ctrl.ServeScreenshotRaw)
-	r.HandleFunc("/api/screenshot/{id}", ctrl.ServeScreenshot)
+	r.HandleFunc("/api/screenshot/{hash}/raw", ctrl.ServeScreenshotRaw)
+	r.HandleFunc("/api/screenshot/{hash}", ctrl.ServeScreenshot)
 	r.HandleFunc("/api/websocket", ctrl.ServeWebSocket)
 
 	frontendFS := http.FS(frontend.FS)

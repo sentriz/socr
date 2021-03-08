@@ -17,9 +17,18 @@ where
     id = pggen.arg ('id')
 limit 1;
 
+-- name: GetScreenshotByHash :one
+select
+    *
+from
+    screenshots
+where
+    hash = pggen.arg ('hash')
+limit 1;
+
 -- name: CreateScreenshot :one
-insert into screenshots (id, timestamp, directory_alias, filename, dim_width, dim_height, dominant_colour, blurhash)
-    values (pggen.arg ('id'), pggen.arg ('timestamp'), pggen.arg ('directory_alias'), pggen.arg ('filename'), pggen.arg ('dim_width'), pggen.arg ('dim_height'), pggen.arg ('dominant_colour'), pggen.arg ('blurhash'))
+insert into screenshots (hash, timestamp, directory_alias, filename, dim_width, dim_height, dominant_colour, blurhash)
+    values (pggen.arg ('hash'), pggen.arg ('timestamp'), pggen.arg ('directory_alias'), pggen.arg ('filename'), pggen.arg ('dim_width'), pggen.arg ('dim_height'), pggen.arg ('dominant_colour'), pggen.arg ('blurhash'))
 returning
     *;
 

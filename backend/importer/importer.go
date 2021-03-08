@@ -3,7 +3,6 @@ package importer
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"image"
@@ -17,7 +16,6 @@ import (
 	"time"
 
 	"github.com/araddon/dateparse"
-	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 
 	"go.senan.xyz/socr/backend/db"
@@ -32,7 +30,7 @@ type Importer struct {
 	DirectoriesUploadsKey string
 	Status                Status
 	UpdatesScan           chan struct{}
-	UpdatesScreenshot     chan hasher.ID
+	UpdatesScreenshot     chan string
 }
 
 type StatusError struct {
@@ -42,7 +40,7 @@ type StatusError struct {
 
 type Status struct {
 	Errors         []StatusError `json:"errors"`
-	LastID         hasher.ID     `json:"last_id"`
+	LastHash       string        `json:"last_hash"`
 	CountProcessed int           `json:"count_processed"`
 	CountTotal     int           `json:"count_total"`
 }
@@ -74,14 +72,14 @@ func (i *Importer) ScanDirectories() error {
 	log.Printf("starting import at %v", start)
 
 	for _, item := range directoryItems {
-		id, err := i.scanDirectoryItem(item)
+		hash, err := i.scanDirectoryItem(item)
 		if err != nil {
 			i.Status.AddError(err)
 			i.UpdatesScan <- struct{}{}
 			continue
 		}
 
-		i.Status.LastID = id
+		i.Status.LastHash = hash
 		i.Status.CountProcessed++
 		i.Status.CountTotal = len(directoryItems)
 		i.UpdatesScan <- struct{}{}
@@ -116,13 +114,13 @@ func (i *Importer) collectDirectoryItems() ([]*collected, error) {
 	return items, nil
 }
 
-func (i *Importer) scanDirectoryItem(item *collected) (hasher.ID, error) {
+func (i *Importer) scanDirectoryItem(item *collected) (string, error) {
 	row, err := i.DB.GetScreenshotByPath(context.Background(), item.dirAlias, item.fileName)
 	switch {
-	case err != nil && !errors.Is(err, sql.ErrNoRows):
-		return hasher.ID{}, fmt.Errorf("getting screenshot by path: %v", err)
+	case err != nil && !errors.Is(err, pgx.ErrNoRows):
+		return "", fmt.Errorf("getting screenshot by path: %v", err)
 	case err == nil:
-		return row.ID, nil
+		return row.Hash, nil
 	}
 
 	log.Printf("importing new screenshot. alias %q, filename %q", item.dirAlias, item.fileName)
@@ -130,23 +128,19 @@ func (i *Importer) scanDirectoryItem(item *collected) (hasher.ID, error) {
 	filePath := filepath.Join(item.dir, item.fileName)
 	bytes, err := os.ReadFile(filePath)
 	if err != nil {
-		return hasher.ID{}, fmt.Errorf("reading from disk: %v", err)
+		return "", fmt.Errorf("reading from disk: %v", err)
 	}
 
-	id, err := hasher.Hash(bytes)
-	if err != nil {
-		return hasher.ID{}, fmt.Errorf("hashing screenshot: %v", err)
-	}
-
+	hash := hasher.Hash(bytes)
 	timestamp := guessFileCreated(item.fileName, item.modTime)
-	if err := i.ImportScreenshot(id, timestamp, item.dirAlias, item.fileName, bytes); err != nil {
-		return hasher.ID{}, fmt.Errorf("importing screenshot: %v", err)
+	if err := i.ImportScreenshot(hash, timestamp, item.dirAlias, item.fileName, bytes); err != nil {
+		return "", fmt.Errorf("importing screenshot: %v", err)
 	}
 
-	return id, nil
+	return hash, nil
 }
 
-func (i *Importer) ImportScreenshot(id hasher.ID, timestamp time.Time, dirAlias, fileName string, raw []byte) error {
+func (i *Importer) ImportScreenshot(hash string, timestamp time.Time, dirAlias, fileName string, raw []byte) error {
 	mime := http.DetectContentType(raw)
 	format, ok := imagery.FormatFromMIME(mime)
 	if !ok {
@@ -160,7 +154,8 @@ func (i *Importer) ImportScreenshot(id hasher.ID, timestamp time.Time, dirAlias,
 	}
 
 	// insert to screenshots
-	if err := i.importScreenshotProperties(id, image, timestamp, dirAlias, fileName); err != nil {
+	id, err := i.importScreenshotProperties(hash, image, timestamp, dirAlias, fileName)
+	if err != nil {
 		return fmt.Errorf("import screenshot props: %w", err)
 	}
 
@@ -169,39 +164,40 @@ func (i *Importer) ImportScreenshot(id hasher.ID, timestamp time.Time, dirAlias,
 		return fmt.Errorf("import screenshot props: %w", err)
 	}
 
-	i.UpdatesScreenshot <- id
+	i.UpdatesScreenshot <- hash
 
 	return nil
 }
 
-func (i *Importer) importScreenshotProperties(id hasher.ID, image image.Image, timestamp time.Time, dirAlias, filename string) error {
+func (i *Importer) importScreenshotProperties(hash string, image image.Image, timestamp time.Time, dirAlias, filename string) (int, error) {
 	_, propDominantColour := imagery.DominantColour(image)
 
 	propBlurhash, err := imagery.CalculateBlurhash(image)
 	if err != nil {
-		return fmt.Errorf("calculate blurhash: %w", err)
+		return 0, fmt.Errorf("calculate blurhash: %w", err)
 	}
 
 	size := image.Bounds().Size()
 	screenshotArgs := db.CreateScreenshotParams{
-		ID:             id,
-		Timestamp:      pgtype.Timestamptz{Time: timestamp},
+		Hash:           hash,
+		Timestamp:      timestamp,
 		DirectoryAlias: dirAlias,
 		Filename:       filename,
-		DimWidth:       int32(size.X),
-		DimHeight:      int32(size.Y),
+		DimWidth:       size.X,
+		DimHeight:      size.Y,
 		DominantColour: propDominantColour,
 		Blurhash:       propBlurhash,
 	}
 
-	if _, err := i.DB.CreateScreenshot(context.Background(), screenshotArgs); err != nil {
-		return fmt.Errorf("inserting screenshot: %w", err)
+	row, err := i.DB.CreateScreenshot(context.Background(), screenshotArgs)
+	if err != nil {
+		return 0, fmt.Errorf("inserting screenshot: %w", err)
 	}
 
-	return nil
+	return row.ID, nil
 }
 
-func (i *Importer) importScreenshotBlocks(id hasher.ID, image image.Image) error {
+func (i *Importer) importScreenshotBlocks(id int, image image.Image) error {
 	imageGrey := imagery.GreyScale(image)
 	imageBig := imagery.Resize(imageGrey, imagery.ScaleFactor)
 	imageEncoded := &bytes.Buffer{}
@@ -219,11 +215,11 @@ func (i *Importer) importScreenshotBlocks(id hasher.ID, image image.Image) error
 		rect := imagery.ScaleDownRect(block.Box)
 		i.DB.CreateBlockBatch(batch, db.CreateBlockParams{
 			ScreenshotID: id,
-			Index:        int16(idx),
-			MinX:         int16(rect[0]),
-			MinY:         int16(rect[1]),
-			MaxX:         int16(rect[2]),
-			MaxY:         int16(rect[3]),
+			Index:        idx,
+			MinX:         rect[0],
+			MinY:         rect[1],
+			MaxX:         rect[2],
+			MaxY:         rect[3],
 			Body:         block.Word,
 		})
 	}

@@ -8,7 +8,7 @@ import (
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
-	"go.senan.xyz/socr/backend/hasher"
+	"time"
 )
 
 // Querier is a typesafe Go interface backed by SQL queries.
@@ -24,12 +24,19 @@ type Querier interface {
 	// GetScreenshotByPathScan scans the result of an executed GetScreenshotByPathBatch query.
 	GetScreenshotByPathScan(results pgx.BatchResults) (GetScreenshotByPathRow, error)
 
-	GetScreenshotByID(ctx context.Context, id hasher.ID) (GetScreenshotByIDRow, error)
+	GetScreenshotByID(ctx context.Context, id int) (GetScreenshotByIDRow, error)
 	// GetScreenshotByIDBatch enqueues a GetScreenshotByID query into batch to be executed
 	// later by the batch.
-	GetScreenshotByIDBatch(batch *pgx.Batch, id hasher.ID)
+	GetScreenshotByIDBatch(batch *pgx.Batch, id int)
 	// GetScreenshotByIDScan scans the result of an executed GetScreenshotByIDBatch query.
 	GetScreenshotByIDScan(results pgx.BatchResults) (GetScreenshotByIDRow, error)
+
+	GetScreenshotByHash(ctx context.Context, hash string) (GetScreenshotByHashRow, error)
+	// GetScreenshotByHashBatch enqueues a GetScreenshotByHash query into batch to be executed
+	// later by the batch.
+	GetScreenshotByHashBatch(batch *pgx.Batch, hash string)
+	// GetScreenshotByHashScan scans the result of an executed GetScreenshotByHashBatch query.
+	GetScreenshotByHashScan(results pgx.BatchResults) (GetScreenshotByHashRow, error)
 
 	CreateScreenshot(ctx context.Context, params CreateScreenshotParams) (CreateScreenshotRow, error)
 	// CreateScreenshotBatch enqueues a CreateScreenshot query into batch to be executed
@@ -114,14 +121,14 @@ const ignoredOID = 0
 
 // Blocks represents the Postgres composite type "blocks".
 type Blocks struct {
-	ID           pgtype.Int4 `json:"id"`
-	ScreenshotID hasher.ID   `json:"screenshot_id"`
-	Index        pgtype.Int2 `json:"index"`
-	MinX         pgtype.Int2 `json:"min_x"`
-	MinY         pgtype.Int2 `json:"min_y"`
-	MaxX         pgtype.Int2 `json:"max_x"`
-	MaxY         pgtype.Int2 `json:"max_y"`
-	Body         pgtype.Text `json:"body"`
+	ID           int    `json:"id"`
+	ScreenshotID int    `json:"screenshot_id"`
+	Index        int    `json:"index"`
+	MinX         int    `json:"min_x"`
+	MinY         int    `json:"min_y"`
+	MaxX         int    `json:"max_x"`
+	MaxY         int    `json:"max_y"`
+	Body         string `json:"body"`
 }
 
 const getScreenshotByPathSQL = `select
@@ -134,21 +141,22 @@ where
 limit 1;`
 
 type GetScreenshotByPathRow struct {
-	ID             hasher.ID          `json:"id"`
-	Timestamp      pgtype.Timestamptz `json:"timestamp"`
-	DirectoryAlias pgtype.Text        `json:"directory_alias"`
-	Filename       pgtype.Text        `json:"filename"`
-	DimWidth       pgtype.Int4        `json:"dim_width"`
-	DimHeight      pgtype.Int4        `json:"dim_height"`
-	DominantColour pgtype.Text        `json:"dominant_colour"`
-	Blurhash       pgtype.Text        `json:"blurhash"`
+	ID             int       `json:"id"`
+	Hash           string    `json:"hash"`
+	Timestamp      time.Time `json:"timestamp"`
+	DirectoryAlias string    `json:"directory_alias"`
+	Filename       string    `json:"filename"`
+	DimWidth       int       `json:"dim_width"`
+	DimHeight      int       `json:"dim_height"`
+	DominantColour string    `json:"dominant_colour"`
+	Blurhash       string    `json:"blurhash"`
 }
 
 // GetScreenshotByPath implements Querier.GetScreenshotByPath.
 func (q *DBQuerier) GetScreenshotByPath(ctx context.Context, directoryAlias string, filename string) (GetScreenshotByPathRow, error) {
 	row := q.conn.QueryRow(ctx, getScreenshotByPathSQL, directoryAlias, filename)
 	var item GetScreenshotByPathRow
-	if err := row.Scan(&item.ID, &item.Timestamp, &item.DirectoryAlias, &item.Filename, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash); err != nil {
+	if err := row.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DirectoryAlias, &item.Filename, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash); err != nil {
 		return item, fmt.Errorf("query GetScreenshotByPath: %w", err)
 	}
 	return item, nil
@@ -163,7 +171,7 @@ func (q *DBQuerier) GetScreenshotByPathBatch(batch *pgx.Batch, directoryAlias st
 func (q *DBQuerier) GetScreenshotByPathScan(results pgx.BatchResults) (GetScreenshotByPathRow, error) {
 	row := results.QueryRow()
 	var item GetScreenshotByPathRow
-	if err := row.Scan(&item.ID, &item.Timestamp, &item.DirectoryAlias, &item.Filename, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash); err != nil {
+	if err := row.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DirectoryAlias, &item.Filename, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash); err != nil {
 		return item, fmt.Errorf("scan GetScreenshotByPathBatch row: %w", err)
 	}
 	return item, nil
@@ -178,28 +186,29 @@ where
 limit 1;`
 
 type GetScreenshotByIDRow struct {
-	ID             hasher.ID          `json:"id"`
-	Timestamp      pgtype.Timestamptz `json:"timestamp"`
-	DirectoryAlias pgtype.Text        `json:"directory_alias"`
-	Filename       pgtype.Text        `json:"filename"`
-	DimWidth       pgtype.Int4        `json:"dim_width"`
-	DimHeight      pgtype.Int4        `json:"dim_height"`
-	DominantColour pgtype.Text        `json:"dominant_colour"`
-	Blurhash       pgtype.Text        `json:"blurhash"`
+	ID             int       `json:"id"`
+	Hash           string    `json:"hash"`
+	Timestamp      time.Time `json:"timestamp"`
+	DirectoryAlias string    `json:"directory_alias"`
+	Filename       string    `json:"filename"`
+	DimWidth       int       `json:"dim_width"`
+	DimHeight      int       `json:"dim_height"`
+	DominantColour string    `json:"dominant_colour"`
+	Blurhash       string    `json:"blurhash"`
 }
 
 // GetScreenshotByID implements Querier.GetScreenshotByID.
-func (q *DBQuerier) GetScreenshotByID(ctx context.Context, id hasher.ID) (GetScreenshotByIDRow, error) {
+func (q *DBQuerier) GetScreenshotByID(ctx context.Context, id int) (GetScreenshotByIDRow, error) {
 	row := q.conn.QueryRow(ctx, getScreenshotByIDSQL, id)
 	var item GetScreenshotByIDRow
-	if err := row.Scan(&item.ID, &item.Timestamp, &item.DirectoryAlias, &item.Filename, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash); err != nil {
+	if err := row.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DirectoryAlias, &item.Filename, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash); err != nil {
 		return item, fmt.Errorf("query GetScreenshotByID: %w", err)
 	}
 	return item, nil
 }
 
 // GetScreenshotByIDBatch implements Querier.GetScreenshotByIDBatch.
-func (q *DBQuerier) GetScreenshotByIDBatch(batch *pgx.Batch, id hasher.ID) {
+func (q *DBQuerier) GetScreenshotByIDBatch(batch *pgx.Batch, id int) {
 	batch.Queue(getScreenshotByIDSQL, id)
 }
 
@@ -207,44 +216,90 @@ func (q *DBQuerier) GetScreenshotByIDBatch(batch *pgx.Batch, id hasher.ID) {
 func (q *DBQuerier) GetScreenshotByIDScan(results pgx.BatchResults) (GetScreenshotByIDRow, error) {
 	row := results.QueryRow()
 	var item GetScreenshotByIDRow
-	if err := row.Scan(&item.ID, &item.Timestamp, &item.DirectoryAlias, &item.Filename, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash); err != nil {
+	if err := row.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DirectoryAlias, &item.Filename, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash); err != nil {
 		return item, fmt.Errorf("scan GetScreenshotByIDBatch row: %w", err)
 	}
 	return item, nil
 }
 
-const createScreenshotSQL = `insert into screenshots (id, timestamp, directory_alias, filename, dim_width, dim_height, dominant_colour, blurhash)
+const getScreenshotByHashSQL = `select
+    *
+from
+    screenshots
+where
+    hash = $1
+limit 1;`
+
+type GetScreenshotByHashRow struct {
+	ID             int       `json:"id"`
+	Hash           string    `json:"hash"`
+	Timestamp      time.Time `json:"timestamp"`
+	DirectoryAlias string    `json:"directory_alias"`
+	Filename       string    `json:"filename"`
+	DimWidth       int       `json:"dim_width"`
+	DimHeight      int       `json:"dim_height"`
+	DominantColour string    `json:"dominant_colour"`
+	Blurhash       string    `json:"blurhash"`
+}
+
+// GetScreenshotByHash implements Querier.GetScreenshotByHash.
+func (q *DBQuerier) GetScreenshotByHash(ctx context.Context, hash string) (GetScreenshotByHashRow, error) {
+	row := q.conn.QueryRow(ctx, getScreenshotByHashSQL, hash)
+	var item GetScreenshotByHashRow
+	if err := row.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DirectoryAlias, &item.Filename, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash); err != nil {
+		return item, fmt.Errorf("query GetScreenshotByHash: %w", err)
+	}
+	return item, nil
+}
+
+// GetScreenshotByHashBatch implements Querier.GetScreenshotByHashBatch.
+func (q *DBQuerier) GetScreenshotByHashBatch(batch *pgx.Batch, hash string) {
+	batch.Queue(getScreenshotByHashSQL, hash)
+}
+
+// GetScreenshotByHashScan implements Querier.GetScreenshotByHashScan.
+func (q *DBQuerier) GetScreenshotByHashScan(results pgx.BatchResults) (GetScreenshotByHashRow, error) {
+	row := results.QueryRow()
+	var item GetScreenshotByHashRow
+	if err := row.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DirectoryAlias, &item.Filename, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash); err != nil {
+		return item, fmt.Errorf("scan GetScreenshotByHashBatch row: %w", err)
+	}
+	return item, nil
+}
+
+const createScreenshotSQL = `insert into screenshots (hash, timestamp, directory_alias, filename, dim_width, dim_height, dominant_colour, blurhash)
     values ($1, $2, $3, $4, $5, $6, $7, $8)
 returning
     *;`
 
 type CreateScreenshotParams struct {
-	ID             hasher.ID
-	Timestamp      pgtype.Timestamptz
+	Hash           string
+	Timestamp      time.Time
 	DirectoryAlias string
 	Filename       string
-	DimWidth       int32
-	DimHeight      int32
+	DimWidth       int
+	DimHeight      int
 	DominantColour string
 	Blurhash       string
 }
 
 type CreateScreenshotRow struct {
-	ID             hasher.ID          `json:"id"`
-	Timestamp      pgtype.Timestamptz `json:"timestamp"`
-	DirectoryAlias string             `json:"directory_alias"`
-	Filename       string             `json:"filename"`
-	DimWidth       int32              `json:"dim_width"`
-	DimHeight      int32              `json:"dim_height"`
-	DominantColour string             `json:"dominant_colour"`
-	Blurhash       string             `json:"blurhash"`
+	ID             int       `json:"id"`
+	Hash           string    `json:"hash"`
+	Timestamp      time.Time `json:"timestamp"`
+	DirectoryAlias string    `json:"directory_alias"`
+	Filename       string    `json:"filename"`
+	DimWidth       int       `json:"dim_width"`
+	DimHeight      int       `json:"dim_height"`
+	DominantColour string    `json:"dominant_colour"`
+	Blurhash       string    `json:"blurhash"`
 }
 
 // CreateScreenshot implements Querier.CreateScreenshot.
 func (q *DBQuerier) CreateScreenshot(ctx context.Context, params CreateScreenshotParams) (CreateScreenshotRow, error) {
-	row := q.conn.QueryRow(ctx, createScreenshotSQL, params.ID, params.Timestamp, params.DirectoryAlias, params.Filename, params.DimWidth, params.DimHeight, params.DominantColour, params.Blurhash)
+	row := q.conn.QueryRow(ctx, createScreenshotSQL, params.Hash, params.Timestamp, params.DirectoryAlias, params.Filename, params.DimWidth, params.DimHeight, params.DominantColour, params.Blurhash)
 	var item CreateScreenshotRow
-	if err := row.Scan(&item.ID, &item.Timestamp, &item.DirectoryAlias, &item.Filename, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash); err != nil {
+	if err := row.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DirectoryAlias, &item.Filename, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash); err != nil {
 		return item, fmt.Errorf("query CreateScreenshot: %w", err)
 	}
 	return item, nil
@@ -252,14 +307,14 @@ func (q *DBQuerier) CreateScreenshot(ctx context.Context, params CreateScreensho
 
 // CreateScreenshotBatch implements Querier.CreateScreenshotBatch.
 func (q *DBQuerier) CreateScreenshotBatch(batch *pgx.Batch, params CreateScreenshotParams) {
-	batch.Queue(createScreenshotSQL, params.ID, params.Timestamp, params.DirectoryAlias, params.Filename, params.DimWidth, params.DimHeight, params.DominantColour, params.Blurhash)
+	batch.Queue(createScreenshotSQL, params.Hash, params.Timestamp, params.DirectoryAlias, params.Filename, params.DimWidth, params.DimHeight, params.DominantColour, params.Blurhash)
 }
 
 // CreateScreenshotScan implements Querier.CreateScreenshotScan.
 func (q *DBQuerier) CreateScreenshotScan(results pgx.BatchResults) (CreateScreenshotRow, error) {
 	row := results.QueryRow()
 	var item CreateScreenshotRow
-	if err := row.Scan(&item.ID, &item.Timestamp, &item.DirectoryAlias, &item.Filename, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash); err != nil {
+	if err := row.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DirectoryAlias, &item.Filename, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash); err != nil {
 		return item, fmt.Errorf("scan CreateScreenshotBatch row: %w", err)
 	}
 	return item, nil
@@ -271,14 +326,15 @@ from
     screenshots;`
 
 type GetAllScreenshotsRow struct {
-	ID             hasher.ID          `json:"id"`
-	Timestamp      pgtype.Timestamptz `json:"timestamp"`
-	DirectoryAlias pgtype.Text        `json:"directory_alias"`
-	Filename       pgtype.Text        `json:"filename"`
-	DimWidth       pgtype.Int4        `json:"dim_width"`
-	DimHeight      pgtype.Int4        `json:"dim_height"`
-	DominantColour pgtype.Text        `json:"dominant_colour"`
-	Blurhash       pgtype.Text        `json:"blurhash"`
+	ID             int       `json:"id"`
+	Hash           string    `json:"hash"`
+	Timestamp      time.Time `json:"timestamp"`
+	DirectoryAlias string    `json:"directory_alias"`
+	Filename       string    `json:"filename"`
+	DimWidth       int       `json:"dim_width"`
+	DimHeight      int       `json:"dim_height"`
+	DominantColour string    `json:"dominant_colour"`
+	Blurhash       string    `json:"blurhash"`
 }
 
 // GetAllScreenshots implements Querier.GetAllScreenshots.
@@ -291,7 +347,7 @@ func (q *DBQuerier) GetAllScreenshots(ctx context.Context) ([]GetAllScreenshotsR
 	items := []GetAllScreenshotsRow{}
 	for rows.Next() {
 		var item GetAllScreenshotsRow
-		if err := rows.Scan(&item.ID, &item.Timestamp, &item.DirectoryAlias, &item.Filename, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash); err != nil {
+		if err := rows.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DirectoryAlias, &item.Filename, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash); err != nil {
 			return nil, fmt.Errorf("scan GetAllScreenshots row: %w", err)
 		}
 		items = append(items, item)
@@ -317,7 +373,7 @@ func (q *DBQuerier) GetAllScreenshotsScan(results pgx.BatchResults) ([]GetAllScr
 	items := []GetAllScreenshotsRow{}
 	for rows.Next() {
 		var item GetAllScreenshotsRow
-		if err := rows.Scan(&item.ID, &item.Timestamp, &item.DirectoryAlias, &item.Filename, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash); err != nil {
+		if err := rows.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DirectoryAlias, &item.Filename, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash); err != nil {
 			return nil, fmt.Errorf("scan GetAllScreenshotsBatch row: %w", err)
 		}
 		items = append(items, item)
@@ -332,12 +388,12 @@ const createBlockSQL = `insert into blocks (screenshot_id, index, min_x, min_y, 
         values ($1, $2, $3, $4, $5, $6, $7);`
 
 type CreateBlockParams struct {
-	ScreenshotID hasher.ID
-	Index        int16
-	MinX         int16
-	MinY         int16
-	MaxX         int16
-	MaxY         int16
+	ScreenshotID int
+	Index        int
+	MinX         int
+	MinY         int
+	MaxX         int
+	MaxY         int
 	Body         string
 }
 
@@ -373,8 +429,8 @@ group by
     directory_alias;`
 
 type CountDirectoriesByAliasRow struct {
-	DirectoryAlias pgtype.Text `json:"directory_alias"`
-	Count          pgtype.Int8 `json:"count"`
+	DirectoryAlias string `json:"directory_alias"`
+	Count          int    `json:"count"`
 }
 
 // CountDirectoriesByAlias implements Querier.CountDirectoriesByAlias.
@@ -446,16 +502,17 @@ type SearchScreenshotsParams struct {
 }
 
 type SearchScreenshotsRow struct {
-	ID             hasher.ID          `json:"id"`
-	Timestamp      pgtype.Timestamptz `json:"timestamp"`
-	DirectoryAlias pgtype.Text        `json:"directory_alias"`
-	Filename       pgtype.Text        `json:"filename"`
-	DimWidth       pgtype.Int4        `json:"dim_width"`
-	DimHeight      pgtype.Int4        `json:"dim_height"`
-	DominantColour pgtype.Text        `json:"dominant_colour"`
-	Blurhash       pgtype.Text        `json:"blurhash"`
-	Blocks         []Blocks           `json:"blocks"`
-	Similarity     pgtype.Float8      `json:"similarity"`
+	ID             int       `json:"id"`
+	Hash           string    `json:"hash"`
+	Timestamp      time.Time `json:"timestamp"`
+	DirectoryAlias string    `json:"directory_alias"`
+	Filename       string    `json:"filename"`
+	DimWidth       int       `json:"dim_width"`
+	DimHeight      int       `json:"dim_height"`
+	DominantColour string    `json:"dominant_colour"`
+	Blurhash       string    `json:"blurhash"`
+	Blocks         []Blocks  `json:"blocks"`
+	Similarity     float64   `json:"similarity"`
 }
 
 // SearchScreenshots implements Querier.SearchScreenshots.
@@ -477,7 +534,7 @@ func (q *DBQuerier) SearchScreenshots(ctx context.Context, params SearchScreensh
 		{Name: "Body", OID: ignoredOID},
 	}, []pgtype.ValueTranscoder{
 		&pgtype.Int4{},
-		&hasher.ID{},
+		&pgtype.Int4{},
 		&pgtype.Int2{},
 		&pgtype.Int2{},
 		&pgtype.Int2{},
@@ -490,7 +547,7 @@ func (q *DBQuerier) SearchScreenshots(ctx context.Context, params SearchScreensh
 	})
 	for rows.Next() {
 		var item SearchScreenshotsRow
-		if err := rows.Scan(&item.ID, &item.Timestamp, &item.DirectoryAlias, &item.Filename, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash, blocksArray, &item.Similarity); err != nil {
+		if err := rows.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DirectoryAlias, &item.Filename, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash, blocksArray, &item.Similarity); err != nil {
 			return nil, fmt.Errorf("scan SearchScreenshots row: %w", err)
 		}
 		blocksArray.AssignTo(&item.Blocks)
@@ -526,7 +583,7 @@ func (q *DBQuerier) SearchScreenshotsScan(results pgx.BatchResults) ([]SearchScr
 		{Name: "Body", OID: ignoredOID},
 	}, []pgtype.ValueTranscoder{
 		&pgtype.Int4{},
-		&hasher.ID{},
+		&pgtype.Int4{},
 		&pgtype.Int2{},
 		&pgtype.Int2{},
 		&pgtype.Int2{},
@@ -539,7 +596,7 @@ func (q *DBQuerier) SearchScreenshotsScan(results pgx.BatchResults) ([]SearchScr
 	})
 	for rows.Next() {
 		var item SearchScreenshotsRow
-		if err := rows.Scan(&item.ID, &item.Timestamp, &item.DirectoryAlias, &item.Filename, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash, blocksArray, &item.Similarity); err != nil {
+		if err := rows.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DirectoryAlias, &item.Filename, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash, blocksArray, &item.Similarity); err != nil {
 			return nil, fmt.Errorf("scan SearchScreenshotsBatch row: %w", err)
 		}
 		blocksArray.AssignTo(&item.Blocks)
