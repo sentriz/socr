@@ -10,8 +10,8 @@
         :key="i"
         :x="b.min_x"
         :y="b.min_y"
-        :height="b.max_x - b.min_x"
-        :width="b.max_y - b.min_y"
+        :width="b.max_x - b.min_x"
+        :height="b.max_y - b.min_y"
       />
     </svg>
   </div>
