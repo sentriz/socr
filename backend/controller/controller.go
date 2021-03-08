@@ -142,7 +142,7 @@ func (c *Controller) ServeScreenshotRaw(w http.ResponseWriter, r *http.Request) 
 	vars := mux.Vars(r)
 	row, err := c.DB.GetScreenshotPathByHash(context.Background(), vars["hash"])
 	if err != nil {
-		resp.Error(w, http.StatusBadRequest, "provided screenshot not found. %v", err)
+		resp.Error(w, http.StatusBadRequest, "requested screenshot not found: %v", err)
 		return
 	}
 	directory, ok := c.Directories[row.DirectoryAlias]
@@ -157,7 +157,7 @@ func (c *Controller) ServeScreenshot(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	screenshot, err := c.DB.GetScreenshotByHash(context.Background(), vars["hash"])
 	if err != nil {
-		resp.Error(w, http.StatusBadRequest, "provided screenshot not found. %v", err)
+		resp.Error(w, http.StatusBadRequest, "requested screenshot not found: %v", err)
 		return
 	}
 	resp.Write(w, screenshot)
