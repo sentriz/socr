@@ -14,12 +14,21 @@ export const tokenSet = (token: string) => localStorage.setItem(tokenKey, token)
 export const tokenGet = () => localStorage.getItem(tokenKey) || undefined;
 export const tokenHas = () => !!localStorage.getItem(tokenKey);
 
-export type Error = string
-export type Response<T> = Promise<[T?, Error?]>
+export interface Error {
+  error: string
+}
+
+export interface Success<T> {
+  result: T
+}
+
+export type Reponse<T> = Promise<Success<T> | Error>
+
+export const isError = <T>(r: Success<T> | Error): r is Error =>
+  (r as Error).error !== undefined
 
 type ReqMethod = 'get' | 'post' | 'put'
-
-const req = async <T>(method: ReqMethod, url: string, body?: object): Response<T> => {
+const req = async <P, R>(method: ReqMethod, url: string, body?: P): Reponse<R> => {
   const token = tokenGet();
 
   const response = await fetch(url, {
@@ -34,35 +43,41 @@ const req = async <T>(method: ReqMethod, url: string, body?: object): Response<T
     router.push(({ name: "login" }))
   }
 
-  if (!response?.ok) {
-    const error = response.statusText.toLowerCase()
-    return [undefined, error]
-  }
-
-  const responseJSON = await response.json();
-  return [responseJSON, undefined]
+  const json = await response.json();
+  return json
 };
 
+export interface PayloadSearch {
+  term: string
+  size: number
+  from: number
+}
+
 export const reqSearch = (body: PayloadSearch) =>
-  req<ResponseSearch<Screenshot>>("post", urlSearch, body);
+  req<PayloadSearch, Search>("post", urlSearch, body);
+
+export interface PayloadAuthenticate {
+  username: string
+  password: string
+}
 
 export const reqAuthenticate = (body: PayloadAuthenticate) =>
-  req<ResponseAuthenticate>("put", urlAuthenticate, body);
+  req<PayloadAuthenticate, Authenticate>("put", urlAuthenticate, body);
 
 export const reqStartImport = () =>
-  req<ResponseStartImport>("post", urlStartImport);
+  req<{}, StartImport>("post", urlStartImport);
 
 export const reqScreenshot = (id: string) =>
-  req<ResponseSearch<Screenshot>>("get", `${urlScreenshot}/${id}`);
+  req<{}, Screenshot>("get", `${urlScreenshot}/${id}`);
 
 export const reqAbout = () =>
-  req<ResponseAbout>("get", urlAbout);
+  req<{}, About>("get", urlAbout);
 
 export const reqImportStatus = () =>
-  req<ResponseImportStatus>("get", urlImportStatus);
+  req<{}, ImportStatus>("get", urlImportStatus);
 
 export const reqPing = () =>
-  req<{}>("get", urlPing); req<{}>("get", urlPing);
+  req<{}, {}>("get", urlPing); 
 
 const socketGuesses: { [key: string]: string } = {
   "https:": "wss:",
@@ -74,7 +89,7 @@ const socketHost = window.location.host;
 
 interface SocketParams {
   want_settings?: 0 | 1,
-  want_screenshot_id?: string,
+  want_screenshot_hash?: string,
   token?: string,
 }
 
@@ -85,101 +100,41 @@ export const newSocket = (params: SocketParams) => {
   return new WebSocket(`${socketProtocol}//${socketHost}${urlSocket}?${paramsEnc}`);
 };
 
-export interface PayloadSearch {
-  term: string
-  query?: Query
-  size: number
-  from: number
-  highlight?: {
-    style: {}
-    fields: Field[]
-  }
-  fields?: string[]
-  facets?: {}
-  explain?: boolean
-  sort: string[]
-  includeLocations?: boolean
-  search_after?: {}
-  search_before?: {}
-}
-
-export interface PayloadAuthenticate {
-  username: string
-  password: string
-}
-
-export interface Status {
-  total: number
-  failed: number
-  successful: number
-}
-
-export interface Query {
-  boost?: {}
-  match_all?: {}
-}
-
 export interface Block {
-  pos: number;
-  start: number;
-  end: number;
-  array_positions: number[];
+  id: number
+  screenshot_id: number
+  index: number
+  min_x: number
+  min_y: number
+  max_x: number
+  max_y: number
+  body: string
 }
 
-type Locations = { [key in Field]?: { [q: string]: Block[] } }
-type Fragments = { [key in Field]?: string[] }
-
-export enum Field {
-  TIMESTAMP = "timestamp",
-  TAGS = "tags",
-  BLOCKS_TEXT = "blocks.text",
-  BLOCKS_POSITION = "blocks.position",
-  SIZE_HEIGHT = "dimensions.height",
-  SIZE_WIDTH = "dimensions.width",
-  DOMINANT_COLOUR = "dominant_colour",
-};
-
-export type FieldSort = `-${Field}` | `${Field}`
-
-export interface ScreenshotFields {
-  [Field.BLOCKS_POSITION]: number[]
-  [Field.BLOCKS_TEXT]: string | string[]
-  [Field.SIZE_HEIGHT]: number
-  [Field.SIZE_WIDTH]: number
-  [Field.DOMINANT_COLOUR]: string
-  [Field.TAGS]: string
-  [Field.TIMESTAMP]: Date
+export interface Screenshot {
+  id: number
+  hash: string
+  timestamp: any
+  dim_width: number
+  dim_height: number
+  dominant_colour: string
+  blurhash: string
+  blocks: Block[]
 }
 
-export interface Hit<T, Sort> {
-  index: string
-  id: string
-  score: number
-  sort: Sort[]
-  fields: T
-  locations?: Locations
-  fragments?: Fragments
+export interface Similarity {
+  similarity: number
 }
 
-export type Screenshot = Hit<ScreenshotFields, FieldSort>
+export type Search = (Screenshot & Similarity)[]
 
-export interface ResponseSearch<T> {
-  status: Status
-  request: PayloadSearch
-  hits: T[]
-  total_hits: number
-  max_score: number
-  took: number
-  facets?: {}
-}
-
-export interface ResponseAuthenticate {
+export interface Authenticate {
   token: string
 }
 
-export interface ResponseStartImport { }
+export interface StartImport { }
 
-export interface ResponseAbout {
+export interface About {
   version: string
   screenshots_indexed: number
   api_key: string
@@ -188,7 +143,7 @@ export interface ResponseAbout {
   screenshots_path: string
 }
 
-export interface ResponseImportStatus {
+export interface ImportStatus {
   running: boolean
   errors: {
     error: string
