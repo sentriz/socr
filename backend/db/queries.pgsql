@@ -1,8 +1,8 @@
--- name: GetScreenshotByPath :one
+-- name: GetDirInfo :one
 select
-    *
+    1
 from
-    screenshots
+    dir_infos
 where
     directory_alias = pggen.arg ('directory_alias')
     and filename = pggen.arg ('filename')
@@ -27,8 +27,8 @@ where
 limit 1;
 
 -- name: CreateScreenshot :one
-insert into screenshots (hash, timestamp, directory_alias, filename, dim_width, dim_height, dominant_colour, blurhash)
-    values (pggen.arg ('hash'), pggen.arg ('timestamp'), pggen.arg ('directory_alias'), pggen.arg ('filename'), pggen.arg ('dim_width'), pggen.arg ('dim_height'), pggen.arg ('dominant_colour'), pggen.arg ('blurhash'))
+insert into screenshots (hash, timestamp, dim_width, dim_height, dominant_colour, blurhash)
+    values (pggen.arg ('hash'), pggen.arg ('timestamp'), pggen.arg ('dim_width'), pggen.arg ('dim_height'), pggen.arg ('dominant_colour'), pggen.arg ('blurhash'))
 returning
     *;
 
@@ -47,7 +47,7 @@ select
     directory_alias,
     count(1)
 from
-    screenshots
+    dir_infos
 group by
     directory_alias;
 
@@ -67,4 +67,21 @@ group by
 order by
     similarity desc
 limit pggen.arg ('limit') offset pggen.arg ('offset');
+
+-- name: CreateDirInfo :exec
+insert into dir_infos (screenshot_id, filename, directory_alias)
+    values (pggen.arg ('screenshot_id'), pggen.arg ('filename'), pggen.arg ('directory_alias'))
+on conflict
+    do nothing;
+
+-- name: GetScreenshotPathByHash :one
+select
+    dir_infos.filename,
+    dir_infos.directory_alias
+from
+    dir_infos
+    join screenshots on screenshots.id = dir_infos.screenshot_id
+where
+    screenshots.hash = pggen.arg ('hash')
+limit 1;
 

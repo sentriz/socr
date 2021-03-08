@@ -4,25 +4,17 @@ create table if not exists screenshots (
     id serial primary key,
     hash text,
     timestamp timestamptz not null,
-    directory_alias text not null,
-    filename text not null,
     dim_width int not null,
     dim_height int not null,
     dominant_colour text not null,
     blurhash text not null
 );
 
-create unique index if not exists idx_screenshots_directory_alias_filename on screenshots (directory_alias, filename);
-
-create table if not exists tags (
-    id int primary key,
-    name text not null
-);
-
-create table if not exists tag_screenshots (
-    tag_id int,
+create table if not exists dir_infos (
     screenshot_id integer,
-    primary key (tag_id, screenshot_id)
+    filename text,
+    directory_alias text,
+    primary key (screenshot_id, filename, directory_alias)
 );
 
 create table if not exists blocks (

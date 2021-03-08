@@ -142,17 +142,17 @@ func (c *Controller) ServeAbout(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) ServeScreenshotRaw(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	screenshot, err := c.DB.GetScreenshotByHash(context.Background(), vars["hash"])
+	row, err := c.DB.GetScreenshotPathByHash(context.Background(), vars["hash"])
 	if err != nil {
 		resp.Error(w, http.StatusBadRequest, "provided screenshot not found. %v", err)
 		return
 	}
-	directory, ok := c.Directories[screenshot.DirectoryAlias]
+	directory, ok := c.Directories[row.DirectoryAlias]
 	if !ok {
-		resp.Error(w, 500, "screenshot has invalid alias %q", screenshot.DirectoryAlias)
+		resp.Error(w, 500, "screenshot has invalid alias %q", row.DirectoryAlias)
 		return
 	}
-	http.ServeFile(w, r, filepath.Join(directory, screenshot.Filename))
+	http.ServeFile(w, r, filepath.Join(directory, row.Filename))
 }
 
 func (c *Controller) ServeScreenshot(w http.ResponseWriter, r *http.Request) {
