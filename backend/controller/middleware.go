@@ -6,7 +6,9 @@ import (
 	"strings"
 
 	"github.com/gorilla/handlers"
+
 	"go.senan.xyz/socr/backend/controller/auth"
+	"go.senan.xyz/socr/backend/controller/resp"
 )
 
 func (c *Controller) WithCORS() func(http.Handler) http.Handler {
@@ -25,7 +27,7 @@ func (c *Controller) WithJWT() func(http.Handler) http.Handler {
 				next.ServeHTTP(w, r)
 				return
 			}
-			http.Error(w, "unauthorised", http.StatusUnauthorized)
+			resp.Error(w, http.StatusUnauthorized, "unauthorised")
 		})
 	}
 }
@@ -37,7 +39,7 @@ func (c *Controller) WithAPIKey() func(http.Handler) http.Handler {
 				next.ServeHTTP(w, r)
 				return
 			}
-			http.Error(w, "unauthorised", http.StatusUnauthorized)
+			resp.Error(w, http.StatusUnauthorized, "unauthorised")
 		})
 	}
 }
