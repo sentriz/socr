@@ -2,8 +2,8 @@
   <div class="flex border border-gray-300 bg-white rounded divide-x divide-gray-300 whitespace-nowrap">
     <div class="padded text-gray-600 bg-gray-200 rounded-l">sort by</div>
     <div class="padded text-gray-800 w-full space-x-2 text-right" @click="toggle">
-      <span class="select-none">{{ props.label }}</span>
-      <i :class="icons[props.order]"></i>
+      <span class="select-none">{{ props?.label }}</span>
+      <i :class="icons[props?.order]"></i>
     </div>
   </div>
 </template>

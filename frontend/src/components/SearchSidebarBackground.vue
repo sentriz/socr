@@ -10,9 +10,9 @@ import { computed, defineProps } from "vue";
 import useStore from "../composables/useStore";
 
 const props = defineProps<{
-  id: string | undefined,
+  hash: string | undefined,
 }>();
 
 const store = useStore();
-const screenshot = computed(() => store.getScreenshotByID(props.id || ""));
+const screenshot = computed(() => store.getScreenshotByHash(props.hash || ""));
 </script>

@@ -13,9 +13,9 @@
         <BadgeLabel label="created">
           <Badge
             class="badge bg-pink-200 text-pink-900"
-            :title="timestamp"
+            :title="screenshot.timestamp"
           >
-            {{ relativeDateStr(timestamp) }}
+            {{ relativeDateStr(screenshot.timestamp) }}
           </Badge>
         </BadgeLabel>
         <BadgeLabel v-if="tags?.length" label="tags">
@@ -30,12 +30,12 @@
       </div>
     </div>
     <!-- box -->
-    <ScreenshotBackground :id="screenshot.id" class="box p-3">
-      <ScreenshotHighlight :hash="screenshot.id" class="mx-auto" />
+    <ScreenshotBackground :hash="screenshot.hash" class="box p-3">
+      <ScreenshotHighlight :hash="screenshot.hash" class="mx-auto" />
     </ScreenshotBackground>
     <!-- box -->
     <div v-if="text.length" class="box bg-gray-200 padded font-mono text-sm">
-      <p v-for="(line, i) in text" :key="i">{{ line }}</p>
+      <p v-for="(line, i) in text" :key="i">{{ line.body }}</p>
     </div>
   </div>
 </template>
@@ -48,7 +48,7 @@ import Badge from "./Badge.vue";
 
 import { computed, defineProps, watch } from "vue";
 import relativeDate from "relative-date";
-import { urlScreenshot, Field } from "../api/";
+import { urlScreenshot } from "../api/";
 import useStore from "../composables/useStore";
 
 const props = defineProps<{
@@ -62,7 +62,7 @@ const store = useStore();
 watch(
   () => props.id,
   (id) => {
-    if (id && !store.getScreenshotByID(id)) {
+    if (id && !store.getScreenshotByHash(id)) {
       store.loadScreenshot(id);
     }
   },
@@ -72,13 +72,7 @@ watch(
 const relativeDateStr = (stamp: string) => relativeDate(new Date(stamp));
 
 const screenshotRaw = computed(() => `${urlScreenshot}/${props.id}/raw`);
-const screenshot = computed(() => store.getScreenshotByID(props.id || ""));
-const text = computed(() => toArray(screenshot.value.fields[Field.BLOCKS_TEXT] || []));
-const timestamp = computed(() => `${screenshot.value.fields[Field.TIMESTAMP]}`);
-const tags = computed(() => {
-  const tags = screenshot.value.fields[Field.TAGS];
-  if (tags) return Array.isArray(tags) ? tags : [tags];
-});
-
-const toArray = <T>(value: T | T[]) => (Array.isArray(value) ? value : [value]);
+const screenshot = computed(() => store.getScreenshotByHash(props.id || ""));
+const text = computed(() => screenshot.value?.blocks || []);
+const tags = computed(() => ["no tags"]);
 </script>

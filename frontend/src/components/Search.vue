@@ -18,9 +18,9 @@
           <hr class="m-0" />
         </div>
         <div class="col-resp gap-x-4 space-y-4">
-          <ScreenshotBackground v-for="id in page" :key="id" :hash="id" class="shadow-lg">
-            <router-link :to="{ name: 'search', params: { id: id } }">
-              <ScreenshotHighlight :hash="id" class="mx-auto"/>
+          <ScreenshotBackground v-for="hash in page" :key="hash" :hash="hash" class="shadow-lg">
+            <router-link :to="{ name: 'search', params: { hash } }">
+              <ScreenshotHighlight :hash="hash" class="mx-auto"/>
             </router-link>
           </ScreenshotBackground>
         </div>
@@ -41,7 +41,8 @@ import SearchLoading from './SearchLoading.vue'
 import { ref, watch, computed } from "vue";
 import { useRoute } from "vue-router";
 import { useDebounce } from "@vueuse/core";
-import { isError, Search, SortOrder } from "../api";
+import { isError, SortOrder } from "../api";
+import type { Search } from "../api";
 import useStore from "../composables/useStore";
 import useInfiniteScroll from "../composables/useInfiniteScroll";
 import useLoading from "../composables/useLoading";

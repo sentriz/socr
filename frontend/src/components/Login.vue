@@ -7,7 +7,7 @@
           <label class="inp-label" for="username">username</label>
           <input
             class="inp shadow w-full"
-            id="username"
+            hash="username"
             type="text"
             placeholder="mark_e_smith"
             v-model="username"
@@ -17,7 +17,7 @@
           <label class="inp-label" for="password">password</label>
           <input
             class="inp shadow w-full"
-            id="password"
+            hash="password"
             type="password"
             placeholder="*******"
             v-model="password"

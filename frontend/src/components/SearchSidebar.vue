@@ -17,7 +17,7 @@
     leave-to-class="opacity-0"
     leave-from-class="opacity-100"
   >
-    <SearchSidebarBackground :id="props.id" />
+    <SearchSidebarBackground :hash="props.id" />
   </Transition>
 </template>
 
