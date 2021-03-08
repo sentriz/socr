@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"image"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -24,13 +23,12 @@ import (
 )
 
 type Importer struct {
-	Running               *int32
-	DB                    *db.DB
-	Directories           map[string]string
-	DirectoriesUploadsKey string
-	Status                Status
-	UpdatesScan           chan struct{}
-	UpdatesScreenshot     chan string
+	Running           *int32
+	DB                *db.DB
+	Directories       map[string]string
+	Status            Status
+	UpdatesScan       chan struct{}
+	UpdatesScreenshot chan string
 }
 
 type StatusError struct {
@@ -99,7 +97,7 @@ type collected struct {
 func (i *Importer) collectDirectoryItems() ([]*collected, error) {
 	var items []*collected
 	for alias, dir := range i.Directories {
-		files, err := ioutil.ReadDir(dir)
+		files, err := os.ReadDir(dir)
 		if err != nil {
 			return nil, fmt.Errorf("listing dir: %w", err)
 		}

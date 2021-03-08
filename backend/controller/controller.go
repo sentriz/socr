@@ -3,9 +3,10 @@ package controller
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -23,6 +24,7 @@ import (
 type Controller struct {
 	DB                      *db.DB
 	Directories             map[string]string
+	DirectoriesUploadsKey   string
 	SocketUpgrader          websocket.Upgrader
 	Importer                *importer.Importer
 	SocketClientsSettings   map[*websocket.Conn]struct{}
@@ -79,16 +81,24 @@ func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 	}
 	defer infile.Close()
 
-	raw, err := ioutil.ReadAll(infile)
+	raw, err := io.ReadAll(infile)
 	if err != nil {
 		resp.Error(w, 500, "read form bytes: %v", err)
+		return
+	}
+
+	uploadsDir := c.Directories[c.DirectoriesUploadsKey]
+	fileName := time.Now().Format(time.RFC822)
+	filePath := filepath.Join(uploadsDir, fileName)
+	if err := os.WriteFile(filePath, raw, 0644); err != nil {
+		resp.Error(w, 500, "write upload to disk: %v", err)
 		return
 	}
 
 	hash := hasher.Hash(raw)
 	go func() {
 		timestamp := time.Now()
-		if err := c.Importer.ImportScreenshot(hash, timestamp, "", "", raw); err != nil {
+		if err := c.Importer.ImportScreenshot(hash, timestamp, c.DirectoriesUploadsKey, fileName, raw); err != nil {
 			log.Printf("error processing screenshot %s: %v", hash, err)
 			return
 		}

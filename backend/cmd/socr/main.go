@@ -46,7 +46,6 @@ func main() {
 	importr := &importer.Importer{
 		Running:               new(int32),
 		Directories:           confDirs,
-		DirectoriesUploadsKey: uploadsKey,
 		DB:                    dbConn,
 		UpdatesScan:           make(chan struct{}),
 		UpdatesScreenshot:     make(chan string),
@@ -54,6 +53,7 @@ func main() {
 
 	ctrl := &controller.Controller{
 		Directories: confDirs,
+		DirectoriesUploadsKey: uploadsKey,
 		DB:          dbConn,
 		Importer:    importr,
 		SocketUpgrader: websocket.Upgrader{
