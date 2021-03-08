@@ -47,9 +47,14 @@ const req = async <P, R>(method: ReqMethod, url: string, body?: P): Reponse<R> =
   return json
 };
 
+export enum SortOrder {
+  Asc = "asc",
+  Desc = "desc",
+}
+
 export interface PayloadSort {
   field: string
-  order: "asc" | "desc"
+  order: SortOrder
 }
 
 export interface PayloadSearch {

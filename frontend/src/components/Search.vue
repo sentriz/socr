@@ -3,11 +3,9 @@
     <div class="flex flex-col md:flex-row gap-2">
       <input v-model="reqQuery" class="inp w-full" type="text" placeholder="enter screenshot text query" />
       <SearchSortFilter
-        v-model="reqParamSortMode"
-        :values="{
-          [`${Field.TIMESTAMP}`]:  { icon: 'fas fa-chevron-up', status: 'date' },
-          [`-${Field.TIMESTAMP}`]: { icon: 'fas fa-chevron-down', status: 'date' },
-        }"
+        v-model:field="reqSortField"
+        v-model:order="reqSortOrder"
+        label="date"
       />
     </div>
     <div ref="scroller">
@@ -43,7 +41,7 @@ import SearchLoading from './SearchLoading.vue'
 import { ref, watch, computed } from "vue";
 import { useRoute } from "vue-router";
 import { useDebounce } from "@vueuse/core";
-import { Field, isError, PayloadSort, payloadSortDefault, Search } from "../api";
+import { isError, Search, SortOrder } from "../api";
 import useStore from "../composables/useStore";
 import useInfiniteScroll from "../composables/useInfiniteScroll";
 import useLoading from "../composables/useLoading";
@@ -58,10 +56,8 @@ const pageSize = 25;
 const pageNum = ref(0);
 const pages = ref<string[][]>([]);
 
-const reqParamSortMode = ref<PayloadSort>({
-  field: "timestamp",
-  order: "asc",
-});
+const reqSortField = ref("timestamp")
+const reqSortOrder = ref(SortOrder.Desc)
 const reqQuery = ref("");
 const reqQueryDebounced = useDebounce(reqQuery, 500);
 
@@ -74,7 +70,8 @@ const fetchScreenshots = async () => {
 
   console.log("loading page #%d", pageNum.value);
   const from = pageSize * pageNum.value;
-  const resp = await load(pageSize, from, reqParamSortMode.value, reqQuery.value);
+  const sort = { field: reqSortField.value, order: reqSortOrder.value }
+  const resp = await load(pageSize, from, sort, reqQuery.value);
   if (isError(resp)) return
 
   hasMore.value = from + resp.result.length < resp.result.total;
@@ -96,7 +93,7 @@ const respLength = computed(() => resp.value?.length || 0);
 const respTookMs = computed(() => ((resp.value?.took || 0) / 10 ** 6).toFixed(2));
 
 // fetch screenshots on filter, sort, and mount
-watch(reqParamSortMode, fetchScreenshotsClear);
+watch(reqSortOrder, fetchScreenshotsClear);
 watch(reqQueryDebounced, fetchScreenshotsClear, { immediate: true });
 
 // fetch screenshots on reaching the bottom of page
