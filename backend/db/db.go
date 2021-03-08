@@ -2,12 +2,14 @@ package db
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 
 	"github.com/jackc/pgx/v4"
-
-	"go.senan.xyz/socr/backend/sql"
 )
+
+//go:embed schema.pgsql
+var schema string
 
 type DB struct {
 	*pgx.Conn
@@ -24,7 +26,7 @@ func New(dsn string) (*DB, error) {
 		return nil, fmt.Errorf("pinging: %w", err)
 	}
 
-	if _, err := db.Exec(context.Background(), sql.Schema); err != nil {
+	if _, err := db.Exec(context.Background(), schema); err != nil {
 		return nil, fmt.Errorf("executing schema: %w", err)
 	}
 

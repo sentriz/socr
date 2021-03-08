@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 pggen gen go \
-    --schema-glob sql/schema.pgsql \
-    --query-glob sql/queries.pgsql \
+    --schema-glob db/schema.pgsql \
+    --query-glob db/queries.pgsql \
     --output-dir db \
     --go-type "timestamptz=time.Time" \
     --go-type "text=string" \
