@@ -11,10 +11,10 @@
 <script setup lang="ts">
 import { defineProps, defineEmit } from "vue";
 
-const emit = defineEmit<{
-  (e: "update:field", v: string): void
-  (e: "update:order", v: Order): void
-}>()
+const emit = defineEmit<
+  ((e: "update:field", v: string) => void) |
+  ((e: "update:order", v: Order) => void)
+>()
 const props = defineProps<{
   label: string,
   field: string,
