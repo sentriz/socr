@@ -1,11 +1,11 @@
 import { reactive, readonly, InjectionKey } from "vue";
-import { reqSearch, reqScreenshot } from "../api";
-import type { Response, Screenshot, FieldSort, ResponseSearch } from "../api";
+import { reqSearch, reqScreenshot, isError, PayloadSort } from "../api";
+import type { Reponse, Screenshot, Search } from "../api";
 
-const screenshotsLoadState = async (state: State, resp?: ResponseSearch<Screenshot>) => {
+const screenshotsLoadState = async (state: State, resp?: Screenshot[]) => {
   if (!resp) return
-  for (const hit of resp.hits || []) {
-    state.screenshots[hit.id] = hit;
+  for (const screenshot of resp || []) {
+    state.screenshots[screenshot.id] = screenshot;
   }
 };
 
@@ -23,14 +23,16 @@ const createStore = () => {
 
   return {
     state: readonly(state),
-    async loadScreenshots(size: number, from: number, sort: FieldSort[], term: string): Response<ResponseSearch<Screenshot>> {
+    async loadScreenshots(size: number, from: number, sort: PayloadSort, term: string): Reponse<Search> {
       const resp = await reqSearch({ size, from, sort, term });
-      screenshotsLoadState(state, resp[0]);
+      if (isError(resp)) return resp
+      screenshotsLoadState(state, resp.result);
       return resp;
     },
-    async loadScreenshot(id: string): Response<ResponseSearch<Screenshot>> {
+    async loadScreenshot(id: string): Reponse<Screenshot> {
       const resp = await reqScreenshot(id);
-      screenshotsLoadState(state, resp[0]);
+      if (isError(resp)) return resp
+      screenshotsLoadState(state, [resp.result]);
       return resp;
     },
     getScreenshotByID(id: string) {

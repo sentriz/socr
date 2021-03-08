@@ -47,10 +47,16 @@ const req = async <P, R>(method: ReqMethod, url: string, body?: P): Reponse<R> =
   return json
 };
 
+export interface PayloadSort {
+  field: string
+  order: "asc" | "desc"
+}
+
 export interface PayloadSearch {
   term: string
   size: number
   from: number
+  sort: PayloadSort
 }
 
 export const reqSearch = (body: PayloadSearch) =>
