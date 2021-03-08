@@ -101,13 +101,19 @@ func (i *Importer) collectDirectoryItems() ([]*collected, error) {
 	for alias, dir := range i.Directories {
 		files, err := os.ReadDir(dir)
 		if err != nil {
-			return nil, fmt.Errorf("listing dir: %w", err)
+			return nil, fmt.Errorf("listing dir %q: %w", dir, err)
 		}
 		for _, file := range files {
+			fileName := file.Name()
+			info, err := file.Info()
+			if err != nil {
+				return nil, fmt.Errorf("get file info %q: %w", fileName, err)
+			}
 			items = append(items, &collected{
 				dirAlias: alias,
 				dir:      dir,
-				fileName: file.Name(),
+				fileName: fileName,
+				modTime:  info.ModTime(),
 			})
 		}
 	}
