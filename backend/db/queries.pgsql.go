@@ -487,13 +487,16 @@ where
 group by
     screenshots.id
 order by
-    similarity desc
-limit $2 offset $3;`
+    (case when $2 = 'timestamp' and $3 = 'asc' then timestamp end) asc,
+    (case when $2 = 'timestamp' and $3 = 'desc' then timestamp end) desc
+limit $4 offset $5;`
 
 type SearchScreenshotsParams struct {
-	Body   string
-	Limit  int
-	Offset int
+	Body      string
+	SortField string
+	SortOrder string
+	Limit     int
+	Offset    int
 }
 
 type SearchScreenshotsRow struct {
@@ -511,7 +514,7 @@ type SearchScreenshotsRow struct {
 
 // SearchScreenshots implements Querier.SearchScreenshots.
 func (q *DBQuerier) SearchScreenshots(ctx context.Context, params SearchScreenshotsParams) ([]SearchScreenshotsRow, error) {
-	rows, err := q.conn.Query(ctx, searchScreenshotsSQL, params.Body, params.Limit, params.Offset)
+	rows, err := q.conn.Query(ctx, searchScreenshotsSQL, params.Body, params.SortField, params.SortOrder, params.Limit, params.Offset)
 	if err != nil {
 		return nil, fmt.Errorf("query SearchScreenshots: %w", err)
 	}
@@ -555,7 +558,7 @@ func (q *DBQuerier) SearchScreenshots(ctx context.Context, params SearchScreensh
 
 // SearchScreenshotsBatch implements Querier.SearchScreenshotsBatch.
 func (q *DBQuerier) SearchScreenshotsBatch(batch *pgx.Batch, params SearchScreenshotsParams) {
-	batch.Queue(searchScreenshotsSQL, params.Body, params.Limit, params.Offset)
+	batch.Queue(searchScreenshotsSQL, params.Body, params.SortField, params.SortOrder, params.Limit, params.Offset)
 }
 
 // SearchScreenshotsScan implements Querier.SearchScreenshotsScan.

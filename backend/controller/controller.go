@@ -164,10 +164,13 @@ func (c *Controller) ServeScreenshot(w http.ResponseWriter, r *http.Request) {
 }
 
 type ServeSearchPayload struct {
-	Size int      `json:"size"`
-	From int      `json:"from"`
-	Sort []string `json:"sort"`
-	Term string   `json:"term"`
+	Size int    `json:"size"`
+	From int    `json:"from"`
+	Term string `json:"term"`
+	Sort struct {
+		Field string `json:"field"`
+		Order string `json:"order"`
+	} `json:"sort"`
 }
 
 func (c *Controller) ServeSearch(w http.ResponseWriter, r *http.Request) {
@@ -177,9 +180,11 @@ func (c *Controller) ServeSearch(w http.ResponseWriter, r *http.Request) {
 
 	start := time.Now()
 	screenshots, err := c.DB.SearchScreenshots(context.Background(), db.SearchScreenshotsParams{
-		Body:   payload.Term,
-		Offset: payload.From,
-		Limit:  payload.Size,
+		Body:      payload.Term,
+		Offset:    payload.From,
+		Limit:     payload.Size,
+		SortField: payload.Sort.Field,
+		SortOrder: payload.Sort.Order,
 	})
 	if err != nil {
 		resp.Error(w, 500, "searching screenshots: %v", err)

@@ -68,7 +68,8 @@ where
 group by
     screenshots.id
 order by
-    similarity desc
+    (case when pggen.arg('sort_field') = 'timestamp' and pggen.arg('sort_order') = 'asc' then timestamp end) asc,
+    (case when pggen.arg('sort_field') = 'timestamp' and pggen.arg('sort_order') = 'desc' then timestamp end) desc
 limit pggen.arg ('limit') offset pggen.arg ('offset');
 
 -- name: CreateDirInfo :exec
