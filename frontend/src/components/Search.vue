@@ -20,9 +20,9 @@
           <hr class="m-0" />
         </div>
         <div class="col-resp gap-x-4 space-y-4">
-          <ScreenshotBackground v-for="id in page" :key="id" :id="id" class="shadow-lg">
+          <ScreenshotBackground v-for="id in page" :key="id" :hash="id" class="shadow-lg">
             <router-link :to="{ name: 'search', params: { id: id } }">
-              <ScreenshotHighlight :id="id" class="mx-auto"/>
+              <ScreenshotHighlight :hash="id" class="mx-auto"/>
             </router-link>
           </ScreenshotBackground>
         </div>
@@ -43,8 +43,7 @@ import SearchLoading from './SearchLoading.vue'
 import { ref, watch, computed } from "vue";
 import { useRoute } from "vue-router";
 import { useDebounce } from "@vueuse/core";
-import { Field } from "../api";
-import type { ResponseSearch, Screenshot, FieldSort } from "../api";
+import { Field, isError, PayloadSort, payloadSortDefault, Search } from "../api";
 import useStore from "../composables/useStore";
 import useInfiniteScroll from "../composables/useInfiniteScroll";
 import useLoading from "../composables/useLoading";
@@ -59,11 +58,14 @@ const pageSize = 25;
 const pageNum = ref(0);
 const pages = ref<string[][]>([]);
 
-const reqParamSortMode = ref(`-${Field.TIMESTAMP}` as FieldSort);
+const reqParamSortMode = ref<PayloadSort>({
+  field: "timestamp",
+  order: "asc",
+});
 const reqQuery = ref("");
 const reqQueryDebounced = useDebounce(reqQuery, 500);
 
-const resp = ref<ResponseSearch<Screenshot>>();
+const resp = ref<Search>();
 const hasMore = ref(true);
 
 const fetchScreenshots = async () => {
@@ -72,13 +74,13 @@ const fetchScreenshots = async () => {
 
   console.log("loading page #%d", pageNum.value);
   const from = pageSize * pageNum.value;
-  [resp.value] = await load(pageSize, from, [reqParamSortMode.value], reqQuery.value);
-  if (!resp.value) return
+  const resp = await load(pageSize, from, reqParamSortMode.value, reqQuery.value);
+  if (isError(resp)) return
 
-  hasMore.value = from + resp.value.hits.length < resp.value.total_hits;
+  hasMore.value = from + resp.result.hits.length < resp.result.total_hits;
   pageNum.value++;
   pages.value.push([]);
-  for (const hit of resp.value.hits) {
+  for (const hit of resp.result.hits) {
     pages.value[pages.value.length - 1].push(hit.id);
   }
 };

@@ -31,7 +31,7 @@
     </div>
     <!-- box -->
     <ScreenshotBackground :id="screenshot.id" class="box p-3">
-      <ScreenshotHighlight :id="screenshot.id" class="mx-auto" />
+      <ScreenshotHighlight :hash="screenshot.id" class="mx-auto" />
     </ScreenshotBackground>
     <!-- box -->
     <div v-if="text.length" class="box bg-gray-200 padded font-mono text-sm">

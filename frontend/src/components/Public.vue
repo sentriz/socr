@@ -1,7 +1,7 @@
 <template>
   <div class="bg-gray-200 min-h-screen">
     <div v-show="imageHave" class="container mx-auto p-6 flex flex-col gap-6">
-      <ScreenshotBackground :id="screenshot?.id || ''" class="box p-3">
+      <ScreenshotBackground :hash="screenshot?.hash || ''" class="box p-3">
         <img class="mx-auto" :src="imageSrc" @load="imageLoaded" />
       </ScreenshotBackground>
       <div class="box bg-gray-100 padded font-mono text-sm">
@@ -22,29 +22,26 @@ import ScreenshotBackground from "./ScreenshotBackground.vue";
 
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import { Field, urlScreenshot, newSocket } from "../api";
+import { urlScreenshot, newSocket, isError } from "../api";
 import type { Screenshot } from "../api";
 import useStore from "../composables/useStore";
 
 const store = useStore();
 const route = useRoute();
-const screenshotID = route.params.id as string || "";
+const hash = route.params.hash as string || "";
 
 const screenshot = ref<Screenshot>();
 const requestScreenshot = async () => {
-  const [resp] = await store.loadScreenshot(screenshotID);
-  if (!resp?.hits.length) return;
+  const resp = await store.loadScreenshot(hash);
+  if (isError(resp)) return
 
-  screenshot.value = store.getScreenshotByID(screenshotID);
+  screenshot.value = store.getScreenshotByHash(hash);
 };
 
-const fields = computed(() => screenshot.value?.fields);
-const text = computed(() => toArray(fields.value?.[Field.BLOCKS_TEXT] || []));
-
-const toArray = <T>(value: T | T[]) => (Array.isArray(value) ? value : [value]);
+const text = computed(() => screenshot.value?.blocks || []);
 
 // suspend showing anything until we have an image
-const imageSrc = `${urlScreenshot}/${screenshotID}/raw`;
+const imageSrc = `${urlScreenshot}/${hash}/raw`;
 const imageHave = ref(false);
 const imageLoaded = () => {
   imageHave.value = true;
@@ -54,6 +51,6 @@ const imageLoaded = () => {
 onMounted(requestScreenshot);
 
 // fetch image on socket message
-const socket = newSocket({ want_screenshot_id: screenshotID });
+const socket = newSocket({ want_screenshot_hash: hash });
 socket.onmessage = requestScreenshot;
 </script>

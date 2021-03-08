@@ -38,7 +38,7 @@ import Logo from "./Logo.vue";
 
 import { ref } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import { reqAuthenticate, tokenSet } from "../api";
+import { isError, reqAuthenticate, tokenSet } from "../api";
 import useStore from "../composables/useStore"
 
 const route = useRoute();
@@ -49,18 +49,17 @@ const username = ref("");
 const password = ref("");
 
 const login = async () => {
-  const [response, error] = await reqAuthenticate({
+  const resp = await reqAuthenticate({
     username: username.value,
     password: password.value,
   })
 
-  if (error) {
-    store.setToast(error)
+  if (isError(resp) ) {
+    store.setToast(resp.error)
+    return
   }
 
-  if (response?.token) {
-    tokenSet(response?.token);
-    router.replace(route.query.redirect as string || "/");
-  }
+  tokenSet(resp.result.token);
+  router.replace(route.query.redirect as string || "/");
 };
 </script>

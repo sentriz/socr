@@ -41,7 +41,7 @@ export default createRouter({
             beforeEnter: beforeCheckAuth,
             children: [
                 {
-                    path: "search/:id?",
+                    path: "search/:hash?",
                     name: "search",
                     component: Search,
                 },
@@ -57,7 +57,7 @@ export default createRouter({
             ],
         },
         {
-            path: "/i/:id",
+            path: "/i/:hash",
             name: "public",
             component: Public,
         },

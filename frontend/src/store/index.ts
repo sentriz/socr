@@ -5,12 +5,12 @@ import type { Reponse, Screenshot, Search } from "../api";
 const screenshotsLoadState = async (state: State, resp?: Screenshot[]) => {
   if (!resp) return
   for (const screenshot of resp || []) {
-    state.screenshots[screenshot.id] = screenshot;
+    state.screenshots[screenshot.hash] = screenshot;
   }
 };
 
 export interface State {
-  screenshots: {[id: string]: Screenshot},
+  screenshots: {[hash: string]: Screenshot},
   toast: string,
 }
 
@@ -29,14 +29,14 @@ const createStore = () => {
       screenshotsLoadState(state, resp.result);
       return resp;
     },
-    async loadScreenshot(id: string): Reponse<Screenshot> {
-      const resp = await reqScreenshot(id);
+    async loadScreenshot(hash: string): Reponse<Screenshot> {
+      const resp = await reqScreenshot(hash);
       if (isError(resp)) return resp
       screenshotsLoadState(state, [resp.result]);
       return resp;
     },
-    getScreenshotByID(id: string) {
-      return state.screenshots[id];
+    getScreenshotByHash(hash: string) {
+      return state.screenshots[hash];
     },
     setToast(toast: string) {
       state.toast = toast
