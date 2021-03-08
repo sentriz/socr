@@ -72,13 +72,14 @@ const fetchScreenshots = async () => {
   console.log("loading page #%d", pageNum.value);
   const from = pageSize * pageNum.value;
   const sort = { field: reqSortField.value, order: reqSortOrder.value }
-  const resp = await load(pageSize, from, sort, reqQuery.value);
-  if (isError(resp)) return
+  const r = await load(pageSize, from, sort, reqQuery.value);
+  if (isError(r)) return
 
-  hasMore.value = from + resp.result.length < resp.result.total;
+  resp.value = r.result
+  hasMore.value = from + resp.value.length < resp.value.total;
   pageNum.value++;
   pages.value.push([]);
-  for (const screenshot of resp.result.screenshots) {
+  for (const screenshot of resp.value.screenshots) {
     pages.value[pages.value.length - 1].push(screenshot.hash);
   }
 };
@@ -91,7 +92,7 @@ const fetchScreenshotsClear = async () => {
 };
 
 const respLength = computed(() => resp.value?.length || 0);
-const respTookMs = computed(() => ((resp.value?.took || 0) / 10 ** 6).toFixed(2));
+const respTookMs = computed(() => ((resp.value?.took || 0) / 10 ** 6).toFixed(2))
 
 // fetch screenshots on filter, sort, and mount
 watch(reqSortOrder, fetchScreenshotsClear);
