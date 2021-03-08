@@ -28,7 +28,7 @@
     </div>
     <SearchLoading v-if="loading" />
   </div>
-  <SearchSidebar :id="sidebarID" />
+  <SearchSidebar :hash="sidebarHash" />
 </template>
 
 <script setup lang="ts">
@@ -51,7 +51,7 @@ const store = useStore();
 const route = useRoute();
 const { loading, load } = useLoading(store.loadScreenshots);
 
-const sidebarID = computed(() => route.params.id as string || "");
+const sidebarHash = computed(() => route.params.hash as string || "");
 
 const pageSize = 25;
 const pageNum = ref(0);
@@ -60,7 +60,7 @@ const pages = ref<string[][]>([]);
 const reqSortField = ref("timestamp")
 const reqSortOrder = ref(SortOrder.Desc)
 const reqQuery = ref("");
-const reqQueryDebounced = useDebounce(reqQuery, 500);
+const reqQueryDebounced = useDebounce(reqQuery, 50);
 
 const resp = ref<Search>();
 const hasMore = ref(true);

@@ -7,7 +7,7 @@
     leave-to-class="translate-x-full"
     leave-from-class="translate-x-0"
   >
-    <SearchSidebarMain :id="props.id" />
+    <SearchSidebarMain :hash="props.hash" />
   </Transition>
   <Transition
     enter-active-class="ease-in-out duration-500"
@@ -17,7 +17,7 @@
     leave-to-class="opacity-0"
     leave-from-class="opacity-100"
   >
-    <SearchSidebarBackground :hash="props.id" />
+    <SearchSidebarBackground :hash="props.hash" />
   </Transition>
 </template>
 
@@ -28,6 +28,6 @@ import SearchSidebarBackground from "./SearchSidebarBackground.vue"
 import { defineProps } from "vue";
 
 const props = defineProps<{
-  id: string | undefined,
+  hash: string | undefined,
 }>();
 </script>

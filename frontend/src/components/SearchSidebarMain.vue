@@ -52,7 +52,7 @@ import { urlScreenshot } from "../api/";
 import useStore from "../composables/useStore";
 
 const props = defineProps<{
-  id: string | undefined,
+  hash: string | undefined,
 }>();
 
 const store = useStore();
@@ -60,7 +60,7 @@ const store = useStore();
 // load the screenshot from the network if we can't find it in the store
 // (can happen on page reload if we've click an image on the eg. 5th page)
 watch(
-  () => props.id,
+  () => props.hash,
   (id) => {
     if (id && !store.getScreenshotByHash(id)) {
       store.loadScreenshot(id);
@@ -71,8 +71,8 @@ watch(
 
 const relativeDateStr = (stamp: string) => relativeDate(new Date(stamp));
 
-const screenshotRaw = computed(() => `${urlScreenshot}/${props.id}/raw`);
-const screenshot = computed(() => store.getScreenshotByHash(props.id || ""));
+const screenshotRaw = computed(() => `${urlScreenshot}/${props.hash}/raw`);
+const screenshot = computed(() => store.getScreenshotByHash(props.hash || ""));
 const text = computed(() => screenshot.value?.blocks || []);
 const tags = computed(() => ["no tags"]);
 </script>
