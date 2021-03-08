@@ -132,7 +132,12 @@ export interface Similarity {
   similarity: number
 }
 
-export type Search = (Screenshot & Similarity)[]
+export interface Search {
+  screenshots: (Screenshot & Similarity)[]
+  length: number
+  total: number
+  took: number
+}
 
 export interface Authenticate {
   token: string

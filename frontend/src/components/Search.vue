@@ -12,7 +12,7 @@
     </div>
     <div ref="scroller">
       <p v-if="!loading" class="text-gray-500 text-right">
-        {{ respTotalHits }} results found in {{ respTookMs || 0 }}ms
+        {{ respLength }} results found in {{ respTookMs || 0 }}ms
       </p>
       <div v-for="(page, i) in pages" :key="i" class="mt-2">
         <div v-show="i !== 0" class="my-6">
@@ -77,11 +77,11 @@ const fetchScreenshots = async () => {
   const resp = await load(pageSize, from, reqParamSortMode.value, reqQuery.value);
   if (isError(resp)) return
 
-  hasMore.value = from + resp.result.hits.length < resp.result.total_hits;
+  hasMore.value = from + resp.result.length < resp.result.total;
   pageNum.value++;
   pages.value.push([]);
-  for (const hit of resp.result.hits) {
-    pages.value[pages.value.length - 1].push(hit.id);
+  for (const screenshot of resp.result.screenshots) {
+    pages.value[pages.value.length - 1].push(screenshot.hash);
   }
 };
 
@@ -92,7 +92,7 @@ const fetchScreenshotsClear = async () => {
   await fetchScreenshots();
 };
 
-const respTotalHits = computed(() => resp.value?.total_hits || 0);
+const respLength = computed(() => resp.value?.length || 0);
 const respTookMs = computed(() => ((resp.value?.took || 0) / 10 ** 6).toFixed(2));
 
 // fetch screenshots on filter, sort, and mount

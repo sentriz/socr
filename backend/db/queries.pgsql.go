@@ -475,7 +475,8 @@ func (q *DBQuerier) CountDirectoriesByAliasScan(results pgx.BatchResults) ([]Cou
 const searchScreenshotsSQL = `select
     screenshots.*,
     array_agg(blocks order by blocks.index) as blocks,
-    avg(similarity (blocks.body, $1)) as similarity
+    avg(similarity (blocks.body, $1)) as similarity,
+    count(1) over () as total
 from
     screenshots
     join blocks on blocks.screenshot_id = screenshots.id
@@ -503,6 +504,7 @@ type SearchScreenshotsRow struct {
 	Blurhash       string    `json:"blurhash"`
 	Blocks         []Blocks  `json:"blocks"`
 	Similarity     float64   `json:"similarity"`
+	Total          int       `json:"total"`
 }
 
 // SearchScreenshots implements Querier.SearchScreenshots.
@@ -537,7 +539,7 @@ func (q *DBQuerier) SearchScreenshots(ctx context.Context, params SearchScreensh
 	})
 	for rows.Next() {
 		var item SearchScreenshotsRow
-		if err := rows.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash, blocksArray, &item.Similarity); err != nil {
+		if err := rows.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash, blocksArray, &item.Similarity, &item.Total); err != nil {
 			return nil, fmt.Errorf("scan SearchScreenshots row: %w", err)
 		}
 		blocksArray.AssignTo(&item.Blocks)
@@ -586,7 +588,7 @@ func (q *DBQuerier) SearchScreenshotsScan(results pgx.BatchResults) ([]SearchScr
 	})
 	for rows.Next() {
 		var item SearchScreenshotsRow
-		if err := rows.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash, blocksArray, &item.Similarity); err != nil {
+		if err := rows.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash, blocksArray, &item.Similarity, &item.Total); err != nil {
 			return nil, fmt.Errorf("scan SearchScreenshotsBatch row: %w", err)
 		}
 		blocksArray.AssignTo(&item.Blocks)

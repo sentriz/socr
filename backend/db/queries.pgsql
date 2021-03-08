@@ -56,7 +56,8 @@ group by
 select
     screenshots.*,
     array_agg(blocks order by blocks.index) as blocks,
-    avg(similarity (blocks.body, pggen.arg ('body'))) as similarity
+    avg(similarity (blocks.body, pggen.arg ('body'))) as similarity,
+    count(1) over () as total
 from
     screenshots
     join blocks on blocks.screenshot_id = screenshots.id
