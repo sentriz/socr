@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"log"
 	"net/http"
 	"os"
@@ -41,21 +40,21 @@ func main() {
 	if err != nil {
 		log.Fatalf("error creating database: %v", err)
 	}
-	defer dbConn.Close(context.Background())
+	defer dbConn.Close()
 
 	importr := &importer.Importer{
-		Running:               new(int32),
-		Directories:           confDirs,
-		DB:                    dbConn,
-		UpdatesScan:           make(chan struct{}),
-		UpdatesScreenshot:     make(chan string),
+		Running:           new(int32),
+		Directories:       confDirs,
+		DB:                dbConn,
+		UpdatesScan:       make(chan struct{}),
+		UpdatesScreenshot: make(chan string),
 	}
 
 	ctrl := &controller.Controller{
-		Directories: confDirs,
+		Directories:           confDirs,
 		DirectoriesUploadsKey: uploadsKey,
-		DB:          dbConn,
-		Importer:    importr,
+		DB:                    dbConn,
+		Importer:              importr,
 		SocketUpgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				// TODO: this?
