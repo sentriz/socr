@@ -475,13 +475,15 @@ func (q *DBQuerier) CountDirectoriesByAliasScan(results pgx.BatchResults) ([]Cou
 const searchScreenshotsSQL = `select
     screenshots.*,
     array_agg(blocks order by blocks.index) as blocks,
-    avg(similarity (blocks.body, $1)) as similarity,
+    coalesce(avg(similarity (blocks.body, $1)), 1.0) as similarity,
     count(1) over () as total
 from
     screenshots
-    join blocks on blocks.screenshot_id = screenshots.id
+    left join blocks on $1 != ''
+        and blocks.screenshot_id = screenshots.id
 where
-    blocks.body % $1
+    $1 = ''
+    or blocks.body % $1
 group by
     screenshots.id
 order by
