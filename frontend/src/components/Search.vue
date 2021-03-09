@@ -53,7 +53,7 @@ const pages = ref<string[][]>([])
 const reqSortField = ref('timestamp')
 const reqSortOrder = ref(SortOrder.Desc)
 const reqQuery = ref('')
-const reqQueryDebounced = useDebounce(reqQuery, 50)
+const reqQueryDebounced = useDebounce(reqQuery, 100)
 
 const respTook = ref(0)
 const respHasMore = ref(true)
