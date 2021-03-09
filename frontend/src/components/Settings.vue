@@ -2,12 +2,12 @@
   <h2>importer</h2>
   <SettingsImporter />
   <hr />
-  <div class="flex gap-3">
-    <div>
+  <div class="flex flex-wrap gap-3">
+    <div class="flex-auto">
       <h2>about</h2>
       <SettingsAbout />
     </div>
-    <div>
+    <div class="flex-auto">
       <h2>directories</h2>
       <SettingsDirectories />
     </div>

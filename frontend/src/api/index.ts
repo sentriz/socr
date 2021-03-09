@@ -165,8 +165,8 @@ export interface About {
 }
 
 export interface Directory {
-  directory_alias: number
-  count: string
+  directory_alias: string
+  count: number
 }
 
 export interface ImportStatus {

@@ -1,14 +1,14 @@
 <template>
-  <table class="table-auto rounded">
+  <table class="table-auto rounded w-full">
     <tr>
       <td class="border padded">version</td>
       <td class="border padded">{{ about?.version || '...' }}</td>
     </tr>
-    <tr>
+    <tr class="bg-gray-100">
       <td class="border padded">api key</td>
       <td class="border padded">{{ about?.api_key || '...' }}</td>
     </tr>
-    <tr class="bg-gray-100">
+    <tr>
       <td class="border padded">socket clients</td>
       <td class="border padded">{{ about?.socket_clients || '...' }}</td>
     </tr>
