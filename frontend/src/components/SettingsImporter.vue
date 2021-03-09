@@ -53,13 +53,16 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { newSocketAuth, urlScreenshot, reqStartImport, reqImportStatus } from '../api'
-import type { ResponseImportStatus } from '../api'
+import { newSocketAuth, urlScreenshot, reqStartImport, reqImportStatus, isError } from '../api'
+import type { ImportStatus } from '../api'
 
-const status = ref<ResponseImportStatus | undefined>()
+const status = ref<ImportStatus | undefined>()
 
 const requestImportStatus = async () => {
-  ;[status.value] = await reqImportStatus()
+  const resp = await reqImportStatus()
+  if (isError(resp)) return
+
+  status.value = resp.result
 }
 
 const url = computed(() => {

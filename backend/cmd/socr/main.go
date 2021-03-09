@@ -90,6 +90,7 @@ func main() {
 	rJWT.HandleFunc("/api/ping", ctrl.ServePing)
 	rJWT.HandleFunc("/api/start_import", ctrl.ServeStartImport)
 	rJWT.HandleFunc("/api/about", ctrl.ServeAbout)
+	rJWT.HandleFunc("/api/directories", ctrl.ServeDirectories)
 	rJWT.HandleFunc("/api/import_status", ctrl.ServeImportStatus)
 	rJWT.HandleFunc("/api/search", ctrl.ServeSearch)
 

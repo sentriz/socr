@@ -120,22 +120,24 @@ func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) ServeAbout(w http.ResponseWriter, r *http.Request) {
+	resp.Write(w, struct {
+		Version       string `json:"version"`
+		APIKey        string `json:"api_key"`
+		SocketClients int    `json:"socket_clients"`
+	}{
+		Version:       "development",
+		APIKey:        c.APIKey,
+		SocketClients: len(c.SocketClientsSettings),
+	})
+}
+
+func (c *Controller) ServeDirectories(w http.ResponseWriter, r *http.Request) {
 	screenshotsCount, err := c.DB.CountDirectoriesByAlias(context.Background())
 	if err != nil {
 		resp.Error(w, 500, "counting directories by alias: %v", err)
 		return
 	}
-	resp.Write(w, struct {
-		Version          string                          `json:"version"`
-		APIKey           string                          `json:"api_key"`
-		SocketClients    int                             `json:"socket_clients"`
-		ScreenshotsCount []db.CountDirectoriesByAliasRow `json:"screenshots_indexed"`
-	}{
-		Version:          "development",
-		APIKey:           c.APIKey,
-		SocketClients:    len(c.SocketClientsSettings),
-		ScreenshotsCount: screenshotsCount,
-	})
+	resp.Write(w, screenshotsCount)
 }
 
 func (c *Controller) ServeScreenshotRaw(w http.ResponseWriter, r *http.Request) {

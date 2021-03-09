@@ -6,6 +6,7 @@ export const urlStartImport = '/api/start_import'
 export const urlAuthenticate = '/api/authenticate'
 export const urlSocket = '/api/websocket'
 export const urlAbout = '/api/about'
+export const urlDirectories = '/api/directories'
 export const urlImportStatus = '/api/import_status'
 export const urlPing = '/api/ping'
 
@@ -86,6 +87,10 @@ export const reqAbout = () => {
   return req<{}, About>('get', urlAbout)
 }
 
+export const reqDirectories = () => {
+  return req<{}, Directory[]>('get', urlDirectories)
+}
+
 export const reqImportStatus = () => {
   return req<{}, ImportStatus>('get', urlImportStatus)
 }
@@ -157,11 +162,13 @@ export interface StartImport {}
 
 export interface About {
   version: string
-  screenshots_indexed: number
   api_key: string
   socket_clients: number
-  import_path: string
-  screenshots_path: string
+}
+
+export interface Directory {
+  directory_alias: number
+  count: string
 }
 
 export interface ImportStatus {
