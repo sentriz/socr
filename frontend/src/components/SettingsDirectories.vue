@@ -1,8 +1,8 @@
 <template>
   <table class="table-auto rounded">
     <tr v-for="(directory, i) in directories">
-      <td class="border padded">{{ directory.directory_alias || "..." }}</td>
-      <td class="border padded">{{ directory.count || "..." }}</td>
+      <td class="border padded">{{ directory.directory_alias || '...' }}</td>
+      <td class="border padded">{{ directory.count || '...' }}</td>
     </tr>
   </table>
 </template>

@@ -192,22 +192,13 @@ func (c *Controller) ServeSearch(w http.ResponseWriter, r *http.Request) {
 		resp.Error(w, 500, "searching screenshots: %v", err)
 		return
 	}
-	took := time.Since(start)
 
-	var total int
-	if len(screenshots) > 0 {
-		total = screenshots[0].Total
-	}
 	resp.Write(w, struct {
 		Screenshots []db.SearchScreenshotsRow `json:"screenshots"`
-		Length      int                       `json:"length"`
-		Total       int                       `json:"total"`
 		Took        time.Duration             `json:"took"`
 	}{
 		Screenshots: screenshots,
-		Length:      len(screenshots),
-		Total:       total,
-		Took:        took,
+		Took:        time.Since(start),
 	})
 }
 

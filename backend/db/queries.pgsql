@@ -69,8 +69,7 @@ group by
 select
     screenshots.*,
     array_agg(blocks order by blocks.index) as highlighted_blocks,
-    coalesce(avg(similarity (blocks.body, pggen.arg ('body'))), 1.0) as similarity,
-    count(1) over () as total
+    coalesce(avg(similarity (blocks.body, pggen.arg ('body'))), 1.0) as similarity
 from
     screenshots
     left join blocks on pggen.arg ('body') != ''
