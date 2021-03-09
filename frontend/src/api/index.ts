@@ -130,7 +130,8 @@ export interface Screenshot {
   dim_height: number
   dominant_colour: string
   blurhash: string
-  blocks: Block[]
+  blocks?: Block[]
+  highlighted_blocks?: Block[]
 }
 
 export interface Similarity {

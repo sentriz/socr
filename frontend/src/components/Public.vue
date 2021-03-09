@@ -5,12 +5,12 @@
         <img class="mx-auto" :src="imageSrc" @load="imageLoaded" />
       </ScreenshotBackground>
       <div class="box bg-gray-100 padded font-mono text-sm">
-        <p v-show="text.length == 0" class="text-gray-600 py-2">
+        <p v-show="blocks.length == 0" class="text-gray-600 py-2">
           <i class="animate-spin fas fa-circle-notch"></i>
           processing screenshot...
         </p>
-        <p v-for="(line, i) in text" :key="i">
-          {{ line }}
+        <p v-for="(block, i) in blocks" :key="i">
+          {{ block.body }}
         </p>
       </div>
     </div>
@@ -38,7 +38,7 @@ const requestScreenshot = async () => {
   screenshot.value = store.getScreenshotByHash(hash);
 };
 
-const text = computed(() => screenshot.value?.blocks || []);
+const blocks = computed(() => store.getBlocksByHash(hash));
 
 // suspend showing anything until we have an image
 const imageSrc = `${urlScreenshot}/${hash}/raw`;

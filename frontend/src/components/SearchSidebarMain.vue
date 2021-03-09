@@ -34,8 +34,8 @@
       <ScreenshotHighlight :hash="screenshot.hash" class="mx-auto" />
     </ScreenshotBackground>
     <!-- box -->
-    <div v-if="text.length" class="box bg-gray-200 padded font-mono text-sm">
-      <p v-for="(line, i) in text" :key="i">{{ line.body }}</p>
+    <div v-if="blocks.length" class="box bg-gray-200 padded font-mono text-sm">
+      <p v-for="(block, i) in blocks" :key="i">{{ block.body }}</p>
     </div>
   </div>
 </template>
@@ -62,9 +62,7 @@ const store = useStore();
 watch(
   () => props.hash,
   (id) => {
-    if (id && !store.getScreenshotByHash(id)) {
-      store.loadScreenshot(id);
-    }
+    id && store.loadScreenshot(id)
   },
   { immediate: true },
 );
@@ -73,6 +71,6 @@ const relativeDateStr = (stamp: string) => relativeDate(new Date(stamp));
 
 const screenshotRaw = computed(() => `${urlScreenshot}/${props.hash}/raw`);
 const screenshot = computed(() => store.getScreenshotByHash(props.hash || ""));
-const text = computed(() => screenshot.value?.blocks || []);
+const blocks = computed(() => store.getBlocksByHash(props.hash || ""));
 const tags = computed(() => ["no tags"]);
 </script>
