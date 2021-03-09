@@ -10,8 +10,6 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 ENV SOCR_LISTEN_ADDR :80
-ENV SOCR_SCREENSHOTS_PATH /screenshots
-ENV SOCR_IMPORT_PATH /import
 ENV SOCR_DB_DSN postgres://socr:socr@db?sslmode=disable
 
 CMD ["go", "run", "backend/cmd/socr/main.go"]
