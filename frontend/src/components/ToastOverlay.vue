@@ -8,14 +8,14 @@
       leave-to-class="translate-y-full"
       leave-from-class="translate-y-0"
     >
-      <Toast v-if="store.state.toast" :toast="store.state.toast"/>
+      <Toast v-if="store.state.toast" :toast="store.state.toast" />
     </Transition>
   </div>
 </template>
 
 <script setup lang="ts">
-import Toast from "./Toast.vue"
-import useStore from "../composables/useStore"
+import Toast from './Toast.vue'
+import useStore from '../composables/useStore'
 
 const store = useStore()
 </script>

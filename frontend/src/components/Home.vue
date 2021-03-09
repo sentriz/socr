@@ -24,8 +24,16 @@
 </template>
 
 <style scoped>
-.nav       { @apply text-gray-500; }
-.nav:hover { @apply text-blue-400; }
-.nav-icon  { @apply mr-2; }
-.router-link-active { @apply text-blue-500; }
+.nav {
+  @apply text-gray-500;
+}
+.nav:hover {
+  @apply text-blue-400;
+}
+.nav-icon {
+  @apply mr-2;
+}
+.router-link-active {
+  @apply text-blue-500;
+}
 </style>

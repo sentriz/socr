@@ -1,15 +1,15 @@
-import { createApp } from "vue";
-import "./main.css";
+import { createApp } from 'vue'
+import './main.css'
 
-import App from "./components/App.vue";
-import router from "./router"
-import store, { storeSymbol } from "./store";
+import App from './components/App.vue'
+import router from './router'
+import store, { storeSymbol } from './store'
 
 window.onbeforeunload = () => {
-  window.scrollTo(0, 0);
-};
+  window.scrollTo(0, 0)
+}
 
-const app = createApp(App);
-app.use(router);
+const app = createApp(App)
+app.use(router)
 app.provide(storeSymbol, store)
-app.mount("body");
+app.mount('body')

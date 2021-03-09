@@ -1,4 +1,4 @@
-import { ref } from "vue";
+import { ref } from 'vue'
 
 export default <T extends Array<any>, U>(fn: (...args: T) => Promise<U>) => {
   const loading = ref(false)

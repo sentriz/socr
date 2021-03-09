@@ -37,40 +37,40 @@
 </template>
 
 <script setup lang="ts">
-import ScreenshotHighlight from "./ScreenshotHighlight.vue";
-import ScreenshotBackground from "./ScreenshotBackground.vue";
-import BadgeLabel from "./BadgeLabel.vue";
-import Badge from "./Badge.vue";
+import ScreenshotHighlight from './ScreenshotHighlight.vue'
+import ScreenshotBackground from './ScreenshotBackground.vue'
+import BadgeLabel from './BadgeLabel.vue'
+import Badge from './Badge.vue'
 
-import { computed, defineProps, watch } from "vue";
-import relativeDate from "relative-date";
-import { urlScreenshot } from "../api/";
-import useStore from "../composables/useStore";
+import { computed, defineProps, watch } from 'vue'
+import relativeDate from 'relative-date'
+import { urlScreenshot } from '../api/'
+import useStore from '../composables/useStore'
 
 const props = defineProps<{
-  hash: string | undefined;
-}>();
+  hash: string | undefined
+}>()
 
-const store = useStore();
+const store = useStore()
 
 // load the screenshot from the network if we can't find it in the store
 // (can happen on page reload if we've click an image on the eg. 5th page)
 watch(
   () => props.hash,
   (id) => {
-    id && store.loadScreenshot(id);
+    id && store.loadScreenshot(id)
   },
   { immediate: true },
-);
+)
 
-const relativeDateStr = (stamp: string) => relativeDate(new Date(stamp));
+const relativeDateStr = (stamp: string) => relativeDate(new Date(stamp))
 
-const screenshotRaw = computed(() => `${urlScreenshot}/${props.hash}/raw`);
-const screenshot = computed(() => store.getScreenshotByHash(props.hash || ""));
-const blocks = computed(() => store.getBlocksByHash(props.hash || ""));
+const screenshotRaw = computed(() => `${urlScreenshot}/${props.hash}/raw`)
+const screenshot = computed(() => store.getScreenshotByHash(props.hash || ''))
+const blocks = computed(() => store.getBlocksByHash(props.hash || ''))
 const highlightedBlocksIndexes = computed(() => {
-  const hashBlocks = store.getHighlightedBlocksByHash(props.hash || "");
-  return new Set(hashBlocks.map((blocks) => blocks.index));
-});
-const tags = computed(() => ["no tags"]);
+  const hashBlocks = store.getHighlightedBlocksByHash(props.hash || '')
+  return new Set(hashBlocks.map((blocks) => blocks.index))
+})
+const tags = computed(() => ['no tags'])
 </script>

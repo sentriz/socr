@@ -19,17 +19,17 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, computed } from "vue";
-import { urlScreenshot } from "../api";
-import useStore from "../composables/useStore";
+import { defineProps, computed } from 'vue'
+import { urlScreenshot } from '../api'
+import useStore from '../composables/useStore'
 
 const props = defineProps<{
   hash: string
-}>();
+}>()
 
-const store = useStore();
+const store = useStore()
 
-const screenshot = computed(() => store.getScreenshotByHash(props.hash));
-const blocks = computed(() => store.getHighlightedBlocksByHash(props.hash));
-const url = computed(() => `${urlScreenshot}/${screenshot.value.hash}/raw`);
+const screenshot = computed(() => store.getScreenshotByHash(props.hash))
+const blocks = computed(() => store.getHighlightedBlocksByHash(props.hash))
+const url = computed(() => `${urlScreenshot}/${screenshot.value.hash}/raw`)
 </script>

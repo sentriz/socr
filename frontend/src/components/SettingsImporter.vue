@@ -28,7 +28,7 @@
       </tr>
       <tr class="bg-gray-100">
         <td class="border padded">total</td>
-        <td class="border padded">{{ status?.count_total || 0}}</td>
+        <td class="border padded">{{ status?.count_total || 0 }}</td>
       </tr>
     </table>
     <div
@@ -52,31 +52,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
-import { newSocketAuth, urlScreenshot, reqStartImport, reqImportStatus } from "../api";
-import type { ResponseImportStatus } from "../api";
+import { ref, onMounted, computed } from 'vue'
+import { newSocketAuth, urlScreenshot, reqStartImport, reqImportStatus } from '../api'
+import type { ResponseImportStatus } from '../api'
 
-const status = ref<ResponseImportStatus | undefined>();
+const status = ref<ResponseImportStatus | undefined>()
 
 const requestImportStatus = async () => {
-  [status.value] = await reqImportStatus();
-};
+  ;[status.value] = await reqImportStatus()
+}
 
 const url = computed(() => {
-  if (!status.value?.last_id) return null;
-  return `${urlScreenshot}/${status.value.last_id}/raw`;
-});
+  if (!status.value?.last_id) return null
+  return `${urlScreenshot}/${status.value.last_id}/raw`
+})
 
 const progress = computed(() => {
-  if (!status.value?.count_total) return `0%`;
-  const perc = (100 * status.value.count_processed) / status.value.count_total;
-  return `${Math.round(perc)}%`;
-});
+  if (!status.value?.count_total) return `0%`
+  const perc = (100 * status.value.count_processed) / status.value.count_total
+  return `${Math.round(perc)}%`
+})
 
 // fetch import status on mount
-onMounted(requestImportStatus);
+onMounted(requestImportStatus)
 
 // fetch import status on socket message
-const socket = newSocketAuth({ want_settings: 1 });
-socket.onmessage = requestImportStatus;
+const socket = newSocketAuth({ want_settings: 1 })
+socket.onmessage = requestImportStatus
 </script>

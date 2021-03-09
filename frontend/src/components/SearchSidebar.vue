@@ -22,12 +22,12 @@
 </template>
 
 <script setup lang="ts">
-import SearchSidebarMain from "./SearchSidebarMain.vue"
-import SearchSidebarBackground from "./SearchSidebarBackground.vue"
+import SearchSidebarMain from './SearchSidebarMain.vue'
+import SearchSidebarBackground from './SearchSidebarBackground.vue'
 
-import { defineProps } from "vue";
+import { defineProps } from 'vue'
 
 const props = defineProps<{
-  hash: string | undefined,
-}>();
+  hash: string | undefined
+}>()
 </script>

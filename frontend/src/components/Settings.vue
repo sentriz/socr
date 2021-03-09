@@ -7,6 +7,6 @@
 </template>
 
 <script setup lang="ts">
-import SettingsImporter from "./SettingsImporter.vue";
-import SettingsAbout from "./SettingsAbout.vue";
+import SettingsImporter from './SettingsImporter.vue'
+import SettingsAbout from './SettingsAbout.vue'
 </script>

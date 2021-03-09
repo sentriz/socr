@@ -18,39 +18,39 @@
 </template>
 
 <script setup lang="ts">
-import ScreenshotBackground from "./ScreenshotBackground.vue";
+import ScreenshotBackground from './ScreenshotBackground.vue'
 
-import { ref, computed, onMounted } from "vue";
-import { useRoute } from "vue-router";
-import { urlScreenshot, newSocket, isError } from "../api";
-import type { Screenshot } from "../api";
-import useStore from "../composables/useStore";
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { urlScreenshot, newSocket, isError } from '../api'
+import type { Screenshot } from '../api'
+import useStore from '../composables/useStore'
 
-const store = useStore();
-const route = useRoute();
-const hash = route.params.hash as string || "";
+const store = useStore()
+const route = useRoute()
+const hash = (route.params.hash as string) || ''
 
-const screenshot = ref<Screenshot>();
+const screenshot = ref<Screenshot>()
 const requestScreenshot = async () => {
-  const resp = await store.loadScreenshot(hash);
+  const resp = await store.loadScreenshot(hash)
   if (isError(resp)) return
 
-  screenshot.value = store.getScreenshotByHash(hash);
-};
+  screenshot.value = store.getScreenshotByHash(hash)
+}
 
-const blocks = computed(() => store.getBlocksByHash(hash));
+const blocks = computed(() => store.getBlocksByHash(hash))
 
 // suspend showing anything until we have an image
-const imageSrc = `${urlScreenshot}/${hash}/raw`;
-const imageHave = ref(false);
+const imageSrc = `${urlScreenshot}/${hash}/raw`
+const imageHave = ref(false)
 const imageLoaded = () => {
-  imageHave.value = true;
-};
+  imageHave.value = true
+}
 
 // fetch image on mount
-onMounted(requestScreenshot);
+onMounted(requestScreenshot)
 
 // fetch image on socket message
-const socket = newSocket({ want_screenshot_hash: hash });
-socket.onmessage = requestScreenshot;
+const socket = newSocket({ want_screenshot_hash: hash })
+socket.onmessage = requestScreenshot
 </script>

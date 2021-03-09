@@ -9,30 +9,27 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmit } from "vue";
+import { defineProps, defineEmit } from 'vue'
 
-const emit = defineEmit<
-  ((e: "update:field", v: string) => void) |
-  ((e: "update:order", v: Order) => void)
->()
+const emit = defineEmit<((e: 'update:field', v: string) => void) | ((e: 'update:order', v: Order) => void)>()
 const props = defineProps<{
-  label: string,
-  field: string,
+  label: string
+  field: string
   order: Order
-}>();
+}>()
 
 enum Order {
-  Asc = "asc",
-  Desc = "desc",
+  Asc = 'asc',
+  Desc = 'desc',
 }
 
-const icons: {[key in Order]: string} = {
-  [Order.Asc]: "fas fa-chevron-up",
-  [Order.Desc]: "fas fa-chevron-down",
+const icons: { [key in Order]: string } = {
+  [Order.Asc]: 'fas fa-chevron-up',
+  [Order.Desc]: 'fas fa-chevron-down',
 }
 
 const toggle = () => {
-  emit("update:field", props.field)
-  emit("update:order", props.order === Order.Asc ? Order.Desc : Order.Asc)
+  emit('update:field', props.field)
+  emit('update:order', props.order === Order.Asc ? Order.Desc : Order.Asc)
 }
 </script>

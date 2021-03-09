@@ -9,7 +9,7 @@
     "experimentalDecorators": true,
     "isolatedModules": true,
     "lib": ["dom", "esnext"],
-    "noImplicitAny": true,
+    "noImplicitAny": true
   },
   "exclude": ["node_modules", "dist"]
 }
