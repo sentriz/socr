@@ -26,6 +26,19 @@ where
     hash = pggen.arg ('hash')
 limit 1;
 
+-- name: GetScreenshotWithBlocksByHash :one
+select
+    screenshots.*,
+    array_agg(blocks order by blocks.index) as blocks
+from
+    screenshots
+    join blocks on blocks.screenshot_id = screenshots.id
+where
+    hash = pggen.arg ('hash')
+group by
+    screenshots.id
+limit 1;
+
 -- name: CreateScreenshot :one
 insert into screenshots (hash, timestamp, dim_width, dim_height, dominant_colour, blurhash)
     values (pggen.arg ('hash'), pggen.arg ('timestamp'), pggen.arg ('dim_width'), pggen.arg ('dim_height'), pggen.arg ('dominant_colour'), pggen.arg ('blurhash'))
@@ -55,7 +68,7 @@ group by
 -- name: SearchScreenshots :many
 select
     screenshots.*,
-    array_agg(blocks order by blocks.index) as blocks,
+    array_agg(blocks order by blocks.index) as highlighted_blocks,
     coalesce(avg(similarity (blocks.body, pggen.arg ('body'))), 1.0) as similarity,
     count(1) over () as total
 from

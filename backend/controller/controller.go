@@ -155,7 +155,7 @@ func (c *Controller) ServeScreenshotRaw(w http.ResponseWriter, r *http.Request) 
 
 func (c *Controller) ServeScreenshot(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	screenshot, err := c.DB.GetScreenshotByHash(context.Background(), vars["hash"])
+	screenshot, err := c.DB.GetScreenshotWithBlocksByHash(context.Background(), vars["hash"])
 	if err != nil {
 		resp.Error(w, http.StatusBadRequest, "requested screenshot not found: %v", err)
 		return

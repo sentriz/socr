@@ -38,6 +38,13 @@ type Querier interface {
 	// GetScreenshotByHashScan scans the result of an executed GetScreenshotByHashBatch query.
 	GetScreenshotByHashScan(results pgx.BatchResults) (GetScreenshotByHashRow, error)
 
+	GetScreenshotWithBlocksByHash(ctx context.Context, hash string) (GetScreenshotWithBlocksByHashRow, error)
+	// GetScreenshotWithBlocksByHashBatch enqueues a GetScreenshotWithBlocksByHash query into batch to be executed
+	// later by the batch.
+	GetScreenshotWithBlocksByHashBatch(batch *pgx.Batch, hash string)
+	// GetScreenshotWithBlocksByHashScan scans the result of an executed GetScreenshotWithBlocksByHashBatch query.
+	GetScreenshotWithBlocksByHashScan(results pgx.BatchResults) (GetScreenshotWithBlocksByHashRow, error)
+
 	CreateScreenshot(ctx context.Context, params CreateScreenshotParams) (CreateScreenshotRow, error)
 	// CreateScreenshotBatch enqueues a CreateScreenshot query into batch to be executed
 	// later by the batch.
@@ -265,6 +272,100 @@ func (q *DBQuerier) GetScreenshotByHashScan(results pgx.BatchResults) (GetScreen
 	return item, nil
 }
 
+const getScreenshotWithBlocksByHashSQL = `select
+    screenshots.*,
+    array_agg(blocks order by blocks.index) as blocks
+from
+    screenshots
+    join blocks on blocks.screenshot_id = screenshots.id
+where
+    hash = $1
+group by
+    screenshots.id
+limit 1;`
+
+type GetScreenshotWithBlocksByHashRow struct {
+	ID             int       `json:"id"`
+	Hash           string    `json:"hash"`
+	Timestamp      time.Time `json:"timestamp"`
+	DimWidth       int       `json:"dim_width"`
+	DimHeight      int       `json:"dim_height"`
+	DominantColour string    `json:"dominant_colour"`
+	Blurhash       string    `json:"blurhash"`
+	Blocks         []Blocks  `json:"blocks"`
+}
+
+// GetScreenshotWithBlocksByHash implements Querier.GetScreenshotWithBlocksByHash.
+func (q *DBQuerier) GetScreenshotWithBlocksByHash(ctx context.Context, hash string) (GetScreenshotWithBlocksByHashRow, error) {
+	row := q.conn.QueryRow(ctx, getScreenshotWithBlocksByHashSQL, hash)
+	var item GetScreenshotWithBlocksByHashRow
+	blocksRow, _ := pgtype.NewCompositeTypeValues("blocks", []pgtype.CompositeTypeField{
+		{Name: "ID", OID: ignoredOID},
+		{Name: "ScreenshotID", OID: ignoredOID},
+		{Name: "Index", OID: ignoredOID},
+		{Name: "MinX", OID: ignoredOID},
+		{Name: "MinY", OID: ignoredOID},
+		{Name: "MaxX", OID: ignoredOID},
+		{Name: "MaxY", OID: ignoredOID},
+		{Name: "Body", OID: ignoredOID},
+	}, []pgtype.ValueTranscoder{
+		&pgtype.Int4{},
+		&pgtype.Int4{},
+		&pgtype.Int2{},
+		&pgtype.Int2{},
+		&pgtype.Int2{},
+		&pgtype.Int2{},
+		&pgtype.Int2{},
+		&pgtype.Text{},
+	})
+	blocksArray := pgtype.NewArrayType("_blocks", ignoredOID, func() pgtype.ValueTranscoder {
+		return blocksRow.NewTypeValue().(*pgtype.CompositeType)
+	})
+	if err := row.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash, blocksArray); err != nil {
+		return item, fmt.Errorf("query GetScreenshotWithBlocksByHash: %w", err)
+	}
+	blocksArray.AssignTo(&item.Blocks)
+	return item, nil
+}
+
+// GetScreenshotWithBlocksByHashBatch implements Querier.GetScreenshotWithBlocksByHashBatch.
+func (q *DBQuerier) GetScreenshotWithBlocksByHashBatch(batch *pgx.Batch, hash string) {
+	batch.Queue(getScreenshotWithBlocksByHashSQL, hash)
+}
+
+// GetScreenshotWithBlocksByHashScan implements Querier.GetScreenshotWithBlocksByHashScan.
+func (q *DBQuerier) GetScreenshotWithBlocksByHashScan(results pgx.BatchResults) (GetScreenshotWithBlocksByHashRow, error) {
+	row := results.QueryRow()
+	var item GetScreenshotWithBlocksByHashRow
+	blocksRow, _ := pgtype.NewCompositeTypeValues("blocks", []pgtype.CompositeTypeField{
+		{Name: "ID", OID: ignoredOID},
+		{Name: "ScreenshotID", OID: ignoredOID},
+		{Name: "Index", OID: ignoredOID},
+		{Name: "MinX", OID: ignoredOID},
+		{Name: "MinY", OID: ignoredOID},
+		{Name: "MaxX", OID: ignoredOID},
+		{Name: "MaxY", OID: ignoredOID},
+		{Name: "Body", OID: ignoredOID},
+	}, []pgtype.ValueTranscoder{
+		&pgtype.Int4{},
+		&pgtype.Int4{},
+		&pgtype.Int2{},
+		&pgtype.Int2{},
+		&pgtype.Int2{},
+		&pgtype.Int2{},
+		&pgtype.Int2{},
+		&pgtype.Text{},
+	})
+	blocksArray := pgtype.NewArrayType("_blocks", ignoredOID, func() pgtype.ValueTranscoder {
+		return blocksRow.NewTypeValue().(*pgtype.CompositeType)
+	})
+	if err := row.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash, blocksArray); err != nil {
+		return item, fmt.Errorf("scan GetScreenshotWithBlocksByHashBatch row: %w", err)
+	}
+	blocksArray.AssignTo(&item.Blocks)
+	return item, nil
+}
+
 const createScreenshotSQL = `insert into screenshots (hash, timestamp, dim_width, dim_height, dominant_colour, blurhash)
     values ($1, $2, $3, $4, $5, $6)
 returning
@@ -474,7 +575,7 @@ func (q *DBQuerier) CountDirectoriesByAliasScan(results pgx.BatchResults) ([]Cou
 
 const searchScreenshotsSQL = `select
     screenshots.*,
-    array_agg(blocks order by blocks.index) as blocks,
+    array_agg(blocks order by blocks.index) as highlighted_blocks,
     coalesce(avg(similarity (blocks.body, $1)), 1.0) as similarity,
     count(1) over () as total
 from
@@ -500,16 +601,16 @@ type SearchScreenshotsParams struct {
 }
 
 type SearchScreenshotsRow struct {
-	ID             int       `json:"id"`
-	Hash           string    `json:"hash"`
-	Timestamp      time.Time `json:"timestamp"`
-	DimWidth       int       `json:"dim_width"`
-	DimHeight      int       `json:"dim_height"`
-	DominantColour string    `json:"dominant_colour"`
-	Blurhash       string    `json:"blurhash"`
-	Blocks         []Blocks  `json:"blocks"`
-	Similarity     float64   `json:"similarity"`
-	Total          int       `json:"total"`
+	ID                int       `json:"id"`
+	Hash              string    `json:"hash"`
+	Timestamp         time.Time `json:"timestamp"`
+	DimWidth          int       `json:"dim_width"`
+	DimHeight         int       `json:"dim_height"`
+	DominantColour    string    `json:"dominant_colour"`
+	Blurhash          string    `json:"blurhash"`
+	HighlightedBlocks []Blocks  `json:"highlighted_blocks"`
+	Similarity        float64   `json:"similarity"`
+	Total             int       `json:"total"`
 }
 
 // SearchScreenshots implements Querier.SearchScreenshots.
@@ -520,7 +621,7 @@ func (q *DBQuerier) SearchScreenshots(ctx context.Context, params SearchScreensh
 	}
 	defer rows.Close()
 	items := []SearchScreenshotsRow{}
-	blocksRow, _ := pgtype.NewCompositeTypeValues("blocks", []pgtype.CompositeTypeField{
+	highlightedBlocksRow, _ := pgtype.NewCompositeTypeValues("blocks", []pgtype.CompositeTypeField{
 		{Name: "ID", OID: ignoredOID},
 		{Name: "ScreenshotID", OID: ignoredOID},
 		{Name: "Index", OID: ignoredOID},
@@ -539,15 +640,15 @@ func (q *DBQuerier) SearchScreenshots(ctx context.Context, params SearchScreensh
 		&pgtype.Int2{},
 		&pgtype.Text{},
 	})
-	blocksArray := pgtype.NewArrayType("_blocks", ignoredOID, func() pgtype.ValueTranscoder {
-		return blocksRow.NewTypeValue().(*pgtype.CompositeType)
+	highlightedBlocksArray := pgtype.NewArrayType("_blocks", ignoredOID, func() pgtype.ValueTranscoder {
+		return highlightedBlocksRow.NewTypeValue().(*pgtype.CompositeType)
 	})
 	for rows.Next() {
 		var item SearchScreenshotsRow
-		if err := rows.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash, blocksArray, &item.Similarity, &item.Total); err != nil {
+		if err := rows.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash, highlightedBlocksArray, &item.Similarity, &item.Total); err != nil {
 			return nil, fmt.Errorf("scan SearchScreenshots row: %w", err)
 		}
-		blocksArray.AssignTo(&item.Blocks)
+		highlightedBlocksArray.AssignTo(&item.HighlightedBlocks)
 		items = append(items, item)
 	}
 	if err := rows.Err(); err != nil {
@@ -569,7 +670,7 @@ func (q *DBQuerier) SearchScreenshotsScan(results pgx.BatchResults) ([]SearchScr
 	}
 	defer rows.Close()
 	items := []SearchScreenshotsRow{}
-	blocksRow, _ := pgtype.NewCompositeTypeValues("blocks", []pgtype.CompositeTypeField{
+	highlightedBlocksRow, _ := pgtype.NewCompositeTypeValues("blocks", []pgtype.CompositeTypeField{
 		{Name: "ID", OID: ignoredOID},
 		{Name: "ScreenshotID", OID: ignoredOID},
 		{Name: "Index", OID: ignoredOID},
@@ -588,15 +689,15 @@ func (q *DBQuerier) SearchScreenshotsScan(results pgx.BatchResults) ([]SearchScr
 		&pgtype.Int2{},
 		&pgtype.Text{},
 	})
-	blocksArray := pgtype.NewArrayType("_blocks", ignoredOID, func() pgtype.ValueTranscoder {
-		return blocksRow.NewTypeValue().(*pgtype.CompositeType)
+	highlightedBlocksArray := pgtype.NewArrayType("_blocks", ignoredOID, func() pgtype.ValueTranscoder {
+		return highlightedBlocksRow.NewTypeValue().(*pgtype.CompositeType)
 	})
 	for rows.Next() {
 		var item SearchScreenshotsRow
-		if err := rows.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash, blocksArray, &item.Similarity, &item.Total); err != nil {
+		if err := rows.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash, highlightedBlocksArray, &item.Similarity, &item.Total); err != nil {
 			return nil, fmt.Errorf("scan SearchScreenshotsBatch row: %w", err)
 		}
-		blocksArray.AssignTo(&item.Blocks)
+		highlightedBlocksArray.AssignTo(&item.HighlightedBlocks)
 		items = append(items, item)
 	}
 	if err := rows.Err(); err != nil {
