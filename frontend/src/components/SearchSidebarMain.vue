@@ -1,8 +1,5 @@
 <template>
-  <div
-    v-if="screenshot"
-    class="z-20 fixed inset-y-0 right-0 max-w-lg w-full p-6 bg-gray-100 overflow-y-auto space-y-6"
-  >
+  <div v-if="screenshot" class="z-20 fixed inset-y-0 right-0 max-w-lg w-full p-6 bg-gray-100 overflow-y-auto space-y-6">
     <!-- box, header -->
     <div class="flex leading-normal">
       <router-link :to="{ name: 'search' }" class="flex-grow text-xl leading-none">
@@ -11,10 +8,7 @@
       <!-- header badges -->
       <div class="flex flex-col md:flex-row gap-3 justify-end items-end">
         <BadgeLabel label="created">
-          <Badge
-            class="badge bg-pink-200 text-pink-900"
-            :title="screenshot.timestamp"
-          >
+          <Badge class="badge bg-pink-200 text-pink-900" :title="screenshot.timestamp">
             {{ relativeDateStr(screenshot.timestamp) }}
           </Badge>
         </BadgeLabel>
@@ -35,7 +29,9 @@
     </ScreenshotBackground>
     <!-- box -->
     <div v-if="blocks.length" class="box bg-gray-200 padded font-mono text-sm">
-      <p v-for="(block, i) in blocks" :key="i">{{ block.body }}</p>
+      <p v-for="(block, i) in blocks" :key="i" :class="{ 'bg-yellow-300': highlightedBlocksIndexes.has(i) }">
+        {{ block.body }}
+      </p>
     </div>
   </div>
 </template>
@@ -52,7 +48,7 @@ import { urlScreenshot } from "../api/";
 import useStore from "../composables/useStore";
 
 const props = defineProps<{
-  hash: string | undefined,
+  hash: string | undefined;
 }>();
 
 const store = useStore();
@@ -62,7 +58,7 @@ const store = useStore();
 watch(
   () => props.hash,
   (id) => {
-    id && store.loadScreenshot(id)
+    id && store.loadScreenshot(id);
   },
   { immediate: true },
 );
@@ -72,5 +68,9 @@ const relativeDateStr = (stamp: string) => relativeDate(new Date(stamp));
 const screenshotRaw = computed(() => `${urlScreenshot}/${props.hash}/raw`);
 const screenshot = computed(() => store.getScreenshotByHash(props.hash || ""));
 const blocks = computed(() => store.getBlocksByHash(props.hash || ""));
+const highlightedBlocksIndexes = computed(() => {
+  const hashBlocks = store.getHighlightedBlocksByHash(props.hash || "");
+  return new Set(hashBlocks.map((blocks) => blocks.index));
+});
 const tags = computed(() => ["no tags"]);
 </script>
