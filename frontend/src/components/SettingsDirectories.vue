@@ -13,7 +13,7 @@ import { isError, reqDirectories } from '../api'
 import type { Directory } from '../api'
 
 // fetch import status and about on mount
-const directories = ref<Directory[]>([{directory_alias: "...", count: 0}])
+const directories = ref<Directory[]>([{ directory_alias: '...', count: 0 }])
 onMounted(async () => {
   const resp = await reqDirectories()
   if (isError(resp)) return

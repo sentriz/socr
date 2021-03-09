@@ -175,7 +175,7 @@ export interface ImportStatus {
     error: string
     time: string
   }[]
-  last_id: string
+  last_hash: string
   count_processed: number
   count_total: number
 }

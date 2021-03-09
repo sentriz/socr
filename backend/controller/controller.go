@@ -117,6 +117,7 @@ func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
 			log.Printf("error importing: %v", err)
 		}
 	}()
+	resp.Write(w, struct{}{})
 }
 
 func (c *Controller) ServeAbout(w http.ResponseWriter, r *http.Request) {
@@ -259,10 +260,10 @@ func (c *Controller) ServeAuthenticate(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) ServeImportStatus(w http.ResponseWriter, r *http.Request) {
 	resp.Write(w, struct {
-		ImportStatus importer.Status `json:"status"`
-		Running      bool            `json:"running"`
+		importer.Status
+		Running bool `json:"running"`
 	}{
-		ImportStatus: c.Importer.Status,
-		Running:      c.Importer.IsRunning(),
+		Status:  c.Importer.Status,
+		Running: c.Importer.IsRunning(),
 	})
 }

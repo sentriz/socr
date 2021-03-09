@@ -14,6 +14,11 @@ module.exports = {
       width: {
         fit: 'fit-content',
       },
+      minHeight: {
+        32: '8rem',
+        36: '9rem',
+        40: '10rem',
+      },
     },
   },
   variants: {},

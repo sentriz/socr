@@ -57,18 +57,20 @@ func (i *Importer) ScanDirectories() error {
 	i.setRunning()
 	defer i.setFinished()
 
-	i.Status = Status{}
-	i.UpdatesScan <- struct{}{}
-
 	directoryItems, err := i.collectDirectoryItems()
 	if err != nil {
 		return fmt.Errorf("collecting directory items: %w", err)
 	}
 
+	i.Status = Status{}
+	i.Status.CountTotal = len(directoryItems)
+	i.UpdatesScan <- struct{}{}
+
 	start := time.Now()
 	log.Printf("starting import at %v", start)
 
-	for _, item := range directoryItems {
+	for idx, item := range directoryItems {
+		i.Status.CountProcessed = idx + 1
 		hash, err := i.scanDirectoryItem(item)
 		if err != nil {
 			i.Status.AddError(err)
@@ -78,13 +80,11 @@ func (i *Importer) ScanDirectories() error {
 		if hash == "" {
 			continue
 		}
-
 		i.Status.LastHash = hash
-		i.Status.CountProcessed++
-		i.Status.CountTotal = len(directoryItems)
 		i.UpdatesScan <- struct{}{}
 	}
 
+	i.UpdatesScan <- struct{}{}
 	log.Printf("finished import in %v", time.Since(start))
 	return nil
 }
@@ -150,12 +150,12 @@ func (i *Importer) ImportScreenshot(hash string, timestamp time.Time, dirAlias, 
 	// insert to screenshots and blocks
 	id, err := i.importScreenshot(hash, timestamp, raw)
 	if err != nil {
-		return fmt.Errorf("import screenshot props: %w", err)
+		return fmt.Errorf("props and blocks: %w", err)
 	}
 
 	// insert to dir info
 	if err := i.importScreenshotDirInfo(id, dirAlias, fileName); err != nil {
-		return fmt.Errorf("import screenshot props: %w", err)
+		return fmt.Errorf("dir info: %w", err)
 	}
 
 	i.UpdatesScreenshot <- hash
