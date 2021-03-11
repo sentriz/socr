@@ -52,13 +52,6 @@ type Querier interface {
 	// CreateScreenshotScan scans the result of an executed CreateScreenshotBatch query.
 	CreateScreenshotScan(results pgx.BatchResults) (CreateScreenshotRow, error)
 
-	GetAllScreenshots(ctx context.Context) ([]GetAllScreenshotsRow, error)
-	// GetAllScreenshotsBatch enqueues a GetAllScreenshots query into batch to be executed
-	// later by the batch.
-	GetAllScreenshotsBatch(batch *pgx.Batch)
-	// GetAllScreenshotsScan scans the result of an executed GetAllScreenshotsBatch query.
-	GetAllScreenshotsScan(results pgx.BatchResults) ([]GetAllScreenshotsRow, error)
-
 	CreateBlock(ctx context.Context, params CreateBlockParams) (pgconn.CommandTag, error)
 	// CreateBlockBatch enqueues a CreateBlock query into batch to be executed
 	// later by the batch.
@@ -80,6 +73,14 @@ type Querier interface {
 	SearchScreenshotsBatch(batch *pgx.Batch, params SearchScreenshotsParams)
 	// SearchScreenshotsScan scans the result of an executed SearchScreenshotsBatch query.
 	SearchScreenshotsScan(results pgx.BatchResults) ([]SearchScreenshotsRow, error)
+
+	// https://www.postgresql.org/docs/current/pgtrgm.html
+	GetAllScreenshots(ctx context.Context, params GetAllScreenshotsParams) ([]GetAllScreenshotsRow, error)
+	// GetAllScreenshotsBatch enqueues a GetAllScreenshots query into batch to be executed
+	// later by the batch.
+	GetAllScreenshotsBatch(batch *pgx.Batch, params GetAllScreenshotsParams)
+	// GetAllScreenshotsScan scans the result of an executed GetAllScreenshotsBatch query.
+	GetAllScreenshotsScan(results pgx.BatchResults) ([]GetAllScreenshotsRow, error)
 
 	CreateDirInfo(ctx context.Context, params CreateDirInfoParams) (pgconn.CommandTag, error)
 	// CreateDirInfoBatch enqueues a CreateDirInfo query into batch to be executed
@@ -415,68 +416,6 @@ func (q *DBQuerier) CreateScreenshotScan(results pgx.BatchResults) (CreateScreen
 	return item, nil
 }
 
-const getAllScreenshotsSQL = `select
-    *
-from
-    screenshots;`
-
-type GetAllScreenshotsRow struct {
-	ID             int       `json:"id"`
-	Hash           string    `json:"hash"`
-	Timestamp      time.Time `json:"timestamp"`
-	DimWidth       int       `json:"dim_width"`
-	DimHeight      int       `json:"dim_height"`
-	DominantColour string    `json:"dominant_colour"`
-	Blurhash       string    `json:"blurhash"`
-}
-
-// GetAllScreenshots implements Querier.GetAllScreenshots.
-func (q *DBQuerier) GetAllScreenshots(ctx context.Context) ([]GetAllScreenshotsRow, error) {
-	rows, err := q.conn.Query(ctx, getAllScreenshotsSQL)
-	if err != nil {
-		return nil, fmt.Errorf("query GetAllScreenshots: %w", err)
-	}
-	defer rows.Close()
-	items := []GetAllScreenshotsRow{}
-	for rows.Next() {
-		var item GetAllScreenshotsRow
-		if err := rows.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash); err != nil {
-			return nil, fmt.Errorf("scan GetAllScreenshots row: %w", err)
-		}
-		items = append(items, item)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("close GetAllScreenshots rows: %w", err)
-	}
-	return items, err
-}
-
-// GetAllScreenshotsBatch implements Querier.GetAllScreenshotsBatch.
-func (q *DBQuerier) GetAllScreenshotsBatch(batch *pgx.Batch) {
-	batch.Queue(getAllScreenshotsSQL)
-}
-
-// GetAllScreenshotsScan implements Querier.GetAllScreenshotsScan.
-func (q *DBQuerier) GetAllScreenshotsScan(results pgx.BatchResults) ([]GetAllScreenshotsRow, error) {
-	rows, err := results.Query()
-	if err != nil {
-		return nil, fmt.Errorf("query GetAllScreenshotsBatch: %w", err)
-	}
-	defer rows.Close()
-	items := []GetAllScreenshotsRow{}
-	for rows.Next() {
-		var item GetAllScreenshotsRow
-		if err := rows.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash); err != nil {
-			return nil, fmt.Errorf("scan GetAllScreenshotsBatch row: %w", err)
-		}
-		items = append(items, item)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("close GetAllScreenshotsBatch rows: %w", err)
-	}
-	return items, err
-}
-
 const createBlockSQL = `insert into blocks (screenshot_id, index, min_x, min_y, max_x, max_y, body)
         values ($1, $2, $3, $4, $5, $6, $7);`
 
@@ -576,28 +515,22 @@ func (q *DBQuerier) CountDirectoriesByAliasScan(results pgx.BatchResults) ([]Cou
 const searchScreenshotsSQL = `select
     screenshots.*,
     array_agg(blocks order by blocks.index) as highlighted_blocks,
-    coalesce(avg(similarity (blocks.body, $1)), 1.0) as similarity,
-    count(1) over () as total
+    avg(similarity (blocks.body, $1)) as similarity
 from
     screenshots
-    left join blocks on $1 != ''
-        and blocks.screenshot_id = screenshots.id
+    left join blocks on blocks.screenshot_id = screenshots.id
 where
-    $1 = ''
-    or blocks.body % $1
+    blocks.body % $1
 group by
     screenshots.id
 order by
-    (case when $2 = 'timestamp' and $3 = 'asc' then timestamp end) asc,
-    (case when $2 = 'timestamp' and $3 = 'desc' then timestamp end) desc
-limit $4 offset $5;`
+    similarity desc
+limit $2 offset $3;`
 
 type SearchScreenshotsParams struct {
-	Body      string
-	SortField string
-	SortOrder string
-	Limit     int
-	Offset    int
+	Body   string
+	Limit  int
+	Offset int
 }
 
 type SearchScreenshotsRow struct {
@@ -610,12 +543,11 @@ type SearchScreenshotsRow struct {
 	Blurhash          string    `json:"blurhash"`
 	HighlightedBlocks []Blocks  `json:"highlighted_blocks"`
 	Similarity        float64   `json:"similarity"`
-	Total             int       `json:"total"`
 }
 
 // SearchScreenshots implements Querier.SearchScreenshots.
 func (q *DBQuerier) SearchScreenshots(ctx context.Context, params SearchScreenshotsParams) ([]SearchScreenshotsRow, error) {
-	rows, err := q.conn.Query(ctx, searchScreenshotsSQL, params.Body, params.SortField, params.SortOrder, params.Limit, params.Offset)
+	rows, err := q.conn.Query(ctx, searchScreenshotsSQL, params.Body, params.Limit, params.Offset)
 	if err != nil {
 		return nil, fmt.Errorf("query SearchScreenshots: %w", err)
 	}
@@ -645,7 +577,7 @@ func (q *DBQuerier) SearchScreenshots(ctx context.Context, params SearchScreensh
 	})
 	for rows.Next() {
 		var item SearchScreenshotsRow
-		if err := rows.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash, highlightedBlocksArray, &item.Similarity, &item.Total); err != nil {
+		if err := rows.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash, highlightedBlocksArray, &item.Similarity); err != nil {
 			return nil, fmt.Errorf("scan SearchScreenshots row: %w", err)
 		}
 		highlightedBlocksArray.AssignTo(&item.HighlightedBlocks)
@@ -659,7 +591,7 @@ func (q *DBQuerier) SearchScreenshots(ctx context.Context, params SearchScreensh
 
 // SearchScreenshotsBatch implements Querier.SearchScreenshotsBatch.
 func (q *DBQuerier) SearchScreenshotsBatch(batch *pgx.Batch, params SearchScreenshotsParams) {
-	batch.Queue(searchScreenshotsSQL, params.Body, params.SortField, params.SortOrder, params.Limit, params.Offset)
+	batch.Queue(searchScreenshotsSQL, params.Body, params.Limit, params.Offset)
 }
 
 // SearchScreenshotsScan implements Querier.SearchScreenshotsScan.
@@ -694,7 +626,7 @@ func (q *DBQuerier) SearchScreenshotsScan(results pgx.BatchResults) ([]SearchScr
 	})
 	for rows.Next() {
 		var item SearchScreenshotsRow
-		if err := rows.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash, highlightedBlocksArray, &item.Similarity, &item.Total); err != nil {
+		if err := rows.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash, highlightedBlocksArray, &item.Similarity); err != nil {
 			return nil, fmt.Errorf("scan SearchScreenshotsBatch row: %w", err)
 		}
 		highlightedBlocksArray.AssignTo(&item.HighlightedBlocks)
@@ -702,6 +634,79 @@ func (q *DBQuerier) SearchScreenshotsScan(results pgx.BatchResults) ([]SearchScr
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("close SearchScreenshotsBatch rows: %w", err)
+	}
+	return items, err
+}
+
+const getAllScreenshotsSQL = `select
+    screenshots.*
+from
+    screenshots
+order by
+    (case when $1 = 'timestamp' and $2 = 'asc' then timestamp end) asc,
+    (case when $1 = 'timestamp' and $2 = 'desc' then timestamp end) desc
+limit $3 offset $4;`
+
+type GetAllScreenshotsParams struct {
+	SortField string
+	SortOrder string
+	Limit     int
+	Offset    int
+}
+
+type GetAllScreenshotsRow struct {
+	ID             int       `json:"id"`
+	Hash           string    `json:"hash"`
+	Timestamp      time.Time `json:"timestamp"`
+	DimWidth       int       `json:"dim_width"`
+	DimHeight      int       `json:"dim_height"`
+	DominantColour string    `json:"dominant_colour"`
+	Blurhash       string    `json:"blurhash"`
+}
+
+// GetAllScreenshots implements Querier.GetAllScreenshots.
+func (q *DBQuerier) GetAllScreenshots(ctx context.Context, params GetAllScreenshotsParams) ([]GetAllScreenshotsRow, error) {
+	rows, err := q.conn.Query(ctx, getAllScreenshotsSQL, params.SortField, params.SortOrder, params.Limit, params.Offset)
+	if err != nil {
+		return nil, fmt.Errorf("query GetAllScreenshots: %w", err)
+	}
+	defer rows.Close()
+	items := []GetAllScreenshotsRow{}
+	for rows.Next() {
+		var item GetAllScreenshotsRow
+		if err := rows.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash); err != nil {
+			return nil, fmt.Errorf("scan GetAllScreenshots row: %w", err)
+		}
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("close GetAllScreenshots rows: %w", err)
+	}
+	return items, err
+}
+
+// GetAllScreenshotsBatch implements Querier.GetAllScreenshotsBatch.
+func (q *DBQuerier) GetAllScreenshotsBatch(batch *pgx.Batch, params GetAllScreenshotsParams) {
+	batch.Queue(getAllScreenshotsSQL, params.SortField, params.SortOrder, params.Limit, params.Offset)
+}
+
+// GetAllScreenshotsScan implements Querier.GetAllScreenshotsScan.
+func (q *DBQuerier) GetAllScreenshotsScan(results pgx.BatchResults) ([]GetAllScreenshotsRow, error) {
+	rows, err := results.Query()
+	if err != nil {
+		return nil, fmt.Errorf("query GetAllScreenshotsBatch: %w", err)
+	}
+	defer rows.Close()
+	items := []GetAllScreenshotsRow{}
+	for rows.Next() {
+		var item GetAllScreenshotsRow
+		if err := rows.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash); err != nil {
+			return nil, fmt.Errorf("scan GetAllScreenshotsBatch row: %w", err)
+		}
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("close GetAllScreenshotsBatch rows: %w", err)
 	}
 	return items, err
 }

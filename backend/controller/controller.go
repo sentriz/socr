@@ -182,21 +182,31 @@ func (c *Controller) ServeSearch(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	start := time.Now()
-	screenshots, err := c.DB.SearchScreenshots(context.Background(), db.SearchScreenshotsParams{
-		Body:      payload.Term,
-		Offset:    payload.From,
-		Limit:     payload.Size,
-		SortField: payload.Sort.Field,
-		SortOrder: payload.Sort.Order,
-	})
+	var screenshots interface{}
+	var err error
+	switch {
+	case payload.Term != "":
+		screenshots, err = c.DB.SearchScreenshots(context.Background(), db.SearchScreenshotsParams{
+			Body:   payload.Term,
+			Offset: payload.From,
+			Limit:  payload.Size,
+		})
+	default:
+		screenshots, err = c.DB.GetAllScreenshots(context.Background(), db.GetAllScreenshotsParams{
+			Offset:    payload.From,
+			Limit:     payload.Size,
+			SortField: payload.Sort.Field,
+			SortOrder: payload.Sort.Order,
+		})
+	}
 	if err != nil {
 		resp.Error(w, 500, "searching screenshots: %v", err)
 		return
 	}
 
 	resp.Write(w, struct {
-		Screenshots []db.SearchScreenshotsRow `json:"screenshots"`
-		Took        time.Duration             `json:"took"`
+		Screenshots interface{}   `json:"screenshots"`
+		Took        time.Duration `json:"took"`
 	}{
 		Screenshots: screenshots,
 		Took:        time.Since(start),

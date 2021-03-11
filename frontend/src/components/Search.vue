@@ -2,7 +2,7 @@
   <div class="space-y-6">
     <div class="flex flex-col md:flex-row gap-2">
       <input v-model="reqQuery" class="inp w-full" type="text" placeholder="enter screenshot text query" />
-      <SearchSortFilter v-model:field="reqSortField" v-model:order="reqSortOrder" label="date" />
+      <SearchSortFilter v-if="!reqQuery" v-model:field="reqSortField" v-model:order="reqSortOrder" label="date" />
     </div>
     <div ref="scroller">
       <p v-if="!loading" class="text-gray-500 text-right">fetched {{ respTook.toFixed(2) }}ms</p>

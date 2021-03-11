@@ -45,12 +45,6 @@ insert into screenshots (hash, timestamp, dim_width, dim_height, dominant_colour
 returning
     *;
 
--- name: GetAllScreenshots :many
-select
-    *
-from
-    screenshots;
-
 -- name: CreateBlock :exec
 insert into blocks (screenshot_id, index, min_x, min_y, max_x, max_y, body)
         values (pggen.arg ('screenshot_id'), pggen.arg ('index'), pggen.arg ('min_x'), pggen.arg ('min_y'), pggen.arg ('max_x'), pggen.arg ('max_y'), pggen.arg ('body'));
@@ -69,16 +63,24 @@ group by
 select
     screenshots.*,
     array_agg(blocks order by blocks.index) as highlighted_blocks,
-    coalesce(avg(similarity (blocks.body, pggen.arg ('body'))), 1.0) as similarity
+    avg(similarity (blocks.body, pggen.arg ('body'))) as similarity
 from
     screenshots
-    left join blocks on pggen.arg ('body') != ''
-        and blocks.screenshot_id = screenshots.id
+    left join blocks on blocks.screenshot_id = screenshots.id
 where
-    pggen.arg ('body') = ''
-    or blocks.body % pggen.arg ('body')
+    blocks.body % pggen.arg ('body')
 group by
     screenshots.id
+order by
+    similarity desc
+limit pggen.arg ('limit') offset pggen.arg ('offset');
+
+-- https://www.postgresql.org/docs/current/pgtrgm.html
+-- name: GetAllScreenshots :many
+select
+    screenshots.*
+from
+    screenshots
 order by
     (case when pggen.arg('sort_field') = 'timestamp' and pggen.arg('sort_order') = 'asc' then timestamp end) asc,
     (case when pggen.arg('sort_field') = 'timestamp' and pggen.arg('sort_order') = 'desc' then timestamp end) desc

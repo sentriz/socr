@@ -191,6 +191,7 @@ func (i *Importer) importScreenshot(hash string, timestamp time.Time, raw []byte
 		return 0, fmt.Errorf("calculate blurhash: %w", err)
 	}
 
+
 	propSize := image.Bounds().Size()
 	screenshotRow, err := i.DB.CreateScreenshot(context.Background(), db.CreateScreenshotParams{
 		Hash:           hash,
@@ -229,7 +230,6 @@ func (i *Importer) importScreenshot(hash string, timestamp time.Time, raw []byte
 			Body:         block.Word,
 		})
 	}
-
 	results := i.DB.SendBatch(context.Background(), batch)
 	if err := results.Close(); err != nil {
 		return 0, fmt.Errorf("end transaction: %w", err)
