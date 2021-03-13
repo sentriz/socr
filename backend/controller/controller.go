@@ -19,30 +19,32 @@ import (
 	"go.senan.xyz/socr/backend/db"
 	"go.senan.xyz/socr/backend/imagery"
 	"go.senan.xyz/socr/backend/importer"
+	"go.senan.xyz/socr/backend/scanner"
 )
 
 type Controller struct {
-	DB                      *db.DB
-	Directories             map[string]string
-	DirectoriesUploadsKey   string
-	SocketUpgrader          websocket.Upgrader
-	Importer                *importer.Importer
-	SocketClientsSettings   map[*websocket.Conn]struct{}
-	SocketClientsScreenshot map[string]map[*websocket.Conn]struct{}
-	HMACSecret              string
-	LoginUsername           string
-	LoginPassword           string
-	APIKey                  string
-	DefaultFormat           imagery.Format
+	DB                    *db.DB
+	Directories           map[string]string
+	DirectoriesUploadsKey string
+	SocketUpgrader        websocket.Upgrader
+	Importer              *importer.Importer
+	Scanner               *scanner.Scanner
+	SocketClientsScanner  map[*websocket.Conn]struct{}
+	SocketClientsImporter map[string]map[*websocket.Conn]struct{}
+	HMACSecret            string
+	LoginUsername         string
+	LoginPassword         string
+	APIKey                string
+	DefaultFormat         imagery.Format
 }
 
-func (c *Controller) EmitUpdatesSettings() error {
-	for range c.Importer.UpdatesScan {
-		for client := range c.SocketClientsSettings {
+func (c *Controller) EmitUpdatesScanner() error {
+	for range c.Scanner.Updates {
+		for client := range c.SocketClientsScanner {
 			if err := client.WriteMessage(websocket.TextMessage, []byte(nil)); err != nil {
 				log.Printf("error writing to socket client: %v", err)
 				client.Close()
-				delete(c.SocketClientsSettings, client)
+				delete(c.SocketClientsScanner, client)
 				continue
 			}
 		}
@@ -50,13 +52,13 @@ func (c *Controller) EmitUpdatesSettings() error {
 	return nil
 }
 
-func (c *Controller) EmitUpdatesScreenshot() error {
-	for id := range c.Importer.UpdatesScreenshot {
-		for client := range c.SocketClientsScreenshot[id] {
+func (c *Controller) EmitUpdatesImporter() error {
+	for id := range c.Importer.Updates {
+		for client := range c.SocketClientsImporter[id] {
 			if err := client.WriteMessage(websocket.TextMessage, []byte(nil)); err != nil {
 				log.Printf("error writing to socket client: %v", err)
 				client.Close()
-				delete(c.SocketClientsScreenshot[id], client)
+				delete(c.SocketClientsImporter[id], client)
 				continue
 			}
 		}
@@ -90,8 +92,8 @@ func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uploadsDir := c.Directories[c.DirectoriesUploadsKey]
 	timestamp := time.Now().Format(time.RFC3339)
+	uploadsDir := c.Directories[c.DirectoriesUploadsKey]
 	fileName := fmt.Sprintf("%s.%s", timestamp, decoded.Format.Filetype)
 	filePath := filepath.Join(uploadsDir, fileName)
 	if err := os.WriteFile(filePath, raw, 0644); err != nil {
@@ -116,7 +118,7 @@ func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
 	go func() {
-		if err := c.Importer.ScanDirectories(); err != nil {
+		if err := c.Scanner.ScanDirectories(); err != nil {
 			log.Printf("error importing: %v", err)
 		}
 	}()
@@ -131,7 +133,7 @@ func (c *Controller) ServeAbout(w http.ResponseWriter, r *http.Request) {
 	}{
 		Version:       "development",
 		APIKey:        c.APIKey,
-		SocketClients: len(c.SocketClientsSettings),
+		SocketClients: len(c.SocketClientsScanner),
 	})
 }
 
@@ -230,13 +232,13 @@ func (c *Controller) ServeWebSocket(w http.ResponseWriter, r *http.Request) {
 		if err := auth.TokenParse(c.HMACSecret, token); err != nil {
 			return
 		}
-		c.SocketClientsSettings[conn] = struct{}{}
+		c.SocketClientsScanner[conn] = struct{}{}
 	}
 	if w := params.Get("want_screenshot_hash"); w != "" {
-		if _, ok := c.SocketClientsScreenshot[w]; !ok {
-			c.SocketClientsScreenshot[w] = map[*websocket.Conn]struct{}{}
+		if _, ok := c.SocketClientsImporter[w]; !ok {
+			c.SocketClientsImporter[w] = map[*websocket.Conn]struct{}{}
 		}
-		c.SocketClientsScreenshot[w][conn] = struct{}{}
+		c.SocketClientsImporter[w][conn] = struct{}{}
 	}
 }
 
@@ -273,10 +275,10 @@ func (c *Controller) ServeAuthenticate(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) ServeImportStatus(w http.ResponseWriter, r *http.Request) {
 	resp.Write(w, struct {
-		importer.Status
+		scanner.Status
 		Running bool `json:"running"`
 	}{
-		Status:  c.Importer.Status,
-		Running: c.Importer.IsRunning(),
+		Status:  c.Scanner.Status,
+		Running: c.Scanner.IsRunning(),
 	})
 }

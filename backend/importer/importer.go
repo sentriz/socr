@@ -6,15 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"image"
-	"log"
 	"net/http"
-	"os"
-	"path/filepath"
-	"strings"
-	"sync/atomic"
 	"time"
 
-	"github.com/araddon/dateparse"
 	"github.com/jackc/pgx/v4"
 
 	"go.senan.xyz/socr/backend/db"
@@ -23,135 +17,8 @@ import (
 )
 
 type Importer struct {
-	Running           *int32
-	DB                *db.DB
-	Directories       map[string]string
-	Status            Status
-	UpdatesScan       chan struct{}
-	UpdatesScreenshot chan string
-}
-
-type StatusError struct {
-	Time  time.Time `json:"time"`
-	Error string    `json:"error"`
-}
-
-type Status struct {
-	Errors         []StatusError `json:"errors"`
-	LastHash       string        `json:"last_hash"`
-	CountProcessed int           `json:"count_processed"`
-	CountTotal     int           `json:"count_total"`
-}
-
-func (s *Status) AddError(err error) {
-	s.Errors = append(s.Errors, StatusError{
-		Time:  time.Now(),
-		Error: err.Error(),
-	})
-	if len(s.Errors) > 20 {
-		s.Errors = s.Errors[1:]
-	}
-}
-
-func (i *Importer) IsRunning() bool { return atomic.LoadInt32(i.Running) == 1 }
-func (i *Importer) setRunning()     { atomic.StoreInt32(i.Running, 1) }
-func (i *Importer) setFinished()    { atomic.StoreInt32(i.Running, 0) }
-
-func (i *Importer) ScanDirectories() error {
-	i.setRunning()
-	defer i.setFinished()
-
-	directoryItems, err := i.collectDirectoryItems()
-	if err != nil {
-		return fmt.Errorf("collecting directory items: %w", err)
-	}
-
-	i.Status = Status{}
-	i.Status.CountTotal = len(directoryItems)
-	i.UpdatesScan <- struct{}{}
-
-	start := time.Now()
-	log.Printf("starting import at %v", start)
-
-	for idx, item := range directoryItems {
-		i.Status.CountProcessed = idx + 1
-		hash, err := i.scanDirectoryItem(item)
-		if err != nil {
-			i.Status.AddError(err)
-			i.UpdatesScan <- struct{}{}
-			continue
-		}
-		if hash == "" {
-			continue
-		}
-		i.Status.LastHash = hash
-		i.UpdatesScan <- struct{}{}
-	}
-
-	i.UpdatesScan <- struct{}{}
-	log.Printf("finished import in %v", time.Since(start))
-	return nil
-}
-
-type collected struct {
-	dirAlias string
-	dir      string
-	fileName string
-	modTime  time.Time
-}
-
-func (i *Importer) collectDirectoryItems() ([]*collected, error) {
-	var items []*collected
-	for alias, dir := range i.Directories {
-		files, err := os.ReadDir(dir)
-		if err != nil {
-			return nil, fmt.Errorf("listing dir %q: %w", dir, err)
-		}
-		for _, file := range files {
-			fileName := file.Name()
-			info, err := file.Info()
-			if err != nil {
-				return nil, fmt.Errorf("get file info %q: %w", fileName, err)
-			}
-			items = append(items, &collected{
-				dirAlias: alias,
-				dir:      dir,
-				fileName: fileName,
-				modTime:  info.ModTime(),
-			})
-		}
-	}
-	return items, nil
-}
-
-func (i *Importer) scanDirectoryItem(item *collected) (string, error) {
-	_, err := i.DB.GetDirInfo(context.Background(), item.dirAlias, item.fileName)
-	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-		return "", fmt.Errorf("getting dir info: %w", err)
-	}
-	if err == nil {
-		return "", nil
-	}
-
-	log.Printf("importing new screenshot. alias %q, filename %q", item.dirAlias, item.fileName)
-
-	filePath := filepath.Join(item.dir, item.fileName)
-	raw, err := os.ReadFile(filePath)
-	if err != nil {
-		return "", fmt.Errorf("open file: %v", err)
-	}
-
-	decoded, err := DecodeImage(raw)
-	if err != nil {
-		return "", fmt.Errorf("decode screenshot: %v", err)
-	}
-
-	timestamp := guessFileCreated(item.fileName, item.modTime)
-	if err := i.ImportScreenshot(decoded, timestamp, item.dirAlias, item.fileName); err != nil {
-		return "", fmt.Errorf("importing screenshot: %v", err)
-	}
-
-	return decoded.Hash, nil
+	DB      *db.DB
+	Updates chan string
 }
 
 func (i *Importer) ImportScreenshot(decoded *Decoded, timestamp time.Time, dirAlias, fileName string) error {
@@ -163,7 +30,7 @@ func (i *Importer) ImportScreenshot(decoded *Decoded, timestamp time.Time, dirAl
 	if err := i.importScreenshotDirInfo(id, dirAlias, fileName); err != nil {
 		return fmt.Errorf("dir info: %w", err)
 	}
-	i.UpdatesScreenshot <- decoded.Hash
+	i.Updates <- decoded.Hash
 
 	if isOld {
 		return nil
@@ -173,7 +40,7 @@ func (i *Importer) ImportScreenshot(decoded *Decoded, timestamp time.Time, dirAl
 	if err := i.importScreenshotBlocks(id, decoded.Image); err != nil {
 		return fmt.Errorf("dir info: %w", err)
 	}
-	i.UpdatesScreenshot <- decoded.Hash
+	i.Updates <- decoded.Hash
 
 	return nil
 }
@@ -254,21 +121,6 @@ func (i *Importer) importScreenshotDirInfo(id int, dirAlias string, fileName str
 		return fmt.Errorf("insert info dir infos: %w", err)
 	}
 	return nil
-}
-
-func guessFileCreated(fileName string, modTime time.Time) time.Time {
-	fileName = strings.ToLower(fileName)
-	fileName = strings.TrimPrefix(fileName, "img_")
-	fileName = strings.TrimSuffix(fileName, filepath.Ext(fileName))
-	fileName = strings.ReplaceAll(fileName, "_", "")
-
-	guessed, err := dateparse.ParseLocal(fileName)
-	if err != nil {
-		log.Printf("couldn't guess timestamp of %q, using mod time", fileName)
-		return modTime
-	}
-
-	return guessed
 }
 
 type Decoded struct {

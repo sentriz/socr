@@ -14,6 +14,7 @@ import (
 	"go.senan.xyz/socr/backend/db"
 	"go.senan.xyz/socr/backend/imagery"
 	"go.senan.xyz/socr/backend/importer"
+	"go.senan.xyz/socr/backend/scanner"
 	"go.senan.xyz/socr/frontend"
 )
 
@@ -42,36 +43,42 @@ func main() {
 	}
 	defer dbConn.Close()
 
-	importr := &importer.Importer{
-		Running:           new(int32),
-		Directories:       confDirs,
-		DB:                dbConn,
-		UpdatesScan:       make(chan struct{}),
-		UpdatesScreenshot: make(chan string),
+	importer := &importer.Importer{
+		DB:      dbConn,
+		Updates: make(chan string),
+	}
+
+	scanner := &scanner.Scanner{
+		Running:     new(int32),
+		Directories: confDirs,
+		DB:          dbConn,
+		Importer:    importer,
+		Updates:     make(chan struct{}),
 	}
 
 	ctrl := &controller.Controller{
 		Directories:           confDirs,
 		DirectoriesUploadsKey: uploadsKey,
 		DB:                    dbConn,
-		Importer:              importr,
+		Importer:              importer,
+		Scanner:               scanner,
 		SocketUpgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				// TODO: this?
 				return true
 			},
 		},
-		SocketClientsSettings:   map[*websocket.Conn]struct{}{},
-		SocketClientsScreenshot: map[string]map[*websocket.Conn]struct{}{},
-		HMACSecret:              confHMACSecret,
-		LoginUsername:           confLoginUsername,
-		LoginPassword:           confLoginPassword,
-		APIKey:                  confAPIKey,
-		DefaultFormat:           imagery.FormatPNG,
+		SocketClientsScanner:  map[*websocket.Conn]struct{}{},
+		SocketClientsImporter: map[string]map[*websocket.Conn]struct{}{},
+		HMACSecret:            confHMACSecret,
+		LoginUsername:         confLoginUsername,
+		LoginPassword:         confLoginPassword,
+		APIKey:                confAPIKey,
+		DefaultFormat:         imagery.FormatPNG,
 	}
 
-	go ctrl.EmitUpdatesSettings()
-	go ctrl.EmitUpdatesScreenshot()
+	go ctrl.EmitUpdatesScanner()
+	go ctrl.EmitUpdatesImporter()
 
 	r := mux.NewRouter()
 	r.Use(ctrl.WithCORS())
