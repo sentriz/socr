@@ -48,6 +48,9 @@ func (s *Status) AddError(err error) {
 		Time:  time.Now(),
 		Error: err.Error(),
 	})
+	if len(s.Errors) > 20 {
+		s.Errors = s.Errors[1:]
+	}
 }
 
 func (i *Importer) IsRunning() bool { return atomic.LoadInt32(i.Running) == 1 }
