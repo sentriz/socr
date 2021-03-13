@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -16,7 +17,6 @@ import (
 	"go.senan.xyz/socr/backend/controller/auth"
 	"go.senan.xyz/socr/backend/controller/resp"
 	"go.senan.xyz/socr/backend/db"
-	"go.senan.xyz/socr/backend/hasher"
 	"go.senan.xyz/socr/backend/imagery"
 	"go.senan.xyz/socr/backend/importer"
 )
@@ -75,30 +75,34 @@ func (c *Controller) ServePing(w http.ResponseWriter, r *http.Request) {
 func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 	infile, _, err := r.FormFile("i")
 	if err != nil {
-		resp.Error(w, 500, "read form: %v", err)
+		resp.Error(w, http.StatusBadRequest, "get form file: %v", err)
 		return
 	}
 	defer infile.Close()
-
 	raw, err := io.ReadAll(infile)
 	if err != nil {
-		resp.Error(w, 500, "read form bytes: %v", err)
+		resp.Error(w, http.StatusBadRequest, "read form file: %v", err)
+		return
+	}
+	decoded, err := importer.DecodeImage(raw)
+	if err != nil {
+		resp.Error(w, http.StatusBadRequest, "decoding screenshot: %v", err)
 		return
 	}
 
 	uploadsDir := c.Directories[c.DirectoriesUploadsKey]
-	fileName := time.Now().Format(time.RFC822)
+	timestamp := time.Now().Format(time.RFC3339)
+	fileName := fmt.Sprintf("%s.%s", timestamp, decoded.Format.Filetype)
 	filePath := filepath.Join(uploadsDir, fileName)
 	if err := os.WriteFile(filePath, raw, 0644); err != nil {
 		resp.Error(w, 500, "write upload to disk: %v", err)
 		return
 	}
 
-	hash := hasher.Hash(raw)
 	go func() {
 		timestamp := time.Now()
-		if err := c.Importer.ImportScreenshot(hash, timestamp, c.DirectoriesUploadsKey, fileName, raw); err != nil {
-			log.Printf("error processing screenshot %s: %v", hash, err)
+		if err := c.Importer.ImportScreenshot(decoded, timestamp, c.DirectoriesUploadsKey, fileName); err != nil {
+			log.Printf("error processing screenshot %s: %v", decoded.Hash, err)
 			return
 		}
 	}()
@@ -106,7 +110,7 @@ func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 	resp.Write(w, struct {
 		ID string `json:"id"`
 	}{
-		ID: hash,
+		ID: decoded.Hash,
 	})
 }
 

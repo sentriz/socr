@@ -132,80 +132,66 @@ func (i *Importer) scanDirectoryItem(item *collected) (string, error) {
 
 	log.Printf("importing new screenshot. alias %q, filename %q", item.dirAlias, item.fileName)
 
-	filePath := filepath.Join(item.dir, item.fileName)
-	bytes, err := os.ReadFile(filePath)
+	raw, err := os.ReadFile(item.fileName)
 	if err != nil {
-		return "", fmt.Errorf("reading from disk: %v", err)
+		return "", fmt.Errorf("open file: %v", err)
 	}
 
-	hash := hasher.Hash(bytes)
+	decoded, err := DecodeImage(raw)
+	if err != nil {
+		return "", fmt.Errorf("decode screenshot: %v", err)
+	}
+
 	timestamp := guessFileCreated(item.fileName, item.modTime)
-	if err := i.ImportScreenshot(hash, timestamp, item.dirAlias, item.fileName, bytes); err != nil {
+	if err := i.ImportScreenshot(decoded, timestamp, item.dirAlias, item.fileName); err != nil {
 		return "", fmt.Errorf("importing screenshot: %v", err)
 	}
 
-	return hash, nil
+	return decoded.Hash, nil
 }
 
-func (i *Importer) ImportScreenshot(hash string, timestamp time.Time, dirAlias, fileName string, raw []byte) error {
-	// insert screenshot and dir info
-	id, image, err := i.importScreenshot(hash, timestamp, raw)
+func (i *Importer) ImportScreenshot(decoded *Decoded, timestamp time.Time, dirAlias, fileName string) error {
+	// insert screenshot and dir info, alert clients with update
+	id, isOld, err := i.importScreenshot(decoded.Hash, decoded.Image, timestamp)
 	if err != nil {
 		return fmt.Errorf("props and blocks: %w", err)
 	}
 	if err := i.importScreenshotDirInfo(id, dirAlias, fileName); err != nil {
 		return fmt.Errorf("dir info: %w", err)
 	}
+	i.UpdatesScreenshot <- decoded.Hash
 
-	// alert frontend of screenshot and dir entries
-	i.UpdatesScreenshot <- hash
-
-	// if no image was returned, the screenshot already existed
-	if image == nil {
+	if isOld {
 		return nil
 	}
 
-	// insert blocks, alert frontend
-	if err := i.importScreenshotBlocks(id, image); err != nil {
+	// insert blocks, alert clients with update
+	if err := i.importScreenshotBlocks(id, decoded.Image); err != nil {
 		return fmt.Errorf("dir info: %w", err)
 	}
-
-	// alert frontend of blocks entries
-	i.UpdatesScreenshot <- hash
+	i.UpdatesScreenshot <- decoded.Hash
 
 	return nil
 }
 
-func (i *Importer) importScreenshot(hash string, timestamp time.Time, raw []byte) (int, image.Image, error) {
-	rowOld, err := i.DB.GetScreenshotByHash(context.Background(), hash)
+func (i *Importer) importScreenshot(hash string, image image.Image, timestamp time.Time) (int, bool, error) {
+	old, err := i.DB.GetScreenshotByHash(context.Background(), hash)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-		return 0, nil, fmt.Errorf("getting screenshot by hash: %w", err)
+		return 0, false, fmt.Errorf("getting screenshot by hash: %w", err)
 	}
-	if rowOld.ID != 0 {
-		// we already have this screenshot
-		return rowOld.ID, nil, nil
-	}
-
-	mime := http.DetectContentType(raw)
-	format, ok := imagery.FormatFromMIME(mime)
-	if !ok {
-		return 0, nil, fmt.Errorf("unrecognised format: %s", mime)
-	}
-	rawReader := bytes.NewReader(raw)
-	image, err := format.Decode(rawReader)
-	if err != nil {
-		return 0, nil, fmt.Errorf("decoding: %s", mime)
+	if err == nil {
+		return old.ID, true, nil
 	}
 
 	_, propDominantColour := imagery.DominantColour(image)
 
 	propBlurhash, err := imagery.CalculateBlurhash(image)
 	if err != nil {
-		return 0, nil, fmt.Errorf("calculate blurhash: %w", err)
+		return 0, false, fmt.Errorf("calculate blurhash: %w", err)
 	}
 
 	propSize := image.Bounds().Size()
-	rowNew, err := i.DB.CreateScreenshot(context.Background(), db.CreateScreenshotParams{
+	new, err := i.DB.CreateScreenshot(context.Background(), db.CreateScreenshotParams{
 		Hash:           hash,
 		Timestamp:      timestamp,
 		DimWidth:       propSize.X,
@@ -214,13 +200,13 @@ func (i *Importer) importScreenshot(hash string, timestamp time.Time, raw []byte
 		Blurhash:       propBlurhash,
 	})
 	if err != nil {
-		return 0, nil, fmt.Errorf("inserting screenshot: %w", err)
+		return 0, false, fmt.Errorf("inserting screenshot: %w", err)
 	}
 
-	return rowNew.ID, image, nil
+	return new.ID, false, nil
 }
 
-func (i *Importer) importScreenshotBlocks(screenshotID int, image image.Image) error {
+func (i *Importer) importScreenshotBlocks(id int, image image.Image) error {
 	imageGrey := imagery.GreyScale(image)
 	imageBig := imagery.Resize(imageGrey, imagery.ScaleFactor)
 	imageEncoded := &bytes.Buffer{}
@@ -237,7 +223,7 @@ func (i *Importer) importScreenshotBlocks(screenshotID int, image image.Image) e
 	for idx, block := range blocks {
 		rect := imagery.ScaleDownRect(block.Box)
 		i.DB.CreateBlockBatch(batch, db.CreateBlockParams{
-			ScreenshotID: screenshotID,
+			ScreenshotID: id,
 			Index:        idx,
 			MinX:         rect.Min.X,
 			MinY:         rect.Min.Y,
@@ -279,4 +265,38 @@ func guessFileCreated(fileName string, modTime time.Time) time.Time {
 	}
 
 	return guessed
+}
+
+type Decoded struct {
+	Hash   string
+	Image  image.Image
+	Data   []byte
+	Format imagery.Format
+}
+
+// DecodeImage takes a raw byte slice of an image (png/jpg/etc) decodes it using an appropriate format
+// and encodes it again. Encoding and decoding makes sure the hash will be the same for the same
+// image given different sources. clipboard/filesystem/etc
+func DecodeImage(raw []byte) (*Decoded, error) {
+	mime := http.DetectContentType(raw)
+	format, ok := imagery.FormatFromMIME(mime)
+	if !ok {
+		return nil, fmt.Errorf("unknown image mime %s", mime)
+	}
+	image, err := format.Decode(bytes.NewReader(raw))
+	if err != nil {
+		return nil, fmt.Errorf("decoding image %w", err)
+	}
+	dataBuff := &bytes.Buffer{}
+	if err := format.Encode(dataBuff, image); err != nil {
+		return nil, fmt.Errorf("encoding image: %w", err)
+	}
+	data := dataBuff.Bytes()
+	hash := hasher.Hash(data)
+	return &Decoded{
+		Hash:   hash,
+		Image:  image,
+		Data:   data,
+		Format: format,
+	}, err
 }
