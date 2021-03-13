@@ -82,10 +82,10 @@ func Resize(img image.Image, factor int) image.Image {
 	)
 }
 
-func ScaleDownRect(rect image.Rectangle) [4]int {
-	return [...]int{
-		rect.Min.X / ScaleFactor, rect.Min.Y / ScaleFactor,
-		rect.Max.X / ScaleFactor, rect.Max.Y / ScaleFactor,
+func ScaleDownRect(rect image.Rectangle) image.Rectangle {
+	return image.Rectangle{
+		Min: image.Point{X: rect.Min.X / ScaleFactor, Y: rect.Min.Y / ScaleFactor},
+		Max: image.Point{X: rect.Max.X / ScaleFactor, Y: rect.Max.Y / ScaleFactor},
 	}
 }
 

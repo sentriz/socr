@@ -239,10 +239,10 @@ func (i *Importer) importScreenshotBlocks(screenshotID int, image image.Image) e
 		i.DB.CreateBlockBatch(batch, db.CreateBlockParams{
 			ScreenshotID: screenshotID,
 			Index:        idx,
-			MinX:         rect[0],
-			MinY:         rect[1],
-			MaxX:         rect[2],
-			MaxY:         rect[3],
+			MinX:         rect.Min.X,
+			MinY:         rect.Min.Y,
+			MaxX:         rect.Max.X,
+			MaxY:         rect.Max.Y,
 			Body:         block.Word,
 		})
 	}
