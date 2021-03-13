@@ -278,7 +278,7 @@ const getScreenshotWithBlocksByHashSQL = `select
     array_agg(blocks order by blocks.index) as blocks
 from
     screenshots
-    join blocks on blocks.screenshot_id = screenshots.id
+    left join blocks on blocks.screenshot_id = screenshots.id
 where
     hash = $1
 group by

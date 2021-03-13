@@ -32,7 +32,7 @@ select
     array_agg(blocks order by blocks.index) as blocks
 from
     screenshots
-    join blocks on blocks.screenshot_id = screenshots.id
+    left join blocks on blocks.screenshot_id = screenshots.id
 where
     hash = pggen.arg ('hash')
 group by

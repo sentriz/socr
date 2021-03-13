@@ -23,7 +23,7 @@ import LoadingSpinner from './LoadingSpinner.vue'
 
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { urlScreenshot, newSocket, isError } from '../api'
+import { urlScreenshot, newSocket } from '../api'
 import useStore from '../composables/useStore'
 
 const store = useStore()
@@ -40,11 +40,10 @@ const screenshot = computed(() => store.getScreenshotByHash(hash))
 const blocks = computed(() => store.getBlocksByHash(hash))
 
 const requestScreenshot = async () => {
-  const resp = await store.loadScreenshot(hash)
-  if (isError(resp)) return
-
   const now = new Date()
   image.value = `${urlScreenshot}/${hash}/raw?t=${now.valueOf()}`
+
+  await store.loadScreenshot(hash)
 }
 
 // fetch image on mount
