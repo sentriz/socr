@@ -135,7 +135,8 @@ func (i *Importer) scanDirectoryItem(item *collected) (string, error) {
 
 	log.Printf("importing new screenshot. alias %q, filename %q", item.dirAlias, item.fileName)
 
-	raw, err := os.ReadFile(item.fileName)
+	filePath := filepath.Join(item.dir, item.fileName)
+	raw, err := os.ReadFile(filePath)
 	if err != nil {
 		return "", fmt.Errorf("open file: %v", err)
 	}
