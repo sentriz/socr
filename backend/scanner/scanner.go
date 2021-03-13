@@ -27,43 +27,6 @@ type Scanner struct {
 	Updates     chan struct{}
 }
 
-func (i *Scanner) ScanDirectories() error {
-	i.setRunning()
-	defer i.setFinished()
-
-	directoryItems, err := i.collectDirectoryItems()
-	if err != nil {
-		return fmt.Errorf("collecting directory items: %w", err)
-	}
-
-	i.Status = Status{}
-	i.Status.CountTotal = len(directoryItems)
-	i.Updates <- struct{}{}
-
-	start := time.Now()
-	log.Printf("starting import at %v", start)
-
-	for idx, item := range directoryItems {
-		i.Status.CountProcessed = idx + 1
-
-		hash, err := i.scanDirectoryItem(item)
-		if err != nil {
-			i.Status.AddError(err)
-			i.Updates <- struct{}{}
-			continue
-		}
-		if hash == "" {
-			continue
-		}
-		i.Status.LastHash = hash
-		i.Updates <- struct{}{}
-	}
-
-	i.Updates <- struct{}{}
-	log.Printf("finished import in %v", time.Since(start))
-	return nil
-}
-
 type StatusError struct {
 	Time  time.Time `json:"time"`
 	Error string    `json:"error"`
@@ -90,6 +53,44 @@ func (s *Scanner) IsRunning() bool { return atomic.LoadInt32(s.Running) == 1 }
 func (s *Scanner) setRunning()     { atomic.StoreInt32(s.Running, 1) }
 func (s *Scanner) setFinished()    { atomic.StoreInt32(s.Running, 0) }
 
+func (s *Scanner) ScanDirectories() error {
+	s.setRunning()
+	defer s.setFinished()
+	directoryItems, err := s.collectDirectoryItems()
+	if err != nil {
+		return fmt.Errorf("collecting directory items: %w", err)
+	}
+
+	s.Status = Status{}
+	start := time.Now()
+
+	log.Printf("starting import at %v", start)
+	s.Status.CountTotal = len(directoryItems)
+	s.Updates <- struct{}{}
+
+	defer func() {
+		log.Printf("finished import in %v", time.Since(start))
+		s.Status.CountProcessed = len(directoryItems)
+		s.Updates <- struct{}{}
+	}()
+
+	for idx, item := range directoryItems {
+		hash, err := s.scanDirectoryItem(item)
+		if err != nil {
+			s.Status.AddError(err)
+			s.Updates <- struct{}{}
+			continue
+		}
+		if hash == "" {
+			continue
+		}
+		s.Status.LastHash = hash
+		s.Status.CountProcessed = idx + 1
+		s.Updates <- struct{}{}
+	}
+	return nil
+}
+
 type dirItem struct {
 	dirAlias string
 	dir      string
@@ -97,9 +98,9 @@ type dirItem struct {
 	modTime  time.Time
 }
 
-func (i *Scanner) collectDirectoryItems() ([]*dirItem, error) {
+func (s *Scanner) collectDirectoryItems() ([]*dirItem, error) {
 	var items []*dirItem
-	for alias, dir := range i.Directories {
+	for alias, dir := range s.Directories {
 		files, err := os.ReadDir(dir)
 		if err != nil {
 			return nil, fmt.Errorf("listing dir %q: %w", dir, err)
@@ -110,19 +111,17 @@ func (i *Scanner) collectDirectoryItems() ([]*dirItem, error) {
 			if err != nil {
 				return nil, fmt.Errorf("get file info %q: %w", fileName, err)
 			}
+			modTime := info.ModTime()
 			items = append(items, &dirItem{
-				dirAlias: alias,
-				dir:      dir,
-				fileName: fileName,
-				modTime:  info.ModTime(),
+				alias, dir, fileName, modTime,
 			})
 		}
 	}
 	return items, nil
 }
 
-func (i *Scanner) scanDirectoryItem(item *dirItem) (string, error) {
-	_, err := i.DB.GetDirInfo(context.Background(), item.dirAlias, item.fileName)
+func (s *Scanner) scanDirectoryItem(item *dirItem) (string, error) {
+	_, err := s.DB.GetDirInfo(context.Background(), item.dirAlias, item.fileName)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return "", fmt.Errorf("getting dir info: %w", err)
 	}
@@ -144,7 +143,7 @@ func (i *Scanner) scanDirectoryItem(item *dirItem) (string, error) {
 	}
 
 	timestamp := guessFileCreated(item.fileName, item.modTime)
-	if err := i.Importer.ImportScreenshot(decoded, timestamp, item.dirAlias, item.fileName); err != nil {
+	if err := s.Importer.ImportScreenshot(decoded, timestamp, item.dirAlias, item.fileName); err != nil {
 		return "", fmt.Errorf("importing screenshot: %v", err)
 	}
 
