@@ -10,11 +10,11 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 
-	"go.senan.xyz/socr/backend/controller"
 	"go.senan.xyz/socr/backend/db"
 	"go.senan.xyz/socr/backend/imagery"
 	"go.senan.xyz/socr/backend/importer"
 	"go.senan.xyz/socr/backend/scanner"
+	"go.senan.xyz/socr/backend/server"
 	"go.senan.xyz/socr/frontend"
 )
 
@@ -56,7 +56,7 @@ func main() {
 		Updates:     make(chan struct{}),
 	}
 
-	ctrl := &controller.Controller{
+	ctrl := &server.Server{
 		Directories:           confDirs,
 		DirectoriesUploadsKey: uploadsKey,
 		DB:                    dbConn,

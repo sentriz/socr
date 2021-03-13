@@ -1,4 +1,4 @@
-package controller
+package server
 
 import (
 	"context"
@@ -14,15 +14,15 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 
-	"go.senan.xyz/socr/backend/controller/auth"
-	"go.senan.xyz/socr/backend/controller/resp"
 	"go.senan.xyz/socr/backend/db"
 	"go.senan.xyz/socr/backend/imagery"
 	"go.senan.xyz/socr/backend/importer"
 	"go.senan.xyz/socr/backend/scanner"
+	"go.senan.xyz/socr/backend/server/auth"
+	"go.senan.xyz/socr/backend/server/resp"
 )
 
-type Controller struct {
+type Server struct {
 	DB                    *db.DB
 	Directories           map[string]string
 	DirectoriesUploadsKey string
@@ -38,7 +38,7 @@ type Controller struct {
 	DefaultFormat         imagery.Format
 }
 
-func (c *Controller) EmitUpdatesScanner() error {
+func (c *Server) EmitUpdatesScanner() error {
 	for range c.Scanner.Updates {
 		for client := range c.SocketClientsScanner {
 			if err := client.WriteMessage(websocket.TextMessage, []byte(nil)); err != nil {
@@ -52,7 +52,7 @@ func (c *Controller) EmitUpdatesScanner() error {
 	return nil
 }
 
-func (c *Controller) EmitUpdatesImporter() error {
+func (c *Server) EmitUpdatesImporter() error {
 	for id := range c.Importer.Updates {
 		for client := range c.SocketClientsImporter[id] {
 			if err := client.WriteMessage(websocket.TextMessage, []byte(nil)); err != nil {
@@ -66,7 +66,7 @@ func (c *Controller) EmitUpdatesImporter() error {
 	return nil
 }
 
-func (c *Controller) ServePing(w http.ResponseWriter, r *http.Request) {
+func (c *Server) ServePing(w http.ResponseWriter, r *http.Request) {
 	resp.Write(w, struct {
 		Status string `json:"status"`
 	}{
@@ -74,7 +74,7 @@ func (c *Controller) ServePing(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
+func (c *Server) ServeUpload(w http.ResponseWriter, r *http.Request) {
 	infile, _, err := r.FormFile("i")
 	if err != nil {
 		resp.Error(w, http.StatusBadRequest, "get form file: %v", err)
@@ -116,7 +116,7 @@ func (c *Controller) ServeUpload(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
+func (c *Server) ServeStartImport(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		if err := c.Scanner.ScanDirectories(); err != nil {
 			log.Printf("error importing: %v", err)
@@ -125,7 +125,7 @@ func (c *Controller) ServeStartImport(w http.ResponseWriter, r *http.Request) {
 	resp.Write(w, struct{}{})
 }
 
-func (c *Controller) ServeAbout(w http.ResponseWriter, r *http.Request) {
+func (c *Server) ServeAbout(w http.ResponseWriter, r *http.Request) {
 	resp.Write(w, struct {
 		Version       string `json:"version"`
 		APIKey        string `json:"api_key"`
@@ -137,7 +137,7 @@ func (c *Controller) ServeAbout(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (c *Controller) ServeDirectories(w http.ResponseWriter, r *http.Request) {
+func (c *Server) ServeDirectories(w http.ResponseWriter, r *http.Request) {
 	screenshotsCount, err := c.DB.CountDirectoriesByAlias(context.Background())
 	if err != nil {
 		resp.Error(w, 500, "counting directories by alias: %v", err)
@@ -146,7 +146,7 @@ func (c *Controller) ServeDirectories(w http.ResponseWriter, r *http.Request) {
 	resp.Write(w, screenshotsCount)
 }
 
-func (c *Controller) ServeScreenshotRaw(w http.ResponseWriter, r *http.Request) {
+func (c *Server) ServeScreenshotRaw(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	row, err := c.DB.GetScreenshotPathByHash(context.Background(), vars["hash"])
 	if err != nil {
@@ -161,7 +161,7 @@ func (c *Controller) ServeScreenshotRaw(w http.ResponseWriter, r *http.Request) 
 	http.ServeFile(w, r, filepath.Join(directory, row.Filename))
 }
 
-func (c *Controller) ServeScreenshot(w http.ResponseWriter, r *http.Request) {
+func (c *Server) ServeScreenshot(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	screenshot, err := c.DB.GetScreenshotWithBlocksByHash(context.Background(), vars["hash"])
 	if err != nil {
@@ -181,7 +181,7 @@ type ServeSearchPayload struct {
 	} `json:"sort"`
 }
 
-func (c *Controller) ServeSearch(w http.ResponseWriter, r *http.Request) {
+func (c *Server) ServeSearch(w http.ResponseWriter, r *http.Request) {
 	var payload ServeSearchPayload
 	json.NewDecoder(r.Body).Decode(&payload)
 	defer r.Body.Close()
@@ -218,7 +218,7 @@ func (c *Controller) ServeSearch(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (c *Controller) ServeWebSocket(w http.ResponseWriter, r *http.Request) {
+func (c *Server) ServeWebSocket(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	token := params.Get("token")
 
@@ -242,7 +242,7 @@ func (c *Controller) ServeWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (c *Controller) ServeAuthenticate(w http.ResponseWriter, r *http.Request) {
+func (c *Server) ServeAuthenticate(w http.ResponseWriter, r *http.Request) {
 	var payload struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
@@ -273,7 +273,7 @@ func (c *Controller) ServeAuthenticate(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (c *Controller) ServeImportStatus(w http.ResponseWriter, r *http.Request) {
+func (c *Server) ServeImportStatus(w http.ResponseWriter, r *http.Request) {
 	resp.Write(w, struct {
 		scanner.Status
 		Running bool `json:"running"`
