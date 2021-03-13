@@ -25,7 +25,9 @@ import useLoading from '../composables/useLoading'
 
 const router = useRouter()
 
-const upload = async (event: ClipboardEvent) => {
+const { loading, load } = useLoading(reqUpload)
+
+document.onpaste = async (event: ClipboardEvent) => {
   const items = event.clipboardData?.items
   if (!items) return
 
@@ -35,12 +37,9 @@ const upload = async (event: ClipboardEvent) => {
   const formData = new FormData()
   formData.append('i', blob)
 
-  const resp = await reqUpload(formData)
+  const resp = await load(formData)
   if (isError(resp)) return
 
   router.push({ name: 'public', params: { hash: resp.result.id } })
 }
-
-const { loading, load } = useLoading(upload)
-document.onpaste = load
 </script>
