@@ -7,12 +7,13 @@ import (
 	"fmt"
 	"image"
 	"net/http"
+	"strconv"
 	"time"
 
+	"github.com/cespare/xxhash"
 	"github.com/jackc/pgx/v4"
 
 	"go.senan.xyz/socr/backend/db"
-	"go.senan.xyz/socr/backend/hasher"
 	"go.senan.xyz/socr/backend/imagery"
 )
 
@@ -148,11 +149,22 @@ func DecodeImage(raw []byte) (*Decoded, error) {
 		return nil, fmt.Errorf("encoding image: %w", err)
 	}
 	data := dataBuff.Bytes()
-	hash := hasher.Hash(data)
+	hash := Hash(data)
 	return &Decoded{
 		Hash:   hash,
 		Image:  image,
 		Data:   data,
 		Format: format,
 	}, err
+}
+
+const (
+	hashBase = 16
+	hashBits = 64
+)
+
+func Hash(bytes []byte) string {
+	sum := xxhash.Sum64(bytes)
+	format := strconv.FormatInt(int64(sum), hashBase)
+	return format
 }
