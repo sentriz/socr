@@ -44,6 +44,18 @@ func (c *Controller) WithAPIKey() func(http.Handler) http.Handler {
 	}
 }
 
+func (c *Controller) WithJWTOrAPIKey() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if checkAPIKey(c, r) || checkJWT(c, r) || checkJWTParam(c, r) {
+				next.ServeHTTP(w, r)
+				return
+			}
+			resp.Error(w, http.StatusUnauthorized, "unauthorised")
+		})
+	}
+}
+
 func (c *Controller) WithLogging() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

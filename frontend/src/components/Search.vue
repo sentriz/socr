@@ -23,6 +23,7 @@
     <SearchLoading v-if="loading" />
   </div>
   <SearchSidebar :hash="sidebarHash" />
+  <ClipboardUploader />
 </template>
 
 <script setup lang="ts">
@@ -31,6 +32,7 @@ import ScreenshotBackground from './ScreenshotBackground.vue'
 import SearchSidebar from './SearchSidebar.vue'
 import SearchSortFilter from './SearchSortFilter.vue'
 import SearchLoading from './SearchLoading.vue'
+import ClipboardUploader from './ClipboardUploader.vue'
 
 import { ref, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'

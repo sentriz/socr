@@ -9,6 +9,7 @@ export const urlAbout = '/api/about'
 export const urlDirectories = '/api/directories'
 export const urlImportStatus = '/api/import_status'
 export const urlPing = '/api/ping'
+export const urlUpload = '/api/upload'
 
 const tokenKey = 'token'
 export const tokenSet = (token: string) => localStorage.setItem(tokenKey, token)
@@ -28,21 +29,22 @@ export type Reponse<T> = Promise<Success<T> | Error>
 export const isError = <T>(r: Success<T> | Error): r is Error => (r as Error).error !== undefined
 
 type ReqMethod = 'get' | 'post' | 'put'
-const req = async <P, R>(method: ReqMethod, url: string, body?: P): Reponse<R> => {
+const req = async <P, R>(method: ReqMethod, url: string, data?: P): Reponse<R> => {
   const token = tokenGet()
 
-  const response = await fetch(url, {
-    method,
-    body: JSON.stringify(body),
-    headers: token ? { authorization: `bearer ${token}` } : {},
-  })
+  let headers: HeadersInit = {}
+  if (token) headers.authorization = `bearer ${token}`
 
+  let body: BodyInit = ''
+  if (data instanceof FormData) body = data
+  else body = JSON.stringify(data)
+
+  const response = await fetch(url, { method, body, headers })
   if (response?.status === 401) {
     router.push({ name: 'login' })
   }
 
-  const json = await response.json()
-  return json
+  return await response.json()
 }
 
 export enum SortOrder {
@@ -62,8 +64,8 @@ export interface PayloadSearch {
   sort: PayloadSort
 }
 
-export const reqSearch = (body: PayloadSearch) => {
-  return req<PayloadSearch, Search>('post', urlSearch, body)
+export const reqSearch = (data: PayloadSearch) => {
+  return req<PayloadSearch, Search>('post', urlSearch, data)
 }
 
 export interface PayloadAuthenticate {
@@ -71,8 +73,8 @@ export interface PayloadAuthenticate {
   password: string
 }
 
-export const reqAuthenticate = (body: PayloadAuthenticate) => {
-  return req<PayloadAuthenticate, Authenticate>('put', urlAuthenticate, body)
+export const reqAuthenticate = (data: PayloadAuthenticate) => {
+  return req<PayloadAuthenticate, Authenticate>('put', urlAuthenticate, data)
 }
 
 export const reqStartImport = () => {
@@ -97,6 +99,10 @@ export const reqImportStatus = () => {
 
 export const reqPing = () => {
   return req<{}, {}>('get', urlPing)
+}
+
+export const reqUpload = (data: FormData) => {
+  return req<FormData, Upload>('post', urlUpload, data)
 }
 
 const socketGuesses: { [key: string]: string } = {
@@ -178,4 +184,8 @@ export interface ImportStatus {
   last_hash: string
   count_processed: number
   count_total: number
+}
+
+export interface Upload {
+  id: string
 }

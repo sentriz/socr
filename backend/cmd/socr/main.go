@@ -95,7 +95,7 @@ func main() {
 	rJWT.HandleFunc("/api/search", ctrl.ServeSearch)
 
 	rAPIKey := r.NewRoute().Subrouter()
-	rAPIKey.Use(ctrl.WithAPIKey())
+	rAPIKey.Use(ctrl.WithJWTOrAPIKey())
 	rAPIKey.HandleFunc("/api/upload", ctrl.ServeUpload)
 
 	server := http.Server{
