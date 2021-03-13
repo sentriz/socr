@@ -191,7 +191,6 @@ func (i *Importer) importScreenshot(hash string, timestamp time.Time, raw []byte
 		return 0, fmt.Errorf("calculate blurhash: %w", err)
 	}
 
-
 	propSize := image.Bounds().Size()
 	screenshotRow, err := i.DB.CreateScreenshot(context.Background(), db.CreateScreenshotParams{
 		Hash:           hash,
@@ -204,6 +203,10 @@ func (i *Importer) importScreenshot(hash string, timestamp time.Time, raw []byte
 	if err != nil {
 		return 0, fmt.Errorf("inserting screenshot: %w", err)
 	}
+
+	// at this point we can at least access the image by hash, even before the text is processed.
+	// so let the frontend know
+	i.UpdatesScreenshot <- hash
 
 	imageGrey := imagery.GreyScale(image)
 	imageBig := imagery.Resize(imageGrey, imagery.ScaleFactor)
