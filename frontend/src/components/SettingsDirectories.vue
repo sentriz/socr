@@ -4,6 +4,9 @@
       <td class="border padded">{{ directory.directory_alias }}</td>
       <td class="border padded">{{ directory.count }}</td>
     </tr>
+    <tr v-if="!directories.length">
+      <td class="border padded">no screenshots yet</td>
+    </tr>
   </table>
 </template>
 
@@ -13,7 +16,7 @@ import { isError, reqDirectories } from '../api'
 import type { Directory } from '../api'
 
 // fetch import status and about on mount
-const directories = ref<Directory[]>([{ directory_alias: '...', count: 0 }])
+const directories = ref<Directory[]>([])
 onMounted(async () => {
   const resp = await reqDirectories()
   if (isError(resp)) return
