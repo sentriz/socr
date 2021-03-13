@@ -1,9 +1,31 @@
-<template></template>
+<template>
+  <Transition
+    enter-active-class="ease-in-out duration-500"
+    enter-to-class="opacity-100"
+    enter-from-class="opacity-0"
+    leave-active-class="ease-in-out duration-500"
+    leave-to-class="opacity-0"
+    leave-from-class="opacity-100"
+  >
+    <div
+      v-if="loading"
+      class="z-10 fixed inset-0 bg-gray-700 bg-opacity-75 transition-opacity flex items-center justify-center"
+    >
+      <LoadingSpinner text="uploading" />
+    </div>
+  </Transition>
+</template>
 
 <script setup lang="ts">
-import { isError, reqUpload } from '../api'
+import LoadingSpinner from './LoadingSpinner.vue'
 
-document.onpaste = async (event) => {
+import { isError, reqUpload } from '../api'
+import { useRouter } from 'vue-router'
+import useLoading from '../composables/useLoading'
+
+const router = useRouter()
+
+const upload = async (event: ClipboardEvent) => {
   const items = event.clipboardData?.items
   if (!items) return
 
@@ -13,9 +35,12 @@ document.onpaste = async (event) => {
   const formData = new FormData()
   formData.append('i', blob)
 
-  const r = await reqUpload(formData)
-  if (isError(r)) return
+  const resp = await reqUpload(formData)
+  if (isError(resp)) return
 
-  console.log(r)
+  router.push({ name: 'public', params: { hash: resp.result.id } })
 }
+
+const { loading, load } = useLoading(upload)
+document.onpaste = load
 </script>

@@ -20,7 +20,7 @@
         </div>
       </div>
     </div>
-    <SearchLoading v-if="loading" />
+    <LoadingSpinner v-if="loading" />
   </div>
   <SearchSidebar :hash="sidebarHash" />
   <ClipboardUploader />
@@ -31,7 +31,7 @@ import ScreenshotHighlight from './ScreenshotHighlight.vue'
 import ScreenshotBackground from './ScreenshotBackground.vue'
 import SearchSidebar from './SearchSidebar.vue'
 import SearchSortFilter from './SearchSortFilter.vue'
-import SearchLoading from './SearchLoading.vue'
+import LoadingSpinner from './LoadingSpinner.vue'
 import ClipboardUploader from './ClipboardUploader.vue'
 
 import { ref, watch, computed } from 'vue'
