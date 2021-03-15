@@ -30,7 +30,7 @@ const store = useStore()
 const route = useRoute()
 const hash = (route.params.hash as string) || ''
 
-const image = ref("")
+const image = ref('')
 const imageHave = ref(false)
 const imageLoaded = (_: Event) => {
   imageHave.value = true

@@ -11,7 +11,16 @@
 <script setup lang="ts">
 import { defineProps, defineEmit } from 'vue'
 
-const emit = defineEmit<((e: 'update:field', v: string) => void) | ((e: 'update:order', v: Order) => void)>()
+// TODO: improve the defineEmit types
+// something like
+// const emit = defineEmit<
+//   ((e: 'update:field', v: string) => void) |
+//   ((e: 'update:order', v: Order) => void)
+// >()
+// see https://github.com/vuejs/vue-next/issues/2874
+// see https://github.com/vuejs/vue-next/pull/2878
+
+const emit = defineEmit<(e: string, v: string) => void>()
 const props = defineProps<{
   label: string
   field: string

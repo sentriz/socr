@@ -1,26 +1,26 @@
 {
-  "name": "socr-vite",
+  "name": "socr",
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vue-tsc --noEmit && vite build"
   },
   "dependencies": {
+    "vue": "^3.0.5",
+    "vue-router": "^4.0.4",
+    "@vueuse/core": "^4.4.1",
     "@fortawesome/fontawesome-free": "^5.15.2",
-    "@vueuse/core": "^4.3.4",
-    "autoprefixer": "^10.2.5",
-    "blurhash": "^1.1.3",
-    "postcss": "^8.2.7",
-    "relative-date": "^1.1.3",
-    "tailwindcss": "^2.0.3",
-    "vue": "^3.0.7",
-    "vue-loader": "^16.1.2",
-    "vue-router": "^4.0.4"
+    "relative-date": "^1.1.3"
   },
   "devDependencies": {
+    "@tailwindcss/jit": "^0.1.1",
     "@vitejs/plugin-vue": "^1.1.5",
     "@vue/compiler-sfc": "^3.0.7",
+    "autoprefixer": "^10.2.5",
+    "postcss": "^8.2.8",
+    "tailwindcss": "^2.0.3",
     "typescript": "^4.2.3",
-    "vite": "^2.0.5"
+    "vite": "^2.1.0",
+    "vue-tsc": "^0.0.11"
   }
 }

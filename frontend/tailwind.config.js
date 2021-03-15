@@ -1,8 +1,5 @@
 module.exports = {
-  purge: {
-    enabled: !!process.env.PRODUCTION,
-    content: ['index.html', './src/**/*.vue', './src/**/*.css'],
-  },
+  purge: ['index.html', './src/**/*.vue'],
   theme: {
     screens: {
       sm: '640px',
@@ -21,6 +18,4 @@ module.exports = {
       },
     },
   },
-  variants: {},
-  plugins: [],
 }
