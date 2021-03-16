@@ -19,7 +19,7 @@
           <a :href="screenshotRaw" target="_blank">raw</a>
         </Badge>
         <Badge class="bg-green-200 text-green-900" icon="fas fa-external-link-alt">
-          <router-link :to="{ name: 'public', params: { id: screenshot.id } }">public</router-link>
+          <router-link :to="{ name: 'public', params: { hash: screenshot.hash } }">public</router-link>
         </Badge>
       </div>
     </div>

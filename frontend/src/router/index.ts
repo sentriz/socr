@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, NavigationGuard } from 'vue-router'
+import { createRouter, createWebHistory, NavigationGuard, RouteRecordRaw } from 'vue-router'
 
 import Search from '../components/Search.vue'
 import Settings from '../components/Settings.vue'
@@ -19,56 +19,58 @@ const beforeLogout: NavigationGuard = (_, __, next) => {
   next({ name: 'login' })
 }
 
+const routes: RouteRecordRaw[] = [
+  {
+    path: '/login',
+    name: 'login',
+    component: Login,
+  },
+  {
+    path: '/logout',
+    name: 'logout',
+    beforeEnter: beforeLogout,
+    redirect: '',
+  },
+  {
+    path: '/',
+    name: 'home',
+    component: Home,
+    redirect: 'search',
+    beforeEnter: beforeCheckAuth,
+    children: [
+      {
+        path: 'search/:hash?',
+        name: 'search',
+        component: Search,
+      },
+      {
+        path: 'settings',
+        name: 'settings',
+        component: Settings,
+      },
+      {
+        path: '',
+        redirect: { name: 'search' },
+      },
+    ],
+  },
+  {
+    path: '/i/:hash',
+    name: 'public',
+    component: Public,
+  },
+  {
+    path: '/not-found',
+    name: 'not-found',
+    component: NotFound,
+  },
+  {
+    path: '/:catchAll(.*)',
+    redirect: { name: 'not-found' },
+  },
+]
+
 export default createRouter({
   history: createWebHistory(),
-  routes: [
-    {
-      path: '/login',
-      name: 'login',
-      component: Login,
-    },
-    {
-      path: '/logout',
-      name: 'logout',
-      beforeEnter: beforeLogout,
-      redirect: '',
-    },
-    {
-      path: '/',
-      name: 'home',
-      component: Home,
-      redirect: 'search',
-      beforeEnter: beforeCheckAuth,
-      children: [
-        {
-          path: 'search/:hash?',
-          name: 'search',
-          component: Search,
-        },
-        {
-          path: 'settings',
-          name: 'settings',
-          component: Settings,
-        },
-        {
-          path: '',
-          redirect: { name: 'search' },
-        },
-      ],
-    },
-    {
-      path: '/i/:hash',
-      name: 'public',
-      component: Public,
-    },
-    {
-      path: '/not_found',
-      name: 'not_found',
-      component: NotFound,
-    },
-    {
-      path: '/:catchAll(.*)',
-      redirect: { name: 'not_found' },
-    },
-  ],
+  routes
 })
