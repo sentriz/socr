@@ -80,6 +80,7 @@ func main() {
 	go ctrl.EmitUpdatesScanner()
 	go ctrl.EmitUpdatesImporter()
 
+	// begin normal routes
 	r := mux.NewRouter()
 	r.Use(ctrl.WithCORS())
 	r.Use(ctrl.WithLogging())
@@ -87,9 +88,6 @@ func main() {
 	r.HandleFunc("/api/screenshot/{hash}/raw", ctrl.ServeScreenshotRaw)
 	r.HandleFunc("/api/screenshot/{hash}", ctrl.ServeScreenshot)
 	r.HandleFunc("/api/websocket", ctrl.ServeWebSocket)
-
-	frontendFS := http.FS(frontend.FS)
-	r.NotFoundHandler = http.FileServer(frontendFS)
 
 	// begin authenticated routes
 	rJWT := r.NewRoute().Subrouter()
@@ -101,9 +99,14 @@ func main() {
 	rJWT.HandleFunc("/api/import_status", ctrl.ServeImportStatus)
 	rJWT.HandleFunc("/api/search", ctrl.ServeSearch)
 
+	// begin api key routes
 	rAPIKey := r.NewRoute().Subrouter()
 	rAPIKey.Use(ctrl.WithJWTOrAPIKey())
 	rAPIKey.HandleFunc("/api/upload", ctrl.ServeUpload)
+
+	// frontend fallback route
+	frontendFS := http.FS(frontend.FS)
+	r.NotFoundHandler = http.FileServer(frontendFS)
 
 	server := http.Server{
 		Addr:    confListenAddr,
