@@ -165,6 +165,6 @@ const (
 
 func Hash(bytes []byte) string {
 	sum := xxhash.Sum64(bytes)
-	format := strconv.FormatInt(int64(sum), hashBase)
+	format := strconv.FormatUint(sum, hashBase)
 	return format
 }
