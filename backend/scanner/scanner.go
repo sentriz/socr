@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/araddon/dateparse"
+	"github.com/fsnotify/fsnotify"
 	"github.com/jackc/pgx/v4"
 
 	"go.senan.xyz/socr/backend/db"
@@ -75,7 +76,7 @@ func (s *Scanner) ScanDirectories() error {
 	}()
 
 	for idx, item := range directoryItems {
-		hash, err := s.scanDirectoryItem(item)
+		hash, err := s.scanDirectoryItem(item.dirAlias, item.dir, item.fileName, item.modTime)
 		if err != nil {
 			s.Status.AddError(err)
 			s.Updates <- struct{}{}
@@ -91,15 +92,47 @@ func (s *Scanner) ScanDirectories() error {
 	return nil
 }
 
-type dirItem struct {
+func (s *Scanner) WatchUpdates() error {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return fmt.Errorf("create watcher: %w", err)
+	}
+	for alias, dir := range s.Directories {
+		if err = watcher.Add(dir); err != nil {
+			return fmt.Errorf("add watcher for %q: %w", alias, err)
+		}
+		log.Printf("starting watcher for %q", dir)
+	}
+	for event := range watcher.Events {
+		if event.Op&fsnotify.Create != fsnotify.Create {
+			continue
+		}
+		if strings.HasSuffix(event.Name, ".tmp") {
+			continue
+		}
+		dir := filepath.Dir(event.Name)
+		dirAlias, ok := dirAliasFromDir(s.Directories, dir)
+		if !ok {
+			continue
+		}
+		fileName := filepath.Base(event.Name)
+		modTime := time.Now()
+		if _, err := s.scanDirectoryItem(dirAlias, dir, fileName, modTime); err != nil {
+			log.Printf("error scanning directory item with event %v: %v", event, err)
+		}
+	}
+	return nil
+}
+
+type collectedDirectoryItem struct {
 	dirAlias string
 	dir      string
 	fileName string
 	modTime  time.Time
 }
 
-func (s *Scanner) collectDirectoryItems() ([]*dirItem, error) {
-	var items []*dirItem
+func (s *Scanner) collectDirectoryItems() ([]*collectedDirectoryItem, error) {
+	var items []*collectedDirectoryItem
 	for alias, dir := range s.Directories {
 		files, err := os.ReadDir(dir)
 		if err != nil {
@@ -112,7 +145,7 @@ func (s *Scanner) collectDirectoryItems() ([]*dirItem, error) {
 				return nil, fmt.Errorf("get file info %q: %w", fileName, err)
 			}
 			modTime := info.ModTime()
-			items = append(items, &dirItem{
+			items = append(items, &collectedDirectoryItem{
 				alias, dir, fileName, modTime,
 			})
 		}
@@ -120,8 +153,8 @@ func (s *Scanner) collectDirectoryItems() ([]*dirItem, error) {
 	return items, nil
 }
 
-func (s *Scanner) scanDirectoryItem(item *dirItem) (string, error) {
-	_, err := s.DB.GetDirInfo(context.Background(), item.dirAlias, item.fileName)
+func (s *Scanner) scanDirectoryItem(dirAlias, dir, fileName string, modTime time.Time) (string, error) {
+	_, err := s.DB.GetDirInfo(context.Background(), dirAlias, fileName)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return "", fmt.Errorf("getting dir info: %w", err)
 	}
@@ -129,9 +162,9 @@ func (s *Scanner) scanDirectoryItem(item *dirItem) (string, error) {
 		return "", nil
 	}
 
-	log.Printf("importing new screenshot. alias %q, filename %q", item.dirAlias, item.fileName)
+	log.Printf("importing new screenshot. alias %q, filename %q", dirAlias, fileName)
 
-	filePath := filepath.Join(item.dir, item.fileName)
+	filePath := filepath.Join(dir, fileName)
 	raw, err := os.ReadFile(filePath)
 	if err != nil {
 		return "", fmt.Errorf("open file: %v", err)
@@ -142,8 +175,8 @@ func (s *Scanner) scanDirectoryItem(item *dirItem) (string, error) {
 		return "", fmt.Errorf("decode screenshot: %v", err)
 	}
 
-	timestamp := guessFileCreated(item.fileName, item.modTime)
-	if err := s.Importer.ImportScreenshot(decoded, timestamp, item.dirAlias, item.fileName); err != nil {
+	timestamp := guessFileCreated(fileName, modTime)
+	if err := s.Importer.ImportScreenshot(decoded, timestamp, dirAlias, fileName); err != nil {
 		return "", fmt.Errorf("importing screenshot: %v", err)
 	}
 
@@ -163,4 +196,13 @@ func guessFileCreated(fileName string, modTime time.Time) time.Time {
 	}
 
 	return guessed
+}
+
+func dirAliasFromDir(directories map[string]string, dir string) (string, bool) {
+	for k, v := range directories {
+		if v == dir {
+			return k, true
+		}
+	}
+	return "", false
 }

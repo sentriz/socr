@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -55,6 +56,12 @@ func main() {
 		Importer:    importr,
 		Updates:     make(chan struct{}),
 	}
+
+	go func() {
+		if err := scanr.WatchUpdates(); err != nil {
+			log.Fatalf("error starting watcher: %v", err)
+		}
+	}()
 
 	servr := &server.Server{
 		Directories:           confDirs,
@@ -139,7 +146,7 @@ func parseEnvDirs(prefix string) map[string]string {
 			continue
 		}
 		alias := strings.ToLower(parts[partAlias])
-		dirs[alias] = parts[partPath]
+		dirs[alias] = filepath.Clean(parts[partPath])
 	}
 	return dirs
 }
