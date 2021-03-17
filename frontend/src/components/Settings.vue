@@ -8,7 +8,7 @@
       <SettingsAbout />
     </div>
     <div class="flex-auto">
-      <h2>directories</h2>
+      <h2>screenshots</h2>
       <SettingsDirectories />
     </div>
   </div>

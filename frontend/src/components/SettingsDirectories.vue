@@ -5,7 +5,7 @@
       <td class="border padded">{{ directory.count }}</td>
     </tr>
     <tr v-if="!directories.length">
-      <td class="border padded">no screenshots yet</td>
+      <td class="border padded">none yet</td>
     </tr>
   </table>
 </template>
