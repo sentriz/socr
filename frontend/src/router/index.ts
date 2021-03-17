@@ -72,5 +72,5 @@ const routes: RouteRecordRaw[] = [
 
 export default createRouter({
   history: createWebHistory(),
-  routes
+  routes,
 })
