@@ -11,7 +11,7 @@ create table if not exists screenshots (
 );
 
 create table if not exists dir_infos (
-    screenshot_id integer,
+    screenshot_id int,
     filename text,
     directory_alias text,
     primary key (screenshot_id, filename, directory_alias)
@@ -20,11 +20,11 @@ create table if not exists dir_infos (
 create table if not exists blocks (
     id serial primary key,
     screenshot_id integer not null references screenshots (id),
-    index smallint not null,
-    min_x smallint not null,
-    min_y smallint not null,
-    max_x smallint not null,
-    max_y smallint not null,
+    index int not null,
+    min_x int not null,
+    min_y int not null,
+    max_x int not null,
+    max_y int not null,
     body text not null
 );
 

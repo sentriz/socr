@@ -26,10 +26,10 @@ func (i *Importer) ImportScreenshot(decoded *Decoded, timestamp time.Time, dirAl
 	// insert screenshot and dir info, alert clients with update
 	id, isOld, err := i.importScreenshot(decoded.Hash, decoded.Image, timestamp)
 	if err != nil {
-		return fmt.Errorf("props and blocks: %w", err)
+		return fmt.Errorf("insert screenshot: %w", err)
 	}
 	if err := i.importScreenshotDirInfo(id, dirAlias, fileName); err != nil {
-		return fmt.Errorf("dir info: %w", err)
+		return fmt.Errorf("insert dir info: %w", err)
 	}
 	i.Updates <- decoded.Hash
 
@@ -39,7 +39,7 @@ func (i *Importer) ImportScreenshot(decoded *Decoded, timestamp time.Time, dirAl
 
 	// insert blocks, alert clients with update
 	if err := i.importScreenshotBlocks(id, decoded.Image); err != nil {
-		return fmt.Errorf("dir info: %w", err)
+		return fmt.Errorf("insert blocks: %w", err)
 	}
 	i.Updates <- decoded.Hash
 

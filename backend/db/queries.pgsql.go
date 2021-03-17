@@ -312,11 +312,11 @@ func (q *DBQuerier) GetScreenshotWithBlocksByHash(ctx context.Context, hash stri
 	}, []pgtype.ValueTranscoder{
 		&pgtype.Int4{},
 		&pgtype.Int4{},
-		&pgtype.Int2{},
-		&pgtype.Int2{},
-		&pgtype.Int2{},
-		&pgtype.Int2{},
-		&pgtype.Int2{},
+		&pgtype.Int4{},
+		&pgtype.Int4{},
+		&pgtype.Int4{},
+		&pgtype.Int4{},
+		&pgtype.Int4{},
 		&pgtype.Text{},
 	})
 	blocksArray := pgtype.NewArrayType("_blocks", ignoredOID, func() pgtype.ValueTranscoder {
@@ -350,11 +350,11 @@ func (q *DBQuerier) GetScreenshotWithBlocksByHashScan(results pgx.BatchResults) 
 	}, []pgtype.ValueTranscoder{
 		&pgtype.Int4{},
 		&pgtype.Int4{},
-		&pgtype.Int2{},
-		&pgtype.Int2{},
-		&pgtype.Int2{},
-		&pgtype.Int2{},
-		&pgtype.Int2{},
+		&pgtype.Int4{},
+		&pgtype.Int4{},
+		&pgtype.Int4{},
+		&pgtype.Int4{},
+		&pgtype.Int4{},
 		&pgtype.Text{},
 	})
 	blocksArray := pgtype.NewArrayType("_blocks", ignoredOID, func() pgtype.ValueTranscoder {
@@ -565,11 +565,11 @@ func (q *DBQuerier) SearchScreenshots(ctx context.Context, params SearchScreensh
 	}, []pgtype.ValueTranscoder{
 		&pgtype.Int4{},
 		&pgtype.Int4{},
-		&pgtype.Int2{},
-		&pgtype.Int2{},
-		&pgtype.Int2{},
-		&pgtype.Int2{},
-		&pgtype.Int2{},
+		&pgtype.Int4{},
+		&pgtype.Int4{},
+		&pgtype.Int4{},
+		&pgtype.Int4{},
+		&pgtype.Int4{},
 		&pgtype.Text{},
 	})
 	highlightedBlocksArray := pgtype.NewArrayType("_blocks", ignoredOID, func() pgtype.ValueTranscoder {
@@ -614,11 +614,11 @@ func (q *DBQuerier) SearchScreenshotsScan(results pgx.BatchResults) ([]SearchScr
 	}, []pgtype.ValueTranscoder{
 		&pgtype.Int4{},
 		&pgtype.Int4{},
-		&pgtype.Int2{},
-		&pgtype.Int2{},
-		&pgtype.Int2{},
-		&pgtype.Int2{},
-		&pgtype.Int2{},
+		&pgtype.Int4{},
+		&pgtype.Int4{},
+		&pgtype.Int4{},
+		&pgtype.Int4{},
+		&pgtype.Int4{},
 		&pgtype.Text{},
 	})
 	highlightedBlocksArray := pgtype.NewArrayType("_blocks", ignoredOID, func() pgtype.ValueTranscoder {
