@@ -126,15 +126,16 @@ func (c *Server) ServeStartImport(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Server) ServeAbout(w http.ResponseWriter, r *http.Request) {
-	resp.Write(w, struct {
-		Version       string `json:"version"`
-		APIKey        string `json:"api_key"`
-		SocketClients int    `json:"socket_clients"`
-	}{
-		Version:       "development",
-		APIKey:        c.APIKey,
-		SocketClients: len(c.SocketClientsScanner),
-	})
+	settings := map[string]interface{}{
+		"version":        "development",
+		"api key":        c.APIKey,
+		"socket clients": len(c.SocketClientsScanner),
+	}
+	for alias, path := range c.Directories {
+		key := fmt.Sprintf("directory %q", alias)
+		settings[key] = path
+	}
+	resp.Write(w, settings)
 }
 
 func (c *Server) ServeDirectories(w http.ResponseWriter, r *http.Request) {

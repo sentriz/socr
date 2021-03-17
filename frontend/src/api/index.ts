@@ -164,11 +164,7 @@ export interface Authenticate {
 
 export interface StartImport {}
 
-export interface About {
-  version: string
-  api_key: string
-  socket_clients: number
-}
+export type About = { [key: string]: number | string }
 
 export interface Directory {
   directory_alias: string

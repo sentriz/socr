@@ -1,16 +1,8 @@
 <template>
   <table class="table-auto rounded w-full">
-    <tr>
-      <td class="border padded">version</td>
-      <td class="border padded">{{ about?.version || '...' }}</td>
-    </tr>
-    <tr class="bg-gray-100">
-      <td class="border padded">api key</td>
-      <td class="border padded">{{ about?.api_key || '...' }}</td>
-    </tr>
-    <tr>
-      <td class="border padded">socket clients</td>
-      <td class="border padded">{{ about?.socket_clients || '...' }}</td>
+    <tr v-if="about" v-for="(value, key, i) in about" :class="{ 'bg-gray-100': i % 2 }">
+      <td class="border padded">{{ key }}</td>
+      <td class="border padded">{{ value }}</td>
     </tr>
   </table>
 </template>
