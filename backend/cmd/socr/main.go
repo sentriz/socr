@@ -29,7 +29,7 @@ func main() {
 	confAPIKey := mustEnv("SOCR_API_KEY")
 	confDirs := parseEnvDirs("SOCR_DIR_")
 
-	if _, ok := confDirs["uploads"]; !ok {
+	if _, ok := confDirs[uploadsKey]; !ok {
 		log.Fatalf("please provide an uploads directory")
 	}
 
@@ -43,25 +43,25 @@ func main() {
 	}
 	defer dbConn.Close()
 
-	importer := &importer.Importer{
+	importr := &importer.Importer{
 		DB:      dbConn,
 		Updates: make(chan string),
 	}
 
-	scanner := &scanner.Scanner{
+	scanr := &scanner.Scanner{
 		Running:     new(int32),
 		Directories: confDirs,
 		DB:          dbConn,
-		Importer:    importer,
+		Importer:    importr,
 		Updates:     make(chan struct{}),
 	}
 
-	ctrl := &server.Server{
+	servr := &server.Server{
 		Directories:           confDirs,
 		DirectoriesUploadsKey: uploadsKey,
 		DB:                    dbConn,
-		Importer:              importer,
-		Scanner:               scanner,
+		Importer:              importr,
+		Scanner:               scanr,
 		SocketUpgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				// TODO: this?
@@ -77,32 +77,32 @@ func main() {
 		DefaultFormat:         imagery.FormatPNG,
 	}
 
-	go ctrl.EmitUpdatesScanner()
-	go ctrl.EmitUpdatesImporter()
+	go servr.EmitUpdatesScanner()
+	go servr.EmitUpdatesImporter()
 
 	// begin normal routes
 	r := mux.NewRouter()
-	r.Use(ctrl.WithCORS())
-	r.Use(ctrl.WithLogging())
-	r.HandleFunc("/api/authenticate", ctrl.ServeAuthenticate)
-	r.HandleFunc("/api/screenshot/{hash}/raw", ctrl.ServeScreenshotRaw)
-	r.HandleFunc("/api/screenshot/{hash}", ctrl.ServeScreenshot)
-	r.HandleFunc("/api/websocket", ctrl.ServeWebSocket)
+	r.Use(servr.WithCORS())
+	r.Use(servr.WithLogging())
+	r.HandleFunc("/api/authenticate", servr.ServeAuthenticate)
+	r.HandleFunc("/api/screenshot/{hash}/raw", servr.ServeScreenshotRaw)
+	r.HandleFunc("/api/screenshot/{hash}", servr.ServeScreenshot)
+	r.HandleFunc("/api/websocket", servr.ServeWebSocket)
 
 	// begin authenticated routes
 	rJWT := r.NewRoute().Subrouter()
-	rJWT.Use(ctrl.WithJWT())
-	rJWT.HandleFunc("/api/ping", ctrl.ServePing)
-	rJWT.HandleFunc("/api/start_import", ctrl.ServeStartImport)
-	rJWT.HandleFunc("/api/about", ctrl.ServeAbout)
-	rJWT.HandleFunc("/api/directories", ctrl.ServeDirectories)
-	rJWT.HandleFunc("/api/import_status", ctrl.ServeImportStatus)
-	rJWT.HandleFunc("/api/search", ctrl.ServeSearch)
+	rJWT.Use(servr.WithJWT())
+	rJWT.HandleFunc("/api/ping", servr.ServePing)
+	rJWT.HandleFunc("/api/start_import", servr.ServeStartImport)
+	rJWT.HandleFunc("/api/about", servr.ServeAbout)
+	rJWT.HandleFunc("/api/directories", servr.ServeDirectories)
+	rJWT.HandleFunc("/api/import_status", servr.ServeImportStatus)
+	rJWT.HandleFunc("/api/search", servr.ServeSearch)
 
 	// begin api key routes
 	rAPIKey := r.NewRoute().Subrouter()
-	rAPIKey.Use(ctrl.WithJWTOrAPIKey())
-	rAPIKey.HandleFunc("/api/upload", ctrl.ServeUpload)
+	rAPIKey.Use(servr.WithJWTOrAPIKey())
+	rAPIKey.HandleFunc("/api/upload", servr.ServeUpload)
 
 	// frontend fallback route
 	frontendFS := http.FS(frontend.FS)
