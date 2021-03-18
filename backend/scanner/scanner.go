@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -183,19 +184,28 @@ func (s *Scanner) scanDirectoryItem(dirAlias, dir, fileName string, modTime time
 	return decoded.Hash, nil
 }
 
+var fileStampExpr = regexp.MustCompile(`(?:\D|^)(?P<ymd>(?:19|20)\d{6})\D?(?P<hms>\d{6})(?:\D|$)`)
+
 func guessFileCreated(fileName string, modTime time.Time) time.Time {
 	fileName = strings.ToLower(fileName)
 	fileName = strings.TrimPrefix(fileName, "img_")
 	fileName = strings.TrimSuffix(fileName, filepath.Ext(fileName))
-	fileName = strings.ReplaceAll(fileName, "_", "")
 
-	guessed, err := dateparse.ParseLocal(fileName)
-	if err != nil {
-		log.Printf("couldn't guess timestamp of %q, using mod time", fileName)
-		return modTime
+	// first try use the date parse library
+	if guessed, err := dateparse.ParseLocal(fileName); err == nil {
+		return guessed
 	}
 
-	return guessed
+	// if that doesn't work, try find a YYYYMMDD-HHMMSS pattern
+	if m := fileStampExpr.FindStringSubmatch(fileName); len(m) > 0 {
+		ymd := m[fileStampExpr.SubexpIndex("ymd")]
+		hms := m[fileStampExpr.SubexpIndex("hms")]
+		guessed, _ := time.Parse("20060102150405", ymd+hms)
+		return guessed
+	}
+
+	// otherwise, fallback to the file's mod time
+	return modTime
 }
 
 func dirAliasFromDir(directories map[string]string, dir string) (string, bool) {
