@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"go.senan.xyz/socr/backend/db"
+	"go.senan.xyz/socr/backend/directories"
 	"go.senan.xyz/socr/backend/imagery"
 	"go.senan.xyz/socr/backend/importer"
 	"go.senan.xyz/socr/backend/scanner"
@@ -20,7 +21,7 @@ import (
 )
 
 func main() {
-	const uploadsKey = "uploads"
+	const uploadsAlias = "uploads"
 
 	confListenAddr := mustEnv("SOCR_LISTEN_ADDR")
 	confDBDSN := mustEnv("SOCR_DB_DSN")
@@ -30,7 +31,7 @@ func main() {
 	confAPIKey := mustEnv("SOCR_API_KEY")
 	confDirs := parseEnvDirs("SOCR_DIR_")
 
-	if _, ok := confDirs[uploadsKey]; !ok {
+	if _, ok := confDirs[uploadsAlias]; !ok {
 		log.Fatalf("please provide an uploads directory")
 	}
 
@@ -50,11 +51,12 @@ func main() {
 	}
 
 	scanr := &scanner.Scanner{
-		Running:     new(int32),
-		Directories: confDirs,
-		DB:          dbConn,
-		Importer:    importr,
-		Updates:     make(chan struct{}),
+		Running:                 new(int32),
+		Directories:             confDirs,
+		DirectoriesUploadsAlias: uploadsAlias,
+		DB:                      dbConn,
+		Importer:                importr,
+		Updates:                 make(chan struct{}),
 	}
 
 	go func() {
@@ -64,11 +66,11 @@ func main() {
 	}()
 
 	servr := &server.Server{
-		Directories:           confDirs,
-		DirectoriesUploadsKey: uploadsKey,
-		DB:                    dbConn,
-		Importer:              importr,
-		Scanner:               scanr,
+		Directories:             confDirs,
+		DirectoriesUploadsAlias: uploadsAlias,
+		DB:                      dbConn,
+		Importer:                importr,
+		Scanner:                 scanr,
 		SocketUpgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				// TODO: this?
@@ -132,21 +134,22 @@ func mustEnv(key string) string {
 	return ""
 }
 
-func parseEnvDirs(prefix string) map[string]string {
+func parseEnvDirs(prefix string) directories.Directories {
 	expr := regexp.MustCompile(prefix + `(?P<Alias>[\w_]+)=(?P<Path>.*)`)
 	const (
 		partFull = iota
 		partAlias
 		partPath
 	)
-	dirs := map[string]string{}
+	dirMap := directories.Directories{}
 	for _, env := range os.Environ() {
 		parts := expr.FindStringSubmatch(env)
 		if len(parts) != 3 {
 			continue
 		}
 		alias := strings.ToLower(parts[partAlias])
-		dirs[alias] = filepath.Clean(parts[partPath])
+		path := filepath.Clean(parts[partPath])
+		dirMap[alias] = path
 	}
-	return dirs
+	return dirMap
 }

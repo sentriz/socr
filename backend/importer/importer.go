@@ -17,6 +17,40 @@ import (
 	"go.senan.xyz/socr/backend/imagery"
 )
 
+type Decoded struct {
+	Hash   string
+	Image  image.Image
+	Data   []byte
+	Format imagery.Format
+}
+
+// DecodeImage takes a raw byte slice of an image (png/jpg/etc) decodes it using an appropriate format
+// and encodes it again. Encoding and decoding makes sure the hash will be the same for the same
+// image given different sources. clipboard/filesystem/etc
+func DecodeImage(raw []byte) (*Decoded, error) {
+	mime := http.DetectContentType(raw)
+	format, ok := imagery.FormatFromMIME(mime)
+	if !ok {
+		return nil, fmt.Errorf("unknown image mime %s", mime)
+	}
+	image, err := format.Decode(bytes.NewReader(raw))
+	if err != nil {
+		return nil, fmt.Errorf("decoding image %w", err)
+	}
+	dataBuff := &bytes.Buffer{}
+	if err := format.Encode(dataBuff, image); err != nil {
+		return nil, fmt.Errorf("encoding image: %w", err)
+	}
+	data := dataBuff.Bytes()
+	hash := Hash(data)
+	return &Decoded{
+		Hash:   hash,
+		Image:  image,
+		Data:   data,
+		Format: format,
+	}, err
+}
+
 type Importer struct {
 	DB      *db.DB
 	Updates chan string
@@ -122,40 +156,6 @@ func (i *Importer) importScreenshotDirInfo(id int, dirAlias string, fileName str
 		return fmt.Errorf("insert info dir infos: %w", err)
 	}
 	return nil
-}
-
-type Decoded struct {
-	Hash   string
-	Image  image.Image
-	Data   []byte
-	Format imagery.Format
-}
-
-// DecodeImage takes a raw byte slice of an image (png/jpg/etc) decodes it using an appropriate format
-// and encodes it again. Encoding and decoding makes sure the hash will be the same for the same
-// image given different sources. clipboard/filesystem/etc
-func DecodeImage(raw []byte) (*Decoded, error) {
-	mime := http.DetectContentType(raw)
-	format, ok := imagery.FormatFromMIME(mime)
-	if !ok {
-		return nil, fmt.Errorf("unknown image mime %s", mime)
-	}
-	image, err := format.Decode(bytes.NewReader(raw))
-	if err != nil {
-		return nil, fmt.Errorf("decoding image %w", err)
-	}
-	dataBuff := &bytes.Buffer{}
-	if err := format.Encode(dataBuff, image); err != nil {
-		return nil, fmt.Errorf("encoding image: %w", err)
-	}
-	data := dataBuff.Bytes()
-	hash := Hash(data)
-	return &Decoded{
-		Hash:   hash,
-		Image:  image,
-		Data:   data,
-		Format: format,
-	}, err
 }
 
 const (

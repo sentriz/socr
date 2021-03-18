@@ -17,16 +17,18 @@ import (
 	"github.com/jackc/pgx/v4"
 
 	"go.senan.xyz/socr/backend/db"
+	"go.senan.xyz/socr/backend/directories"
 	"go.senan.xyz/socr/backend/importer"
 )
 
 type Scanner struct {
-	Running     *int32
-	DB          *db.DB
-	Directories map[string]string
-	Status      Status
-	Importer    *importer.Importer
-	Updates     chan struct{}
+	Running                 *int32
+	DB                      *db.DB
+	Directories             directories.Directories
+	DirectoriesUploadsAlias string
+	Status                  Status
+	Importer                *importer.Importer
+	Updates                 chan struct{}
 }
 
 type StatusError struct {
@@ -99,6 +101,9 @@ func (s *Scanner) WatchUpdates() error {
 		return fmt.Errorf("create watcher: %w", err)
 	}
 	for alias, dir := range s.Directories {
+		if alias == s.DirectoriesUploadsAlias {
+			continue
+		}
 		if err = watcher.Add(dir); err != nil {
 			return fmt.Errorf("add watcher for %q: %w", alias, err)
 		}
@@ -112,7 +117,7 @@ func (s *Scanner) WatchUpdates() error {
 			continue
 		}
 		dir := filepath.Dir(event.Name)
-		dirAlias, ok := dirAliasFromDir(s.Directories, dir)
+		dirAlias, ok := s.Directories.AliasByPath(dir)
 		if !ok {
 			continue
 		}
@@ -206,13 +211,4 @@ func guessFileCreated(fileName string, modTime time.Time) time.Time {
 
 	// otherwise, fallback to the file's mod time
 	return modTime
-}
-
-func dirAliasFromDir(directories map[string]string, dir string) (string, bool) {
-	for k, v := range directories {
-		if v == dir {
-			return k, true
-		}
-	}
-	return "", false
 }

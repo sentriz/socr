@@ -15,6 +15,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"go.senan.xyz/socr/backend/db"
+	"go.senan.xyz/socr/backend/directories"
 	"go.senan.xyz/socr/backend/imagery"
 	"go.senan.xyz/socr/backend/importer"
 	"go.senan.xyz/socr/backend/scanner"
@@ -23,19 +24,19 @@ import (
 )
 
 type Server struct {
-	DB                    *db.DB
-	Directories           map[string]string
-	DirectoriesUploadsKey string
-	SocketUpgrader        websocket.Upgrader
-	Importer              *importer.Importer
-	Scanner               *scanner.Scanner
-	SocketClientsScanner  map[*websocket.Conn]struct{}
-	SocketClientsImporter map[string]map[*websocket.Conn]struct{}
-	HMACSecret            string
-	LoginUsername         string
-	LoginPassword         string
-	APIKey                string
-	DefaultFormat         imagery.Format
+	DB                      *db.DB
+	Directories             directories.Directories
+	DirectoriesUploadsAlias string
+	SocketUpgrader          websocket.Upgrader
+	Importer                *importer.Importer
+	Scanner                 *scanner.Scanner
+	SocketClientsScanner    map[*websocket.Conn]struct{}
+	SocketClientsImporter   map[string]map[*websocket.Conn]struct{}
+	HMACSecret              string
+	LoginUsername           string
+	LoginPassword           string
+	APIKey                  string
+	DefaultFormat           imagery.Format
 }
 
 func (c *Server) EmitUpdatesScanner() error {
@@ -93,7 +94,7 @@ func (c *Server) ServeUpload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	timestamp := time.Now().Format(time.RFC3339)
-	uploadsDir := c.Directories[c.DirectoriesUploadsKey]
+	uploadsDir := c.Directories[c.DirectoriesUploadsAlias]
 	fileName := fmt.Sprintf("%s.%s", timestamp, decoded.Format.Filetype)
 	filePath := filepath.Join(uploadsDir, fileName)
 	if err := os.WriteFile(filePath, raw, 0644); err != nil {
@@ -103,7 +104,7 @@ func (c *Server) ServeUpload(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		timestamp := time.Now()
-		if err := c.Importer.ImportScreenshot(decoded, timestamp, c.DirectoriesUploadsKey, fileName); err != nil {
+		if err := c.Importer.ImportScreenshot(decoded, timestamp, c.DirectoriesUploadsAlias, fileName); err != nil {
 			log.Printf("error processing screenshot %s: %v", decoded.Hash, err)
 			return
 		}
