@@ -6,21 +6,23 @@
         <i class="text-gray-800 hover:text-gray-600 fas fa-times-circle"></i>
       </router-link>
       <!-- header badges -->
-      <div class="flex flex-col md:flex-row gap-3 justify-end items-end">
-        <BadgeLabel label="created">
-          <Badge class="badge bg-pink-200 text-pink-900" :title="screenshot.timestamp">
+      <div class="flex flex-col md:flex-row gap-8 justify-end items-end">
+        <BadgeGroup label="created">
+          <Badge class="bg-pink-200 text-pink-900" :title="screenshot.timestamp">
             {{ relativeDateStr(screenshot.timestamp) }}
           </Badge>
-        </BadgeLabel>
-        <BadgeLabel v-if="tags?.length" label="tags">
-          <Badge v-for="(tag, i) in tags" :key="i" class="badge bg-blue-200 text-blue-900">{{ tag }}</Badge>
-        </BadgeLabel>
-        <Badge class="bg-indigo-200 text-indigo-900" icon="fas fa-external-link-alt">
-          <a :href="screenshotRaw" target="_blank">raw</a>
-        </Badge>
-        <Badge class="bg-green-200 text-green-900" icon="fas fa-external-link-alt">
-          <router-link :to="{ name: 'public', params: { hash: screenshot.hash } }">public</router-link>
-        </Badge>
+        </BadgeGroup>
+        <BadgeGroup v-if="screenshot.directories?.length" label="directories">
+          <Badge v-for="(dir, i) in screenshot.directories" :key="i" class="bg-blue-200 text-blue-900">{{ dir }}</Badge>
+        </BadgeGroup>
+        <BadgeGroup>
+          <Badge class="bg-indigo-200 text-indigo-900" icon="fas fa-external-link-alt">
+            <a :href="screenshotRaw" target="_blank">raw</a>
+          </Badge>
+          <Badge class="bg-green-200 text-green-900" icon="fas fa-external-link-alt">
+            <router-link :to="{ name: 'public', params: { hash: screenshot.hash } }">public</router-link>
+          </Badge>
+        </BadgeGroup>
       </div>
     </div>
     <!-- box -->
@@ -39,7 +41,7 @@
 <script setup lang="ts">
 import ScreenshotHighlight from './ScreenshotHighlight.vue'
 import ScreenshotBackground from './ScreenshotBackground.vue'
-import BadgeLabel from './BadgeLabel.vue'
+import BadgeGroup from './BadgeGroup.vue'
 import Badge from './Badge.vue'
 
 import { computed, defineProps, watch } from 'vue'
@@ -72,5 +74,4 @@ const highlightedBlocksIndexes = computed(() => {
   const hashBlocks = store.getHighlightedBlocksByHash(props.hash || '')
   return new Set(hashBlocks.map((blocks) => blocks.index))
 })
-const tags = computed(() => ['no tags'])
 </script>

@@ -275,10 +275,12 @@ func (q *DBQuerier) GetScreenshotByHashScan(results pgx.BatchResults) (GetScreen
 
 const getScreenshotWithBlocksByHashSQL = `select
     screenshots.*,
-    array_agg(blocks order by blocks.index) as blocks
+    array_agg(blocks order by blocks.index) as blocks,
+    array_agg(distinct dir_infos.directory_alias) as directories
 from
     screenshots
     left join blocks on blocks.screenshot_id = screenshots.id
+    left join dir_infos on dir_infos.screenshot_id = screenshots.id
 where
     hash = $1
 group by
@@ -294,6 +296,7 @@ type GetScreenshotWithBlocksByHashRow struct {
 	DominantColour string    `json:"dominant_colour"`
 	Blurhash       string    `json:"blurhash"`
 	Blocks         []Blocks  `json:"blocks"`
+	Directories    []string  `json:"directories"`
 }
 
 // GetScreenshotWithBlocksByHash implements Querier.GetScreenshotWithBlocksByHash.
@@ -322,7 +325,7 @@ func (q *DBQuerier) GetScreenshotWithBlocksByHash(ctx context.Context, hash stri
 	blocksArray := pgtype.NewArrayType("_blocks", ignoredOID, func() pgtype.ValueTranscoder {
 		return blocksRow.NewTypeValue().(*pgtype.CompositeType)
 	})
-	if err := row.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash, blocksArray); err != nil {
+	if err := row.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash, blocksArray, &item.Directories); err != nil {
 		return item, fmt.Errorf("query GetScreenshotWithBlocksByHash: %w", err)
 	}
 	blocksArray.AssignTo(&item.Blocks)
@@ -360,7 +363,7 @@ func (q *DBQuerier) GetScreenshotWithBlocksByHashScan(results pgx.BatchResults) 
 	blocksArray := pgtype.NewArrayType("_blocks", ignoredOID, func() pgtype.ValueTranscoder {
 		return blocksRow.NewTypeValue().(*pgtype.CompositeType)
 	})
-	if err := row.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash, blocksArray); err != nil {
+	if err := row.Scan(&item.ID, &item.Hash, &item.Timestamp, &item.DimWidth, &item.DimHeight, &item.DominantColour, &item.Blurhash, blocksArray, &item.Directories); err != nil {
 		return item, fmt.Errorf("scan GetScreenshotWithBlocksByHashBatch row: %w", err)
 	}
 	blocksArray.AssignTo(&item.Blocks)

@@ -6,6 +6,7 @@ pggen gen go \
     --output-dir db \
     --go-type "timestamptz=time.Time" \
     --go-type "text=string" \
+    --go-type "_text=[]string" \
     --go-type "smallint=int" \
     --go-type "integer=int" \
     --go-type "bigint=int" \

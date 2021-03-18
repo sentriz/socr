@@ -29,10 +29,12 @@ limit 1;
 -- name: GetScreenshotWithBlocksByHash :one
 select
     screenshots.*,
-    array_agg(blocks order by blocks.index) as blocks
+    array_agg(blocks order by blocks.index) as blocks,
+    array_agg(distinct dir_infos.directory_alias) as directories
 from
     screenshots
     left join blocks on blocks.screenshot_id = screenshots.id
+    left join dir_infos on dir_infos.screenshot_id = screenshots.id
 where
     hash = pggen.arg ('hash')
 group by

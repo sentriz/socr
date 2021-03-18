@@ -11,6 +11,6 @@
 import { defineProps } from 'vue'
 
 const props = defineProps<{
-  label: string
+  label?: string
 }>()
 </script>
