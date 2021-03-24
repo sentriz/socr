@@ -14,14 +14,26 @@ type Block struct {
 }
 
 type Screenshot struct {
-	ID             int       `db:"id"                 json:"id"`
-	Hash           string    `db:"hash"               json:"hash"`
-	Timestamp      time.Time `db:"timestamp"          json:"timestamp"`
-	DimWidth       int       `db:"dim_width"          json:"dim_width"`
-	DimHeight      int       `db:"dim_height"         json:"dim_height"`
-	DominantColour string    `db:"dominant_colour"    json:"dominant_colour"`
-	Similarity     float64   `db:"similarity"         json:"similarity"`
-	Blurhash       string    `db:"blurhash"           json:"blurhash"`
-	Blocks         []*Block  `db:"highlighted_blocks" json:"highlighted_blocks"`
-	Directories    []string  `db:"directories"        json:"directories"`
+	ID                int       `db:"id"                 json:"id"`
+	Hash              string    `db:"hash"               json:"hash"`
+	Timestamp         time.Time `db:"timestamp"          json:"timestamp"`
+	DimWidth          int       `db:"dim_width"          json:"dim_width"`
+	DimHeight         int       `db:"dim_height"         json:"dim_height"`
+	DominantColour    string    `db:"dominant_colour"    json:"dominant_colour"`
+	Blurhash          string    `db:"blurhash"           json:"blurhash"`
+	Similarity        float64   `db:"similarity"         json:"similarity,omitempty"`
+	Blocks            []*Block  `db:"blocks"             json:"blocks,omitempty"`
+	HighlightedBlocks []*Block  `db:"highlighted_blocks" json:"highlighted_blocks,omitempty"`
+	Directories       []string  `db:"directories"        json:"directories,omitempty"`
+}
+
+type DirInfo struct {
+	ScreenshotID   int    `db:"screenshot_id"   json:"screenshot_id"`
+	Filename       string `db:"filename"        json:"filename"`
+	DirectoryAlias string `db:"directory_alias" json:"directory_alias"`
+}
+
+type DirectoryCount struct {
+	DirectoryAlias string `db:"directory_alias" json:"directory_alias"`
+	Count          int    `db:"count"           json:"count"`
 }

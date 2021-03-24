@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -140,7 +139,7 @@ func (c *Server) ServeAbout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Server) ServeDirectories(w http.ResponseWriter, r *http.Request) {
-	screenshotsCount, err := c.DB.CountDirectoriesByAlias(context.Background())
+	screenshotsCount, err := c.DB.CountDirectories()
 	if err != nil {
 		resp.Error(w, 500, "counting directories by alias: %v", err)
 		return
@@ -150,7 +149,7 @@ func (c *Server) ServeDirectories(w http.ResponseWriter, r *http.Request) {
 
 func (c *Server) ServeScreenshotRaw(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	row, err := c.DB.GetScreenshotPathByHash(context.Background(), vars["hash"])
+	row, err := c.DB.GetDirInfoByScreenshotHash(vars["hash"])
 	if err != nil {
 		resp.Error(w, http.StatusBadRequest, "requested screenshot not found: %v", err)
 		return
@@ -165,7 +164,7 @@ func (c *Server) ServeScreenshotRaw(w http.ResponseWriter, r *http.Request) {
 
 func (c *Server) ServeScreenshot(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	screenshot, err := c.DB.GetScreenshotWithBlocksByHash(context.Background(), vars["hash"])
+	screenshot, err := c.DB.GetScreenshotByHashWithRelations(vars["hash"])
 	if err != nil {
 		resp.Error(w, http.StatusBadRequest, "requested screenshot not found: %v", err)
 		return

@@ -1,7 +1,6 @@
 package scanner
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -160,7 +159,7 @@ func (s *Scanner) collectDirectoryItems() ([]*collectedDirectoryItem, error) {
 }
 
 func (s *Scanner) scanDirectoryItem(dirAlias, dir, fileName string, modTime time.Time) (string, error) {
-	_, err := s.DB.GetDirInfo(context.Background(), dirAlias, fileName)
+	_, err := s.DB.GetDirInfo(dirAlias, fileName)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return "", fmt.Errorf("getting dir info: %w", err)
 	}

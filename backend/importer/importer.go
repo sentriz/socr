@@ -2,7 +2,6 @@ package importer
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
 	"image"
@@ -81,7 +80,7 @@ func (i *Importer) ImportScreenshot(decoded *Decoded, timestamp time.Time, dirAl
 }
 
 func (i *Importer) importScreenshot(hash string, image image.Image, timestamp time.Time) (int, bool, error) {
-	old, err := i.DB.GetScreenshotByHash(context.Background(), hash)
+	old, err := i.DB.GetScreenshotByHash(hash)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return 0, false, fmt.Errorf("getting screenshot by hash: %w", err)
 	}
@@ -97,7 +96,7 @@ func (i *Importer) importScreenshot(hash string, image image.Image, timestamp ti
 	}
 
 	propSize := image.Bounds().Size()
-	new, err := i.DB.CreateScreenshot(context.Background(), db.CreateScreenshotParams{
+	new, err := i.DB.CreateScreenshot(&db.Screenshot{
 		Hash:           hash,
 		Timestamp:      timestamp,
 		DimWidth:       propSize.X,
@@ -119,35 +118,32 @@ func (i *Importer) importScreenshotBlocks(id int, image image.Image) error {
 	if err := imagery.FormatPNG.Encode(imageEncoded, imageBig); err != nil {
 		return fmt.Errorf("encode scaled and greyed image: %w", err)
 	}
-
-	blocks, err := imagery.ExtractText(imageEncoded.Bytes())
+	rawBlocks, err := imagery.ExtractText(imageEncoded.Bytes())
 	if err != nil {
 		return fmt.Errorf("extract image text: %w", err)
 	}
 
-	batch := &pgx.Batch{}
-	for idx, block := range blocks {
-		rect := imagery.ScaleDownRect(block.Box)
-		i.DB.CreateBlockBatch(batch, db.CreateBlockParams{
+	var blocks []*db.Block
+	for idx, rawBlock := range rawBlocks {
+		rect := imagery.ScaleDownRect(rawBlock.Box)
+		blocks = append(blocks, &db.Block{
 			ScreenshotID: id,
 			Index:        idx,
 			MinX:         rect.Min.X,
 			MinY:         rect.Min.Y,
 			MaxX:         rect.Max.X,
 			MaxY:         rect.Max.Y,
-			Body:         block.Word,
+			Body:         rawBlock.Word,
 		})
 	}
-	results := i.DB.SendBatch(context.Background(), batch)
-	if err := results.Close(); err != nil {
-		return fmt.Errorf("end transaction: %w", err)
+	if err := i.DB.CreateBlocks(blocks); err != nil {
+		return fmt.Errorf("inserting blocks: %w", err)
 	}
-
 	return nil
 }
 
 func (i *Importer) importScreenshotDirInfo(id int, dirAlias string, fileName string) error {
-	_, err := i.DB.CreateDirInfo(context.Background(), db.CreateDirInfoParams{
+	_, err := i.DB.CreateDirInfo(&db.DirInfo{
 		ScreenshotID:   id,
 		Filename:       fileName,
 		DirectoryAlias: dirAlias,

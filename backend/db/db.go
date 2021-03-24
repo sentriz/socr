@@ -15,7 +15,6 @@ var schema string
 
 type DB struct {
 	*pgxpool.Pool
-	*DBQuerier
 	squirrel.StatementBuilderType
 }
 
@@ -29,13 +28,22 @@ func New(dsn string) (*DB, error) {
 		return nil, fmt.Errorf("executing schema: %w", err)
 	}
 
-	builder := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
-
 	return &DB{
 		Pool:                 pool,
-		DBQuerier:            NewQuerier(pool),
-		StatementBuilderType: builder,
+		StatementBuilderType: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
 	}, nil
+}
+
+func (db *DB) CreateScreenshot(screenshot *Screenshot) (*Screenshot, error) {
+	q := db.
+		Insert("screenshots").
+		Columns("hash", "timestamp", "dim_width", "dim_height", "dominant_colour", "blurhash").
+		Values(screenshot.Hash, screenshot.Timestamp, screenshot.DimWidth, screenshot.DimHeight, screenshot.DominantColour, screenshot.Blurhash).
+		Suffix("returning *")
+
+	sql, args, _ := q.ToSql()
+	var result Screenshot
+	return &result, pgxscan.Get(context.Background(), db, &result, sql, args...)
 }
 
 var sortFields = map[string]struct{}{
@@ -56,6 +64,49 @@ type SearchScreenshotsOptions struct {
 	SortOrder string
 }
 
+func (db *DB) GetScreenshotByID(id int) (*Screenshot, error) {
+	q := db.
+		Select("*").
+		From("screenshots").
+		Where(squirrel.Eq{"id": id}).
+		Limit(1)
+
+	sql, args, _ := q.ToSql()
+	var result Screenshot
+	return &result, pgxscan.Get(context.Background(), db, &result, sql, args...)
+}
+
+func (db *DB) GetScreenshotByHash(hash string) (*Screenshot, error) {
+	q := db.
+		Select("*").
+		From("screenshots").
+		Where(squirrel.Eq{"hash": hash}).
+		Limit(1)
+
+	sql, args, _ := q.ToSql()
+	var result Screenshot
+	return &result, pgxscan.Get(context.Background(), db, &result, sql, args...)
+}
+
+func (db *DB) GetScreenshotByHashWithRelations(hash string) (*Screenshot, error) {
+	q := db.
+		Select(
+			"screenshots.*",
+			"json_agg(blocks order by blocks.index) as blocks",
+			"json_agg(distinct dir_infos.directory_alias) as directories",
+		).
+		From("screenshots").
+		LeftJoin("blocks on blocks.screenshot_id = screenshots.id").
+		LeftJoin("dir_infos on dir_infos.screenshot_id = screenshots.id").
+		Where(squirrel.Eq{"hash": hash}).
+		GroupBy("screenshots.id").
+		Limit(1)
+
+	sql, args, _ := q.ToSql()
+	var result Screenshot
+	return &result, pgxscan.Get(context.Background(), db, &result, sql, args...)
+}
+
 func (db *DB) SearchScreenshots(options SearchScreenshotsOptions) ([]*Screenshot, error) {
 	if _, ok := sortFields[options.SortField]; !ok {
 		return nil, fmt.Errorf("invalid sort field %q provided", options.SortField)
@@ -72,10 +123,11 @@ func (db *DB) SearchScreenshots(options SearchScreenshotsOptions) ([]*Screenshot
 	if options.Directory != "" {
 		q = q.
 			Join("dir_infos on dir_infos.screenshot_id = screenshots.id").
-			Where("dir_infos.directory_alias = ?", options.Directory)
+			Where(squirrel.Eq{"dir_infos.directory_alias": options.Directory})
 	}
 	if options.SortField != "" && options.SortOrder != "" {
-		q = q.OrderBy(fmt.Sprintf("%s %s", options.SortField, options.SortOrder))
+		q = q.
+			OrderBy(fmt.Sprintf("%s %s", options.SortField, options.SortOrder))
 	}
 	if options.Body != "" {
 		q = q.
@@ -86,7 +138,74 @@ func (db *DB) SearchScreenshots(options SearchScreenshotsOptions) ([]*Screenshot
 			GroupBy("screenshots.id")
 	}
 
-	sql, args := q.MustSql()
+	sql, args, _ := q.ToSql()
 	var results []*Screenshot
 	return results, pgxscan.Select(context.Background(), db, &results, sql, args...)
+}
+
+func (db *DB) CreateBlocks(blocks []*Block) error {
+	q := db.
+		Insert("blocks").
+		Columns("screenshot_id", "index", "min_x", "min_y", "max_x", "max_y", "body")
+	for _, block := range blocks {
+		q = q.Values(block.ScreenshotID, block.Index, block.MinX, block.MinY, block.MaxX, block.MaxY, block.Body)
+	}
+
+	sql, args, _ := q.ToSql()
+	_, err := db.Exec(context.Background(), sql, args...)
+	return err
+}
+
+func (db *DB) CreateDirInfo(dirInfo *DirInfo) (*DirInfo, error) {
+	q := db.
+		Insert("dir_infos").
+		Columns("screenshot_id", "filename", "directory_alias").
+		Values(dirInfo.ScreenshotID, dirInfo.Filename, dirInfo.DirectoryAlias).
+		Suffix("returning *")
+
+	sql, args, _ := q.ToSql()
+	var result DirInfo
+	return &result, pgxscan.Get(context.Background(), db, &result, sql, args...)
+}
+
+func (db *DB) GetDirInfo(directoryAlias string, filename string) (*DirInfo, error) {
+	q := db.
+		Select("*").
+		From("dir_infos").
+		Where(squirrel.Eq{
+			"directory_alias": directoryAlias,
+			"filename":        filename,
+		}).
+		Limit(1)
+
+	sql, args, _ := q.ToSql()
+	var result DirInfo
+	return &result, pgxscan.Get(context.Background(), db, &result, sql, args...)
+}
+
+func (db *DB) GetDirInfoByScreenshotHash(hash string) (*DirInfo, error) {
+	q := db.
+		Select("dir_infos.*").
+		From("dir_infos").
+		Join("screenshots on screenshots.id = dir_infos.screenshot_id").
+		Where(squirrel.Eq{"screenshots.hash": hash}).
+		Limit(1)
+
+	sql, args, _ := q.ToSql()
+	var result DirInfo
+	return &result, pgxscan.Get(context.Background(), db, &result, sql, args...)
+}
+
+func (db *DB) CountDirectories() ([]*DirectoryCount, error) {
+	q := db.
+		Select(
+			"directory_alias",
+			"count(1) as count",
+		).
+		From("dir_infos").
+		GroupBy("directory_alias")
+
+	sql, args, _ := q.ToSql()
+	var result []*DirectoryCount
+	return result, pgxscan.Select(context.Background(), db, &result, sql, args...)
 }
