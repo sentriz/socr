@@ -60,34 +60,6 @@ from
 group by
     directory_alias;
 
--- https://www.postgresql.org/docs/current/pgtrgm.html
--- name: SearchScreenshots :many
-select
-    screenshots.*,
-    array_agg(blocks order by blocks.index) as highlighted_blocks,
-    avg(similarity (blocks.body, pggen.arg ('body'))) as similarity
-from
-    screenshots
-    left join blocks on blocks.screenshot_id = screenshots.id
-where
-    blocks.body % pggen.arg ('body')
-group by
-    screenshots.id
-order by
-    similarity desc
-limit pggen.arg ('limit') offset pggen.arg ('offset');
-
--- https://www.postgresql.org/docs/current/pgtrgm.html
--- name: GetAllScreenshots :many
-select
-    screenshots.*
-from
-    screenshots
-order by
-    (case when pggen.arg('sort_field') = 'timestamp' and pggen.arg('sort_order') = 'asc' then timestamp end) asc,
-    (case when pggen.arg('sort_field') = 'timestamp' and pggen.arg('sort_order') = 'desc' then timestamp end) desc
-limit pggen.arg ('limit') offset pggen.arg ('offset');
-
 -- name: CreateDirInfo :exec
 insert into dir_infos (screenshot_id, filename, directory_alias)
     values (pggen.arg ('screenshot_id'), pggen.arg ('filename'), pggen.arg ('directory_alias'))

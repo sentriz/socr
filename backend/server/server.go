@@ -174,10 +174,11 @@ func (c *Server) ServeScreenshot(w http.ResponseWriter, r *http.Request) {
 }
 
 type ServeSearchPayload struct {
-	Size int    `json:"size"`
-	From int    `json:"from"`
-	Term string `json:"term"`
-	Sort struct {
+	Body      string `json:"body"`
+	Directory string `json:"directory"`
+	Limit     int    `json:"limit"`
+	Offset    int    `json:"offset"`
+	Sort      struct {
 		Field string `json:"field"`
 		Order string `json:"order"`
 	} `json:"sort"`
@@ -188,32 +189,26 @@ func (c *Server) ServeSearch(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&payload)
 	defer r.Body.Close()
 
-	start := time.Now()
-	var screenshots interface{}
-	var err error
-	switch {
-	case payload.Term != "":
-		screenshots, err = c.DB.SearchScreenshots(context.Background(), db.SearchScreenshotsParams{
-			Body:   payload.Term,
-			Offset: payload.From,
-			Limit:  payload.Size,
-		})
-	default:
-		screenshots, err = c.DB.GetAllScreenshots(context.Background(), db.GetAllScreenshotsParams{
-			Offset:    payload.From,
-			Limit:     payload.Size,
-			SortField: payload.Sort.Field,
-			SortOrder: payload.Sort.Order,
-		})
+	switch payload.Sort.Field {
+	case "":
 	}
+
+	start := time.Now()
+	screenshots, err := c.DB.SearchScreenshots(db.SearchScreenshotsOptions{
+		Body:      payload.Body,
+		Offset:    payload.Offset,
+		Limit:     payload.Limit,
+		SortField: payload.Sort.Field,
+		SortOrder: payload.Sort.Order,
+	})
 	if err != nil {
 		resp.Error(w, 500, "searching screenshots: %v", err)
 		return
 	}
 
 	resp.Write(w, struct {
-		Screenshots interface{}   `json:"screenshots"`
-		Took        time.Duration `json:"took"`
+		Screenshots []*db.Screenshot `json:"screenshots"`
+		Took        time.Duration    `json:"took"`
 	}{
 		Screenshots: screenshots,
 		Took:        time.Since(start),
