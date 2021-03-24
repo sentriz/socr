@@ -125,17 +125,18 @@ func (db *DB) SearchScreenshots(options SearchScreenshotsOptions) ([]*Screenshot
 			Join("dir_infos on dir_infos.screenshot_id = screenshots.id").
 			Where(squirrel.Eq{"dir_infos.directory_alias": options.Directory})
 	}
-	if options.SortField != "" && options.SortOrder != "" {
-		q = q.
-			OrderBy(fmt.Sprintf("%s %s", options.SortField, options.SortOrder))
-	}
 	if options.Body != "" {
 		q = q.
 			Column("json_agg(blocks order by blocks.index) as highlighted_blocks").
 			Column("avg(similarity(blocks.body, ?)) as similarity", options.Body).
 			LeftJoin("blocks on blocks.screenshot_id = screenshots.id").
 			Where("blocks.body % ?", options.Body).
-			GroupBy("screenshots.id")
+			GroupBy("screenshots.id").
+			OrderBy("similarity desc")
+	}
+	if options.SortField != "" && options.SortOrder != "" {
+		q = q.
+			OrderBy(fmt.Sprintf("%s %s", options.SortField, options.SortOrder))
 	}
 
 	sql, args, _ := q.ToSql()
