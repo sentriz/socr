@@ -65,9 +65,9 @@ const fetchScreenshots = async () => {
   if (!respHasMore.value) return
 
   console.log('loading page #%d', pageNum.value)
-  const from = pageSize * pageNum.value
+  const offset = pageSize * pageNum.value
   const sort = { field: reqSortField.value, order: reqSortOrder.value }
-  const resp = await load(pageSize, from, sort, reqQuery.value)
+  const resp = await load(pageSize, offset, sort, reqQuery.value)
   if (isError(resp)) return
 
   respTook.value = (resp.result.took || 0) / 10 ** 6

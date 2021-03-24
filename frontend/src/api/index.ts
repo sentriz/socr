@@ -58,9 +58,9 @@ export interface PayloadSort {
 }
 
 export interface PayloadSearch {
-  term: string
-  size: number
-  from: number
+  body: string
+  limit: number
+  offset: number
   sort: PayloadSort
 }
 
