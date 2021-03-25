@@ -66,7 +66,7 @@ type SearchScreenshotsOptions struct {
 
 func (db *DB) GetScreenshotByID(id int) (*Screenshot, error) {
 	q := db.
-		Select("*").
+		Select("screenshots.*").
 		From("screenshots").
 		Where(squirrel.Eq{"id": id}).
 		Limit(1)
@@ -89,17 +89,21 @@ func (db *DB) GetScreenshotByHash(hash string) (*Screenshot, error) {
 }
 
 func (db *DB) GetScreenshotByHashWithRelations(hash string) (*Screenshot, error) {
+	colAggBlocks := db.
+		Select("json_agg(blocks order by index)").
+		From("blocks").
+		Where("screenshot_id = screenshots.id")
+	colAggAliases := db.
+		Select("json_agg(dir_infos.directory_alias)").
+		From("dir_infos").
+		Where("screenshot_id = screenshots.id")
+
 	q := db.
-		Select(
-			"screenshots.*",
-			"json_agg(blocks order by blocks.index) as blocks",
-			"json_agg(distinct dir_infos.directory_alias) as directories",
-		).
+		Select("screenshots.*").
+		Column(squirrel.Alias(colAggBlocks, "blocks")).
+		Column(squirrel.Alias(colAggAliases, "directories")).
 		From("screenshots").
-		LeftJoin("blocks on blocks.screenshot_id = screenshots.id").
-		LeftJoin("dir_infos on dir_infos.screenshot_id = screenshots.id").
 		Where(squirrel.Eq{"hash": hash}).
-		GroupBy("screenshots.id").
 		Limit(1)
 
 	sql, args, _ := q.ToSql()
@@ -126,9 +130,11 @@ func (db *DB) SearchScreenshots(options SearchScreenshotsOptions) ([]*Screenshot
 			Where(squirrel.Eq{"dir_infos.directory_alias": options.Directory})
 	}
 	if options.Body != "" {
+		colAggBlocks := squirrel.Expr("json_agg(blocks order by blocks.index)")
+		colSimilarity := squirrel.Expr("avg(similarity(blocks.body, ?))", options.Body)
 		q = q.
-			Column("json_agg(blocks order by blocks.index) as highlighted_blocks").
-			Column("avg(similarity(blocks.body, ?)) as similarity", options.Body).
+			Column(squirrel.Alias(colAggBlocks, "highlighted_blocks")).
+			Column(squirrel.Alias(colSimilarity, "similarity")).
 			LeftJoin("blocks on blocks.screenshot_id = screenshots.id").
 			Where("blocks.body % ?", options.Body).
 			GroupBy("screenshots.id").
