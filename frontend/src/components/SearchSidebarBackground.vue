@@ -7,7 +7,7 @@ import { computed, defineProps } from 'vue'
 import useStore from '../composables/useStore'
 
 const props = defineProps<{
-  hash: string | undefined
+  hash?: string
 }>()
 
 const store = useStore()

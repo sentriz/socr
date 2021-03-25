@@ -28,6 +28,6 @@ import SearchSidebarBackground from './SearchSidebarBackground.vue'
 import { defineProps } from 'vue'
 
 const props = defineProps<{
-  hash: string | undefined
+  hash?: string
 }>()
 </script>

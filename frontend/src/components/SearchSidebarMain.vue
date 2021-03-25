@@ -50,7 +50,7 @@ import { urlScreenshot } from '../api/'
 import useStore from '../composables/useStore'
 
 const props = defineProps<{
-  hash: string | undefined
+  hash?: string
 }>()
 
 const store = useStore()
@@ -59,9 +59,7 @@ const store = useStore()
 // (can happen on page reload if we've click an image on the eg. 5th page)
 watch(
   () => props.hash,
-  (id) => {
-    id && store.loadScreenshot(id)
-  },
+  (id) => id && store.loadScreenshot(id),
   { immediate: true },
 )
 
