@@ -1,5 +1,5 @@
 <template>
-  <div class="flex border border-gray-300 bg-white rounded divide-x divide-gray-300 whitespace-nowrap">
+  <div ref="elm" class="flex border border-gray-300 bg-white rounded divide-x divide-gray-300 whitespace-nowrap">
     <div class="padded text-gray-600 bg-gray-200 rounded-l">{{ props.label }}</div>
     <div class="relative" v-if="props.items.length">
       <SearchFilterItem :label="props.selected.label" :icon="props.selected.icon" @click="toggle" />
@@ -19,6 +19,7 @@
 <script setup lang="ts">
 import SearchFilterItem from './SearchFilterItem.vue'
 
+import { onClickOutside } from '@vueuse/core'
 import { defineProps, defineEmit, ref } from 'vue'
 
 interface Item {
@@ -35,9 +36,13 @@ const props = defineProps<{
 
 const isOpen = ref(false)
 const toggle = () => (isOpen.value = !isOpen.value)
+const close = () => (isOpen.value = false)
 
 const choose = (index: number) => {
   emit('update:selected', props.items[index])
-  toggle()
+  close()
 }
+
+const elm = ref(null)
+onClickOutside(elm, () => close())
 </script>
