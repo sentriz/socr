@@ -7,7 +7,7 @@
     </div>
     <div ref="scroller">
       <p v-if="!loading" class="text-gray-500 text-right">fetched {{ respTook.toFixed(2) }}ms</p>
-      <div v-for="(page, i) in pages" :key="i" class="mt-2">
+      <div v-for="(page, i) in respPages" :key="i" class="mt-2">
         <div v-show="i !== 0" class="my-6">
           <span class="text-gray-500"> page {{ i + 1 }}</span>
           <hr class="m-0" />
@@ -49,74 +49,89 @@ const { loading, load } = useLoading(store.loadScreenshots)
 
 const sidebarHash = computed(() => (route.params.hash as string) || '')
 
-const pageSize = 25
-const pageNum = ref(0)
-const pages = ref<string[][]>([])
-
-type FilterDisplayRow = { label: string; icon: string }
-type SortRow = FilterDisplayRow & { field: string; order: SortOrder }
-type FilterRow = FilterDisplayRow & { directory?: string }
-
-const reqSortOptions: SortRow[] = [
-  { label: 'time desc', icon: 'fas fa-chevron-down', field: 'timestamp', order: SortOrder.Desc },
-  { label: 'time asc', icon: 'fas fa-chevron-up', field: 'timestamp', order: SortOrder.Asc },
-]
-const reqSortOption = ref<SortRow>(reqSortOptions[0])
-
-const reqFilterOptions = ref<FilterRow[]>([{ label: 'all', icon: 'fas fa-asterisk' }])
-const reqFilterOption = ref<FilterRow>(reqFilterOptions.value[0])
-
-onMounted(async () => {
-  const resp = await reqDirectories()
-  if (isError(resp)) return
-
-  for (const d of resp.result)
-    reqFilterOptions.value.push({
-      label: d.directory_alias,
-      icon: d.is_uploads ? 'fas fa-folder-plus' : 'fas fa-folder',
-      directory: d.directory_alias,
-    })
-})
-
 const reqQuery = ref('')
 const reqQueryDebounced = useDebounce(reqQuery, 100)
+const reqPageSize = 25
+const reqPageNum = ref(0)
+
+type Sort = { label: string; icon: string; field: string; order: SortOrder }
+const reqSortSimilarity: Sort = { label: 'similarity', icon: 'fas fa-search', field: 'similarity', order: SortOrder.Desc }
+const reqSortTimeDesc: Sort = { label: 'time desc', icon: 'fas fa-chevron-down', field: 'timestamp', order: SortOrder.Desc }
+const reqSortTimeAsc: Sort = { label: 'time asc', icon: 'fas fa-chevron-up', field: 'timestamp', order: SortOrder.Asc }
+const reqSortOptions = ref([reqSortTimeDesc, reqSortTimeAsc])
+const reqSortOption = ref(reqSortTimeDesc)
+
+type Filter = { label: string; icon: string; directory?: string }
+const reqFilterAll: Filter = { label: 'all', icon: 'fas fa-asterisk' }
+const reqFilterOptions = ref([reqFilterAll])
+const reqFilterOption = ref(reqFilterAll)
 
 const respTook = ref(0)
 const respHasMore = ref(true)
+const respPages = ref<string[][]>([])
 
 const fetchScreenshots = async () => {
   if (loading.value) return
   if (!respHasMore.value) return
 
-  console.log('loading page #%d', pageNum.value)
-  const offset = pageSize * pageNum.value
+  console.log('loading page #%d', reqPageNum.value)
+  const offset = reqPageSize * reqPageNum.value
   const sort = { field: reqSortOption.value.field, order: reqSortOption.value.order }
-  const resp = await load(pageSize, offset, sort, reqQuery.value, reqFilterOption.value.directory)
+  const resp = await load(reqPageSize, offset, sort, reqQuery.value, reqFilterOption.value.directory)
   if (isError(resp)) return
 
   respTook.value = (resp.result.took || 0) / 10 ** 6
   respHasMore.value = !!resp.result.screenshots?.length
   if (!respHasMore.value) return
 
-  pageNum.value++
-  pages.value.push([])
+  reqPageNum.value++
+  respPages.value.push([])
   for (const screenshot of resp.result.screenshots || []) {
-    pages.value[pages.value.length - 1].push(screenshot.hash)
+    respPages.value[respPages.value.length - 1].push(screenshot.hash)
   }
 }
 
-const fetchScreenshotsClear = async () => {
-  pageNum.value = 0
-  pages.value = []
+const clearParameters = () => {
+  reqPageNum.value = 0
+  respPages.value = []
   respHasMore.value = true
-  await fetchScreenshots()
+
+  // 🤔
+  if (reqQuery.value && !reqSortOptions.value.includes(reqSortSimilarity)) {
+    reqSortOptions.value.splice(0, 0, reqSortSimilarity)
+    reqSortOption.value = reqSortSimilarity
+  }
+  if (!reqQuery.value && reqSortOptions.value.includes(reqSortSimilarity)) {
+    reqSortOptions.value.splice(0, 1)
+    reqSortOption.value = reqSortTimeDesc
+  }
 }
 
-// fetch screenshots on filter, sort, and mount
-watch(reqSortOption, fetchScreenshotsClear)
-watch(reqFilterOption, fetchScreenshotsClear)
-watch(reqQueryDebounced, fetchScreenshotsClear, { immediate: true })
+const clearFetchScreenshots = () => {
+  clearParameters()
+  fetchScreenshots()
+}
 
 // fetch screenshots on reaching the bottom of page
 const scroller = useInfiniteScroll(fetchScreenshots)
+
+// fetch screenshots on filter, sort, or query change
+watch(reqSortOption, clearFetchScreenshots)
+watch(reqFilterOption, clearFetchScreenshots)
+watch(reqQueryDebounced, clearFetchScreenshots, { immediate: true })
+
+// fetch directories for dropdown on mount
+onMounted(async () => {
+  const resp = await reqDirectories()
+  if (isError(resp)) return
+
+  reqFilterOptions.value = [
+    ...reqFilterOptions.value,
+    ...resp.result.map((d) => ({
+      label: d.directory_alias,
+      icon: d.is_uploads ? 'fas fa-folder-plus' : 'fas fa-folder',
+      directory: d.directory_alias,
+    })),
+  ]
+})
 </script>
