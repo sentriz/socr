@@ -123,7 +123,8 @@ func (db *DB) SearchScreenshots(options SearchScreenshotsOptions) ([]*Screenshot
 		Select("screenshots.*").
 		From("screenshots").
 		Limit(uint64(options.Limit)).
-		Offset(uint64(options.Offset))
+		Offset(uint64(options.Offset)).
+		OrderBy(fmt.Sprintf("%s %s", options.SortField, options.SortOrder))
 	if options.Directory != "" {
 		q = q.
 			Join("dir_infos on dir_infos.screenshot_id = screenshots.id").
@@ -137,12 +138,7 @@ func (db *DB) SearchScreenshots(options SearchScreenshotsOptions) ([]*Screenshot
 			Column(sq.Alias(colSimilarity, "similarity")).
 			LeftJoin("blocks on blocks.screenshot_id = screenshots.id").
 			Where("blocks.body % ?", options.Body).
-			GroupBy("screenshots.id").
-			OrderBy("similarity desc")
-	}
-	if options.SortField != "" && options.SortOrder != "" {
-		q = q.
-			OrderBy(fmt.Sprintf("%s %s", options.SortField, options.SortOrder))
+			GroupBy("screenshots.id")
 	}
 
 	sql, args, _ := q.ToSql()

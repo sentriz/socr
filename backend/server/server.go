@@ -200,10 +200,6 @@ func (c *Server) ServeSearch(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&payload)
 	defer r.Body.Close()
 
-	switch payload.Sort.Field {
-	case "":
-	}
-
 	start := time.Now()
 	screenshots, err := c.DB.SearchScreenshots(db.SearchScreenshotsOptions{
 		Body:      payload.Body,
