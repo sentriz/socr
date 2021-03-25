@@ -34,8 +34,14 @@ const createStore = () => {
 
   return {
     state: readonly(state),
-    async loadScreenshots(limit: number, offset: number, sort: PayloadSort, body: string): Reponse<Search> {
-      const resp = await reqSearch({ limit, offset, sort, body })
+    async loadScreenshots(
+      limit: number,
+      offset: number,
+      sort: PayloadSort,
+      body: string,
+      directory?: string,
+    ): Reponse<Search> {
+      const resp = await reqSearch({ limit, offset, sort, body, directory })
       if (isError(resp)) return resp
       screenshotsLoadState(state, resp.result.screenshots)
       return resp

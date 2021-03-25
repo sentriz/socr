@@ -138,13 +138,25 @@ func (c *Server) ServeAbout(w http.ResponseWriter, r *http.Request) {
 	resp.Write(w, settings)
 }
 
+type DirectoryCount struct {
+	*db.DirectoryCount
+	IsUploads bool `json:"is_uploads,omitempty"`
+}
+
 func (c *Server) ServeDirectories(w http.ResponseWriter, r *http.Request) {
-	screenshotsCount, err := c.DB.CountDirectories()
+	rawCounts, err := c.DB.CountDirectories()
 	if err != nil {
 		resp.Error(w, 500, "counting directories by alias: %v", err)
 		return
 	}
-	resp.Write(w, screenshotsCount)
+	var counts []*DirectoryCount
+	for _, raw := range rawCounts {
+		counts = append(counts, &DirectoryCount{
+			DirectoryCount: raw,
+			IsUploads:      raw.DirectoryAlias == c.DirectoriesUploadsAlias,
+		})
+	}
+	resp.Write(w, counts)
 }
 
 func (c *Server) ServeScreenshotRaw(w http.ResponseWriter, r *http.Request) {
@@ -199,6 +211,7 @@ func (c *Server) ServeSearch(w http.ResponseWriter, r *http.Request) {
 		Limit:     payload.Limit,
 		SortField: payload.Sort.Field,
 		SortOrder: payload.Sort.Order,
+		Directory: payload.Directory,
 	})
 	if err != nil {
 		resp.Error(w, 500, "searching screenshots: %v", err)

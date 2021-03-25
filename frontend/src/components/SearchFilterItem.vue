@@ -1,7 +1,7 @@
 <template>
-  <div class="padded text-gray-800 w-full space-x-2 text-right">
-    <span class="select-none">{{ props.label }}</span>
+  <div class="padded text-gray-800 w-full space-x-3">
     <i :class="props.icon"></i>
+    <span class="select-none">{{ props.label }}</span>
   </div>
 </template>
 

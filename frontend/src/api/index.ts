@@ -62,6 +62,7 @@ export interface PayloadSearch {
   limit: number
   offset: number
   sort: PayloadSort
+  directory?: string
 }
 
 export const reqSearch = (data: PayloadSearch) => {
@@ -169,6 +170,7 @@ export type About = { [key: string]: number | string }
 export interface Directory {
   directory_alias: string
   count: number
+  is_uploads?: boolean
 }
 
 export interface ImportStatus {

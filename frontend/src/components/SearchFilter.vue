@@ -1,10 +1,15 @@
 <template>
-  <div class="relative">
+  <div class="relative" v-if="props.items.length">
     <div class="flex border border-gray-300 bg-white rounded divide-x divide-gray-300 whitespace-nowrap">
-      <div class="padded text-gray-600 bg-gray-200 rounded-l">sort by</div>
-      <SearchFilterItem :label="props.selected.label" :icon="props.selected.icon" @click="toggle" />
+      <div class="padded text-gray-600 bg-gray-200 rounded-l">{{ props.label }}</div>
+      <SearchFilterItem
+        :label="props.selected.label"
+        :icon="props.selected.icon"
+        @click="toggle"
+        class="cursor-pointer"
+      />
     </div>
-    <div v-if="isOpen" class="absolute z-10 right-0 py-2 mt-2 border border-gray-300 bg-white rounded text-right">
+    <div v-if="isOpen" class="absolute z-10 right-0 py-2 mt-2 border border-gray-300 bg-white rounded">
       <SearchFilterItem v-for="(item, idx) in props.items" :label="item.label" :icon="item.icon" @click="choose(idx)" />
     </div>
   </div>
@@ -22,6 +27,7 @@ interface Item {
 
 const emit = defineEmit<(e: string, v: Item) => void>()
 const props = defineProps<{
+  label: string
   items: Item[]
   selected: Item
 }>()
