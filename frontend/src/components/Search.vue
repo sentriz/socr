@@ -2,7 +2,7 @@
   <div class="space-y-6">
     <div class="flex flex-col md:flex-row gap-2">
       <input v-model="reqQuery" class="inp w-full" type="text" placeholder="enter screenshot text query" />
-      <SearchSortFilter v-if="!reqQuery" v-model:field="reqSortField" v-model:order="reqSortOrder" label="date" />
+      <SearchFilter v-if="!reqQuery" :items="reqSortOptions" v-model:selected="reqSortOption" />
     </div>
     <div ref="scroller">
       <p v-if="!loading" class="text-gray-500 text-right">fetched {{ respTook.toFixed(2) }}ms</p>
@@ -30,7 +30,7 @@
 import ScreenshotHighlight from './ScreenshotHighlight.vue'
 import ScreenshotBackground from './ScreenshotBackground.vue'
 import SearchSidebar from './SearchSidebar.vue'
-import SearchSortFilter from './SearchSortFilter.vue'
+import SearchFilter from './SearchFilter.vue'
 import LoadingSpinner from './LoadingSpinner.vue'
 import ClipboardUploader from './ClipboardUploader.vue'
 
@@ -52,8 +52,12 @@ const pageSize = 25
 const pageNum = ref(0)
 const pages = ref<string[][]>([])
 
-const reqSortField = ref('timestamp')
-const reqSortOrder = ref(SortOrder.Desc)
+const reqSortOptions = [
+  { field: 'timestamp', order: SortOrder.Desc, label: 'time desc', icon: 'fas fa-chevron-down' },
+  { field: 'timestamp', order: SortOrder.Asc, label: 'time asc', icon: 'fas fa-chevron-up' },
+]
+const reqSortOption = ref(reqSortOptions[0])
+
 const reqQuery = ref('')
 const reqQueryDebounced = useDebounce(reqQuery, 100)
 
@@ -66,13 +70,12 @@ const fetchScreenshots = async () => {
 
   console.log('loading page #%d', pageNum.value)
   const offset = pageSize * pageNum.value
-  const sort = { field: reqSortField.value, order: reqSortOrder.value }
+  const sort = { field: reqSortOption.value.field, order: reqSortOption.value.order }
   const resp = await load(pageSize, offset, sort, reqQuery.value)
   if (isError(resp)) return
 
   respTook.value = (resp.result.took || 0) / 10 ** 6
   respHasMore.value = !!resp.result.screenshots?.length
-  console.log(respHasMore.value)
   if (!respHasMore.value) return
 
   pageNum.value++
@@ -90,7 +93,7 @@ const fetchScreenshotsClear = async () => {
 }
 
 // fetch screenshots on filter, sort, and mount
-watch(reqSortOrder, fetchScreenshotsClear)
+watch(reqSortOption, fetchScreenshotsClear)
 watch(reqQueryDebounced, fetchScreenshotsClear, { immediate: true })
 
 // fetch screenshots on reaching the bottom of page
