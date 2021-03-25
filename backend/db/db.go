@@ -5,7 +5,7 @@ import (
 	_ "embed"
 	"fmt"
 
-	"github.com/Masterminds/squirrel"
+	sq "github.com/Masterminds/squirrel"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
@@ -15,7 +15,7 @@ var schema string
 
 type DB struct {
 	*pgxpool.Pool
-	squirrel.StatementBuilderType
+	sq.StatementBuilderType
 }
 
 func New(dsn string) (*DB, error) {
@@ -30,7 +30,7 @@ func New(dsn string) (*DB, error) {
 
 	return &DB{
 		Pool:                 pool,
-		StatementBuilderType: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		StatementBuilderType: sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
 	}, nil
 }
 
@@ -68,7 +68,7 @@ func (db *DB) GetScreenshotByID(id int) (*Screenshot, error) {
 	q := db.
 		Select("screenshots.*").
 		From("screenshots").
-		Where(squirrel.Eq{"id": id}).
+		Where(sq.Eq{"id": id}).
 		Limit(1)
 
 	sql, args, _ := q.ToSql()
@@ -80,7 +80,7 @@ func (db *DB) GetScreenshotByHash(hash string) (*Screenshot, error) {
 	q := db.
 		Select("*").
 		From("screenshots").
-		Where(squirrel.Eq{"hash": hash}).
+		Where(sq.Eq{"hash": hash}).
 		Limit(1)
 
 	sql, args, _ := q.ToSql()
@@ -100,10 +100,10 @@ func (db *DB) GetScreenshotByHashWithRelations(hash string) (*Screenshot, error)
 
 	q := db.
 		Select("screenshots.*").
-		Column(squirrel.Alias(colAggBlocks, "blocks")).
-		Column(squirrel.Alias(colAggAliases, "directories")).
+		Column(sq.Alias(colAggBlocks, "blocks")).
+		Column(sq.Alias(colAggAliases, "directories")).
 		From("screenshots").
-		Where(squirrel.Eq{"hash": hash}).
+		Where(sq.Eq{"hash": hash}).
 		Limit(1)
 
 	sql, args, _ := q.ToSql()
@@ -127,14 +127,14 @@ func (db *DB) SearchScreenshots(options SearchScreenshotsOptions) ([]*Screenshot
 	if options.Directory != "" {
 		q = q.
 			Join("dir_infos on dir_infos.screenshot_id = screenshots.id").
-			Where(squirrel.Eq{"dir_infos.directory_alias": options.Directory})
+			Where(sq.Eq{"dir_infos.directory_alias": options.Directory})
 	}
 	if options.Body != "" {
-		colAggBlocks := squirrel.Expr("json_agg(blocks order by blocks.index)")
-		colSimilarity := squirrel.Expr("avg(similarity(blocks.body, ?))", options.Body)
+		colAggBlocks := sq.Expr("json_agg(blocks order by blocks.index)")
+		colSimilarity := sq.Expr("avg(similarity(blocks.body, ?))", options.Body)
 		q = q.
-			Column(squirrel.Alias(colAggBlocks, "highlighted_blocks")).
-			Column(squirrel.Alias(colSimilarity, "similarity")).
+			Column(sq.Alias(colAggBlocks, "highlighted_blocks")).
+			Column(sq.Alias(colSimilarity, "similarity")).
 			LeftJoin("blocks on blocks.screenshot_id = screenshots.id").
 			Where("blocks.body % ?", options.Body).
 			GroupBy("screenshots.id").
@@ -179,7 +179,7 @@ func (db *DB) GetDirInfo(directoryAlias string, filename string) (*DirInfo, erro
 	q := db.
 		Select("*").
 		From("dir_infos").
-		Where(squirrel.Eq{
+		Where(sq.Eq{
 			"directory_alias": directoryAlias,
 			"filename":        filename,
 		}).
@@ -195,7 +195,7 @@ func (db *DB) GetDirInfoByScreenshotHash(hash string) (*DirInfo, error) {
 		Select("dir_infos.*").
 		From("dir_infos").
 		Join("screenshots on screenshots.id = dir_infos.screenshot_id").
-		Where(squirrel.Eq{"screenshots.hash": hash}).
+		Where(sq.Eq{"screenshots.hash": hash}).
 		Limit(1)
 
 	sql, args, _ := q.ToSql()
