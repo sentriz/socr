@@ -9,7 +9,7 @@
       <div class="flex flex-col md:flex-row gap-6 justify-end items-end">
         <BadgeGroup label="created">
           <Badge class="bg-pink-200 text-pink-900" :title="screenshot.timestamp">
-            {{ relativeDateStr(screenshot.timestamp) }}
+            {{ timestampRelative }}
           </Badge>
         </BadgeGroup>
         <BadgeGroup v-if="screenshot.directories?.length" label="directories">
@@ -45,9 +45,9 @@ import BadgeGroup from './BadgeGroup.vue'
 import Badge from './Badge.vue'
 
 import { computed, defineProps, watch } from 'vue'
-import relativeDate from 'relative-date'
 import { urlScreenshot } from '../api/'
 import useStore from '../composables/useStore'
+import { useTimeAgo } from '@vueuse/core'
 
 const props = defineProps<{
   hash?: string
@@ -63,8 +63,6 @@ watch(
   { immediate: true },
 )
 
-const relativeDateStr = (stamp: string) => relativeDate(new Date(stamp))
-
 const screenshotRaw = computed(() => `${urlScreenshot}/${props.hash}/raw`)
 const screenshot = computed(() => store.getScreenshotByHash(props.hash || ''))
 const blocks = computed(() => store.getBlocksByHash(props.hash || ''))
@@ -72,4 +70,7 @@ const highlightedBlocksIndexes = computed(() => {
   const hashBlocks = store.getHighlightedBlocksByHash(props.hash || '')
   return new Set(hashBlocks.map((blocks) => blocks.index))
 })
+
+const timestamp = computed(() => screenshot.value?.timestamp)
+const timestampRelative = useTimeAgo(timestamp)
 </script>
