@@ -6,7 +6,7 @@
         <i class="text-gray-800 hover:text-gray-600 fas fa-times-circle"></i>
       </router-link>
       <!-- header badges -->
-      <div class="flex flex-col md:flex-row gap-8 justify-end items-end">
+      <div class="flex flex-col md:flex-row gap-6 justify-end items-end">
         <BadgeGroup label="created">
           <Badge class="bg-pink-200 text-pink-900" :title="screenshot.timestamp">
             {{ relativeDateStr(screenshot.timestamp) }}
