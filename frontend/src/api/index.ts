@@ -154,7 +154,7 @@ export interface Similarity {
 }
 
 export interface Search {
-  screenshots: (Screenshot & Similarity)[]
+  screenshots?: (Screenshot & Similarity)[]
   took: number
 }
 

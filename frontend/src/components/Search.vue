@@ -71,12 +71,13 @@ const fetchScreenshots = async () => {
   if (isError(resp)) return
 
   respTook.value = (resp.result.took || 0) / 10 ** 6
-  respHasMore.value = !!resp.result.screenshots.length
+  respHasMore.value = !!resp.result.screenshots?.length
+  console.log(respHasMore.value)
   if (!respHasMore.value) return
 
   pageNum.value++
   pages.value.push([])
-  for (const screenshot of resp.result.screenshots) {
+  for (const screenshot of resp.result.screenshots || []) {
     pages.value[pages.value.length - 1].push(screenshot.hash)
   }
 }
