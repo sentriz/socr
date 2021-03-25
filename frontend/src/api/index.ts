@@ -148,6 +148,7 @@ export interface Screenshot {
   blurhash: string
   blocks?: Block[]
   highlighted_blocks?: Block[]
+  directories?: string[]
 }
 
 export interface Similarity {
