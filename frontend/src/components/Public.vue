@@ -1,13 +1,13 @@
 <template>
-  <div class="bg-gray-100 min-h-screen">
-    <div class="container mx-auto p-6 flex flex-col gap-6">
+  <div class="min-h-screen bg-gray-100">
+    <div class="container flex flex-col gap-6 p-6 mx-auto">
       <!-- block image or loading -->
       <ScreenshotBackground v-show="imageHave" :hash="screenshot?.hash || ''" class="box p-3">
         <img class="mx-auto" :src="image" @load="imageLoaded" />
       </ScreenshotBackground>
       <LoadingSpinner v-show="!imageHave" class="bg-gray-100" text="processing image" />
       <!-- block text or loading -->
-      <div v-show="blocks.length" class="box bg-white padded font-mono text-sm">
+      <div v-show="blocks.length" class="box padded font-mono text-sm bg-white">
         <p v-for="(block, i) in blocks" :key="i">
           {{ block.body }}
         </p>

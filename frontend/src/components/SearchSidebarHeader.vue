@@ -2,23 +2,23 @@
   <div class="flex leading-normal">
     <!-- left -->
     <router-link :to="{ name: 'search' }" class="flex-grow text-xl leading-none">
-      <i class="text-gray-800 hover:text-gray-600 fas fa-times-circle"></i>
+      <i class="hover:text-gray-600 fas fa-times-circle text-gray-800"></i>
     </router-link>
     <!-- right -->
-    <div class="flex flex-col md:flex-row gap-6 justify-end items-end">
+    <div class="md:flex-row flex flex-col items-end justify-end gap-6">
       <BadgeGroup label="created">
-        <Badge class="bg-pink-200 text-pink-900" :title="screenshot.timestamp">
+        <Badge class="text-pink-900 bg-pink-200" :title="screenshot.timestamp">
           {{ timestampRelative }}
         </Badge>
       </BadgeGroup>
       <BadgeGroup v-if="screenshot.directories?.length" label="directories">
-        <Badge v-for="(dir, i) in screenshot.directories" :key="i" class="bg-blue-200 text-blue-900">{{ dir }}</Badge>
+        <Badge v-for="(dir, i) in screenshot.directories" :key="i" class="text-blue-900 bg-blue-200">{{ dir }}</Badge>
       </BadgeGroup>
       <BadgeGroup>
-        <Badge class="bg-indigo-200 text-indigo-900" icon="fas fa-external-link-alt">
+        <Badge class="text-indigo-900 bg-indigo-200" icon="fas fa-external-link-alt">
           <a :href="screenshotRaw" target="_blank">raw</a>
         </Badge>
-        <Badge class="bg-green-200 text-green-900" icon="fas fa-external-link-alt">
+        <Badge class="text-green-900 bg-green-200" icon="fas fa-external-link-alt">
           <router-link :to="{ name: 'public', params: { hash: screenshot.hash } }">public</router-link>
         </Badge>
       </BadgeGroup>

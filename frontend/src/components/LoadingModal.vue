@@ -2,7 +2,7 @@
   <TransitionFade>
     <div
       v-if="loading"
-      class="z-10 fixed inset-0 bg-gray-700 bg-opacity-75 transition-opacity flex items-center justify-center"
+      class="fixed inset-0 z-10 flex items-center justify-center transition-opacity bg-gray-700 bg-opacity-75"
     >
       <LoadingSpinner :text="props.text" />
     </div>

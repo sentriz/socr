@@ -1,8 +1,8 @@
 <template>
-  <table class="table-auto rounded w-full">
+  <table class="w-full rounded table-auto">
     <tr v-if="about" v-for="(value, key, i) in about" :class="{ 'bg-gray-100': i % 2 }">
-      <td class="border padded">{{ key }}</td>
-      <td class="border padded">{{ value }}</td>
+      <td class="padded border">{{ key }}</td>
+      <td class="padded border">{{ value }}</td>
     </tr>
   </table>
 </template>

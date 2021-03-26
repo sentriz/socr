@@ -1,15 +1,15 @@
 <template>
   <TransitionFade>
-    <div v-if="screenshot" class="z-10 fixed inset-0 bg-gray-700 bg-opacity-75 transition-opacity" />
+    <div v-if="screenshot" class="fixed inset-0 z-10 transition-opacity bg-gray-700 bg-opacity-75" />
   </TransitionFade>
   <TransitionSlide>
-    <div v-if="screenshot" ref="content" class="z-20 fixed inset-y-0 right-0 max-w-lg w-full">
-      <div class="space-y-6 bg-gray-100 p-6 h-full overflow-y-auto">
+    <div v-if="screenshot" ref="content" class="fixed inset-y-0 right-0 z-20 w-full max-w-lg">
+      <div class="h-full p-6 space-y-6 overflow-y-auto bg-gray-100">
         <SearchSidebarHeader :hash="screenshot.hash" />
         <ScreenshotBackground :hash="screenshot.hash" class="box p-3">
           <ScreenshotHighlight :hash="screenshot.hash" class="mx-auto" />
         </ScreenshotBackground>
-        <div v-if="blocks.length" class="box bg-gray-200 padded font-mono text-sm">
+        <div v-if="blocks.length" class="box padded font-mono text-sm bg-gray-200">
           <p v-for="(block, i) in blocks" :key="i" :class="{ 'bg-yellow-300': highlightedBlocksIndexes.has(i) }">
             {{ block.body }}
           </p>

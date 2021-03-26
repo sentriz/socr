@@ -1,11 +1,11 @@
 <template>
-  <table class="table-auto rounded w-full">
+  <table class="w-full rounded table-auto">
     <tr v-for="(directory, i) in directories" :class="{ 'bg-gray-100': i % 2 }">
-      <td class="border padded">{{ directory.directory_alias }}</td>
-      <td class="border padded">{{ directory.count }}</td>
+      <td class="padded border">{{ directory.directory_alias }}</td>
+      <td class="padded border">{{ directory.count }}</td>
     </tr>
     <tr v-if="!directories.length">
-      <td class="border padded">none yet</td>
+      <td class="padded border">none yet</td>
     </tr>
   </table>
 </template>

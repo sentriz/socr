@@ -1,9 +1,9 @@
 <template>
-  <div ref="elm" class="flex border border-gray-300 bg-white rounded divide-x divide-gray-300 whitespace-nowrap">
+  <div ref="elm" class="whitespace-nowrap flex bg-white border border-gray-300 divide-x divide-gray-300 rounded">
     <div class="padded text-gray-600 bg-gray-200 rounded-l">{{ props.label }}</div>
     <div class="relative" v-if="props.items.length">
       <SearchFilterItem :label="props.selected.label" :icon="props.selected.icon" @click="toggle" />
-      <div v-if="isOpen" class="absolute z-10 py-2 mt-2 border border-gray-300 bg-white rounded">
+      <div v-if="isOpen" class="absolute z-10 py-2 mt-2 bg-white border border-gray-300 rounded">
         <SearchFilterItem
           class="hover:bg-gray-100"
           v-for="(item, idx) in props.items"

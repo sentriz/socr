@@ -1,5 +1,5 @@
 <template>
-  <div class="padded text-gray-800 w-full space-x-3 cursor-pointer">
+  <div class="padded w-full space-x-3 text-gray-800 cursor-pointer">
     <i :class="props.icon"></i>
     <span class="select-none">{{ props.label }}</span>
   </div>

@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto min-h-screen p-6">
+  <div class="container min-h-screen p-6 mx-auto">
     <ul class="flex">
       <div class="flex-1 space-x-6">
         <router-link class="nav" :to="{ name: 'search' }">
@@ -11,7 +11,7 @@
           <span>settings</span>
         </router-link>
       </div>
-      <div class="hidden sm:block">
+      <div class="sm:block hidden">
         <router-link class="nav" :to="{ name: 'logout' }">
           <i class="nav-icon fas fa-sign-out-alt"></i>
           <span>logout</span>

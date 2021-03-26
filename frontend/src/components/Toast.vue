@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white text-gray-700 shadow-md border border-gray-100 rounded padded inline-block">
+  <div class="padded inline-block text-gray-700 bg-white border border-gray-100 rounded shadow-md">
     {{ props.toast }}
   </div>
 </template>

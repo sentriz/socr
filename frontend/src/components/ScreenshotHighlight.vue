@@ -1,10 +1,10 @@
 <template>
-  <div class="relative w-fit">
+  <div class="w-fit relative">
     <img :src="url" />
     <svg
       v-if="blocks.length"
       :viewBox="`0 0 ${screenshot.dim_width} ${screenshot.dim_height}`"
-      class="absolute inset-0 fill-current text-yellow-500 text-opacity-50"
+      class="absolute inset-0 text-yellow-500 text-opacity-50 fill-current"
     >
       <rect
         v-for="(b, i) in blocks"

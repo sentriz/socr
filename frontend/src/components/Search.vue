@@ -1,12 +1,12 @@
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col md:flex-row gap-2">
+    <div class="md:flex-row flex flex-col gap-2">
       <input v-model="reqQuery" class="inp w-full" type="text" placeholder="enter screenshot text query" />
       <SearchFilter label="sort by" :items="reqSortOptions" v-model:selected="reqSortOption" />
       <SearchFilter label="directory" :items="reqFilterOptions" v-model:selected="reqFilterOption" />
     </div>
     <div ref="scroller">
-      <p v-if="!loading" class="text-gray-500 text-right">fetched {{ respTook.toFixed(2) }}ms</p>
+      <p v-if="!loading" class="text-right text-gray-500">fetched {{ respTook.toFixed(2) }}ms</p>
       <div v-for="(page, i) in respPages" :key="i" class="mt-2">
         <div v-show="i !== 0" class="my-6">
           <span class="text-gray-500"> page {{ i + 1 }}</span>

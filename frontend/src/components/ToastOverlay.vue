@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <TransitionSlideY>
-      <div v-if="store.state.toast" class="transition transform fixed bottom-6 inset-x-0 flex justify-center">
+      <div v-if="store.state.toast" class="bottom-6 fixed inset-x-0 flex justify-center transition transform">
         <Toast :toast="store.state.toast" />
       </div>
     </TransitionSlideY>

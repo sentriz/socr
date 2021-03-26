@@ -1,5 +1,5 @@
 <template>
-  <span class="px-2 space-x-1 inline-block text-white rounded">
+  <span class="inline-block px-2 space-x-1 text-white rounded">
     <i v-if="props.icon" :class="props.icon" class="text-sm" />
     <span><slot /></span>
   </span>
