@@ -64,7 +64,7 @@ func main() {
 		Importer:                importr,
 		Scanner:                 scanr,
 		SocketUpgrader: websocket.Upgrader{
-			CheckOrigin: func(r *http.Request) bool { return true },
+			CheckOrigin: server.CheckOrigin,
 		},
 		SocketClientsScanner:  map[*websocket.Conn]struct{}{},
 		SocketClientsImporter: map[string]map[*websocket.Conn]struct{}{},

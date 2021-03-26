@@ -319,3 +319,11 @@ func (c *Server) ServeImportStatus(w http.ResponseWriter, r *http.Request) {
 		Running: c.Scanner.IsRunning(),
 	})
 }
+
+// used for socket upgrader
+// not checking origin here because currenly to become a socket client,
+// you must know the hash of the media, or else provide a token for sensitive info.
+// if there is a problem with this please let me know
+func CheckOrigin(r *http.Request) bool {
+	return true
+}
