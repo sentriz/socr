@@ -20,6 +20,7 @@ import (
 	"go.senan.xyz/socr/backend/scanner"
 	"go.senan.xyz/socr/backend/server/auth"
 	"go.senan.xyz/socr/backend/server/resp"
+	"go.senan.xyz/socr/frontend"
 )
 
 type Server struct {
@@ -38,7 +39,39 @@ type Server struct {
 	DefaultFormat           imagery.Format
 }
 
-func (c *Server) EmitUpdatesScanner() error {
+func (c *Server) Router() *mux.Router {
+	// begin normal routes
+	r := mux.NewRouter()
+	r.Use(c.WithCORS())
+	r.Use(c.WithLogging())
+	r.HandleFunc("/api/authenticate", c.ServeAuthenticate)
+	r.HandleFunc("/api/screenshot/{hash}/raw", c.ServeScreenshotRaw)
+	r.HandleFunc("/api/screenshot/{hash}", c.ServeScreenshot)
+	r.HandleFunc("/api/websocket", c.ServeWebSocket)
+
+	// begin authenticated routes
+	rJWT := r.NewRoute().Subrouter()
+	rJWT.Use(c.WithJWT())
+	rJWT.HandleFunc("/api/ping", c.ServePing)
+	rJWT.HandleFunc("/api/start_import", c.ServeStartImport)
+	rJWT.HandleFunc("/api/about", c.ServeAbout)
+	rJWT.HandleFunc("/api/directories", c.ServeDirectories)
+	rJWT.HandleFunc("/api/import_status", c.ServeImportStatus)
+	rJWT.HandleFunc("/api/search", c.ServeSearch)
+
+	// begin api key routes
+	rAPIKey := r.NewRoute().Subrouter()
+	rAPIKey.Use(c.WithJWTOrAPIKey())
+	rAPIKey.HandleFunc("/api/upload", c.ServeUpload)
+
+	// frontend fallback route
+	frontendFS := http.FS(frontend.FS)
+	r.NotFoundHandler = http.FileServer(frontendFS)
+
+	return r
+}
+
+func (c *Server) EmitUpdatesScanner() {
 	for range c.Scanner.Updates {
 		for client := range c.SocketClientsScanner {
 			if err := client.WriteMessage(websocket.TextMessage, []byte(nil)); err != nil {
@@ -49,10 +82,9 @@ func (c *Server) EmitUpdatesScanner() error {
 			}
 		}
 	}
-	return nil
 }
 
-func (c *Server) EmitUpdatesImporter() error {
+func (c *Server) EmitUpdatesImporter() {
 	for id := range c.Importer.Updates {
 		for client := range c.SocketClientsImporter[id] {
 			if err := client.WriteMessage(websocket.TextMessage, []byte(nil)); err != nil {
@@ -63,7 +95,6 @@ func (c *Server) EmitUpdatesImporter() error {
 			}
 		}
 	}
-	return nil
 }
 
 func (c *Server) ServePing(w http.ResponseWriter, r *http.Request) {
@@ -77,18 +108,18 @@ func (c *Server) ServePing(w http.ResponseWriter, r *http.Request) {
 func (c *Server) ServeUpload(w http.ResponseWriter, r *http.Request) {
 	infile, _, err := r.FormFile("i")
 	if err != nil {
-		resp.Error(w, http.StatusBadRequest, "get form file: %v", err)
+		resp.Errorf(w, http.StatusBadRequest, "get form file: %v", err)
 		return
 	}
 	defer infile.Close()
 	raw, err := io.ReadAll(infile)
 	if err != nil {
-		resp.Error(w, http.StatusBadRequest, "read form file: %v", err)
+		resp.Errorf(w, http.StatusBadRequest, "read form file: %v", err)
 		return
 	}
 	decoded, err := importer.DecodeImage(raw)
 	if err != nil {
-		resp.Error(w, http.StatusBadRequest, "decoding screenshot: %v", err)
+		resp.Errorf(w, http.StatusBadRequest, "decoding screenshot: %v", err)
 		return
 	}
 
@@ -96,8 +127,8 @@ func (c *Server) ServeUpload(w http.ResponseWriter, r *http.Request) {
 	uploadsDir := c.Directories[c.DirectoriesUploadsAlias]
 	fileName := fmt.Sprintf("%s.%s", timestamp, decoded.Format.Filetype)
 	filePath := filepath.Join(uploadsDir, fileName)
-	if err := os.WriteFile(filePath, raw, 0644); err != nil {
-		resp.Error(w, 500, "write upload to disk: %v", err)
+	if err := os.WriteFile(filePath, raw, 0600); err != nil {
+		resp.Errorf(w, 500, "write upload to disk: %v", err)
 		return
 	}
 
@@ -146,10 +177,11 @@ type DirectoryCount struct {
 func (c *Server) ServeDirectories(w http.ResponseWriter, r *http.Request) {
 	rawCounts, err := c.DB.CountDirectories()
 	if err != nil {
-		resp.Error(w, 500, "counting directories by alias: %v", err)
+		resp.Errorf(w, 500, "counting directories by alias: %v", err)
 		return
 	}
-	var counts []*DirectoryCount
+
+	counts := make([]*DirectoryCount, 0, len(rawCounts))
 	for _, raw := range rawCounts {
 		counts = append(counts, &DirectoryCount{
 			DirectoryCount: raw,
@@ -163,12 +195,12 @@ func (c *Server) ServeScreenshotRaw(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	row, err := c.DB.GetDirInfoByScreenshotHash(vars["hash"])
 	if err != nil {
-		resp.Error(w, http.StatusBadRequest, "requested screenshot not found: %v", err)
+		resp.Errorf(w, http.StatusBadRequest, "requested screenshot not found: %v", err)
 		return
 	}
 	directory, ok := c.Directories[row.DirectoryAlias]
 	if !ok {
-		resp.Error(w, 500, "screenshot has invalid alias %q", row.DirectoryAlias)
+		resp.Errorf(w, 500, "screenshot has invalid alias %q", row.DirectoryAlias)
 		return
 	}
 	http.ServeFile(w, r, filepath.Join(directory, row.Filename))
@@ -178,7 +210,7 @@ func (c *Server) ServeScreenshot(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	screenshot, err := c.DB.GetScreenshotByHashWithRelations(vars["hash"])
 	if err != nil {
-		resp.Error(w, http.StatusBadRequest, "requested screenshot not found: %v", err)
+		resp.Errorf(w, http.StatusBadRequest, "requested screenshot not found: %v", err)
 		return
 	}
 	resp.Write(w, screenshot)
@@ -197,7 +229,9 @@ type ServeSearchPayload struct {
 
 func (c *Server) ServeSearch(w http.ResponseWriter, r *http.Request) {
 	var payload ServeSearchPayload
-	json.NewDecoder(r.Body).Decode(&payload)
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		resp.Errorf(w, 400, "decode payload: %v", err)
+	}
 	defer r.Body.Close()
 
 	start := time.Now()
@@ -210,7 +244,7 @@ func (c *Server) ServeSearch(w http.ResponseWriter, r *http.Request) {
 		Directory: payload.Directory,
 	})
 	if err != nil {
-		resp.Error(w, 500, "searching screenshots: %v", err)
+		resp.Errorf(w, 500, "searching screenshots: %v", err)
 		return
 	}
 
@@ -252,22 +286,20 @@ func (c *Server) ServeAuthenticate(w http.ResponseWriter, r *http.Request) {
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}
-
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		resp.Error(w, http.StatusBadRequest, "parse payload: %v", err)
-		return
+		resp.Errorf(w, http.StatusBadRequest, "decode payload: %v", err)
 	}
 
 	hasUsername := (payload.Username == c.LoginUsername)
 	hasPassword := (payload.Password == c.LoginPassword)
 	if !(hasUsername && hasPassword) {
-		resp.Error(w, http.StatusUnauthorized, "unauthorised")
+		resp.Errorf(w, http.StatusUnauthorized, "unauthorised")
 		return
 	}
 
 	token, err := auth.TokenNew(c.HMACSecret)
 	if err != nil {
-		resp.Error(w, 500, "generating token")
+		resp.Errorf(w, 500, "generating token")
 		return
 	}
 

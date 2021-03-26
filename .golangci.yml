@@ -1,0 +1,78 @@
+run:
+  skip-dirs-use-default: true
+
+linters:
+  disable-all: true
+  enable:
+    - bodyclose
+    - deadcode
+    - depguard
+    - dogsled
+    - errcheck
+    - gochecknoglobals
+    - gochecknoinits
+    - goconst
+    - gocritic
+    - gocyclo
+    - golint
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - misspell
+    - nakedret
+    - rowserrcheck
+    - staticcheck
+    - structcheck
+    - stylecheck
+    - typecheck
+    - unconvert
+    - varcheck
+    - asciicheck
+    - cyclop
+    - dupl
+    - durationcheck
+    - errorlint
+    - exhaustive
+    - exportloopref
+    - forbidigo
+    - forcetypeassert
+    - funlen
+    - gocognit
+    - godox
+    - gofmt
+    - goheader
+    - goimports
+    - gomoddirectives
+    - gomodguard
+    - ifshort
+    - importas
+    - makezero
+    - nestif
+    - nilerr
+    - noctx
+    - paralleltest
+    - prealloc
+    - revive
+    - sqlclosecheck
+    - testpackage
+    - thelper
+    - tparallel
+    - unparam
+    - unused
+    - wastedassign
+    - whitespace
+
+# TODO: fix these
+issues:
+  exclude-rules:
+    - text: "should have comment"
+      linters:
+        - golint
+    - text: "comment on exported var"
+      linters:
+        - golint
+    - text: "at least one file in a package should have a package comment"
+      linters:
+        - stylecheck

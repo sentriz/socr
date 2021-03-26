@@ -47,7 +47,7 @@ func DecodeImage(raw []byte) (*Decoded, error) {
 		Image:  image,
 		Data:   data,
 		Format: format,
-	}, err
+	}, nil
 }
 
 type Importer struct {
@@ -123,7 +123,7 @@ func (i *Importer) importScreenshotBlocks(id int, image image.Image) error {
 		return fmt.Errorf("extract image text: %w", err)
 	}
 
-	var blocks []*db.Block
+	blocks := make([]*db.Block, 0, len(rawBlocks))
 	for idx, rawBlock := range rawBlocks {
 		rect := imagery.ScaleDownRect(rawBlock.Box)
 		blocks = append(blocks, &db.Block{
@@ -154,13 +154,8 @@ func (i *Importer) importScreenshotDirInfo(id int, dirAlias string, fileName str
 	return nil
 }
 
-const (
-	hashBase = 16
-	hashBits = 64
-)
-
 func Hash(bytes []byte) string {
 	sum := xxhash.Sum64(bytes)
-	format := strconv.FormatUint(sum, hashBase)
+	format := strconv.FormatUint(sum, 16)
 	return format
 }

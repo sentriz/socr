@@ -2,7 +2,7 @@ package db
 
 import (
 	"context"
-	_ "embed"
+	_ "embed" //nolint:golint
 	"fmt"
 	"log"
 	"time"
@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
+//nolint:gochecknoglobals
 //go:embed schema.pgsql
 var schema string
 
@@ -59,15 +60,6 @@ func (db *DB) CreateScreenshot(screenshot *Screenshot) (*Screenshot, error) {
 	sql, args, _ := q.ToSql()
 	var result Screenshot
 	return &result, pgxscan.Get(context.Background(), db, &result, sql, args...)
-}
-
-var sortFields = map[string]struct{}{
-	"timestamp":  {},
-	"similarity": {},
-}
-var sortOrders = map[string]struct{}{
-	"asc":  {},
-	"desc": {},
 }
 
 type SearchScreenshotsOptions struct {
@@ -127,10 +119,10 @@ func (db *DB) GetScreenshotByHashWithRelations(hash string) (*Screenshot, error)
 }
 
 func (db *DB) SearchScreenshots(options SearchScreenshotsOptions) ([]*Screenshot, error) {
-	if _, ok := sortFields[options.SortField]; !ok {
+	if !isSortField(options.SortField) {
 		return nil, fmt.Errorf("invalid sort field %q provided", options.SortField)
 	}
-	if _, ok := sortOrders[options.SortOrder]; !ok {
+	if !isSortOrder(options.SortOrder) {
 		return nil, fmt.Errorf("invalid sort order %q provided", options.SortOrder)
 	}
 
@@ -226,4 +218,22 @@ func (db *DB) CountDirectories() ([]*DirectoryCount, error) {
 	sql, args, _ := q.ToSql()
 	var result []*DirectoryCount
 	return result, pgxscan.Select(context.Background(), db, &result, sql, args...)
+}
+
+func isSortField(f string) bool {
+	fields := map[string]struct{}{
+		"timestamp":  {},
+		"similarity": {},
+	}
+	_, ok := fields[f]
+	return ok
+}
+
+func isSortOrder(f string) bool {
+	fields := map[string]struct{}{
+		"asc":  {},
+		"desc": {},
+	}
+	_, ok := fields[f]
+	return ok
 }

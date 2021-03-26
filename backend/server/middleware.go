@@ -27,7 +27,7 @@ func (c *Server) WithJWT() func(http.Handler) http.Handler {
 				next.ServeHTTP(w, r)
 				return
 			}
-			resp.Error(w, http.StatusUnauthorized, "unauthorised")
+			resp.Errorf(w, http.StatusUnauthorized, "unauthorised")
 		})
 	}
 }
@@ -39,7 +39,7 @@ func (c *Server) WithAPIKey() func(http.Handler) http.Handler {
 				next.ServeHTTP(w, r)
 				return
 			}
-			resp.Error(w, http.StatusUnauthorized, "unauthorised")
+			resp.Errorf(w, http.StatusUnauthorized, "unauthorised")
 		})
 	}
 }
@@ -51,7 +51,7 @@ func (c *Server) WithJWTOrAPIKey() func(http.Handler) http.Handler {
 				next.ServeHTTP(w, r)
 				return
 			}
-			resp.Error(w, http.StatusUnauthorized, "unauthorised")
+			resp.Errorf(w, http.StatusUnauthorized, "unauthorised")
 		})
 	}
 }
