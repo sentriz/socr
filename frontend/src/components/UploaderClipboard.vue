@@ -1,7 +1,5 @@
 <template>
-  <!-- TODO: make paste work here with no pointer events -->
-  <div class="fixed inset-0 pointer-events-none" @paste="paste" />
-  <LoadingModal :loading="loading" text="uploading" />
+  <LoadingModal :loading="loading" text="uploading from clipboard" />
 </template>
 
 <script setup lang="ts">
@@ -14,7 +12,8 @@ import useLoading from '../composables/useLoading'
 const router = useRouter()
 const { loading, load } = useLoading(reqUpload)
 
-const paste = async (event: ClipboardEvent) => {
+// TODO: not attach handler to the whole document, just the main page
+document.onpaste = async (event: ClipboardEvent) => {
   const items = event.clipboardData?.items
   if (!items) return
   const blob = items[0]?.getAsFile()

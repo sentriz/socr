@@ -24,8 +24,8 @@
     <LoadingSpinner v-if="loading" />
   </div>
   <SearchSidebar :hash="sidebarHash" />
-  <ClipboardUploader />
-  <UploadHint />
+  <UploaderClipboard />
+  <UploaderFile />
 </template>
 
 <script setup lang="ts">
@@ -34,8 +34,8 @@ import ScreenshotBackground from './ScreenshotBackground.vue'
 import SearchSidebar from './SearchSidebar.vue'
 import SearchFilter from './SearchFilter.vue'
 import LoadingSpinner from './LoadingSpinner.vue'
-import ClipboardUploader from './ClipboardUploader.vue'
-import UploadHint from './UploadHint.vue'
+import UploaderClipboard from './UploaderClipboard.vue'
+import UploaderFile from './UploaderFile.vue'
 
 import { ref, watch, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
