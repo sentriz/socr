@@ -1,23 +1,18 @@
 <template>
-  <Transition
-    enter-active-class="ease-in-out duration-500"
-    enter-to-class="opacity-100"
-    enter-from-class="opacity-0"
-    leave-active-class="ease-in-out duration-500"
-    leave-to-class="opacity-0"
-    leave-from-class="opacity-100"
-  >
+  <TransitionFade>
     <div
+      @paste="paste"
       v-if="loading"
       class="z-10 fixed inset-0 bg-gray-700 bg-opacity-75 transition-opacity flex items-center justify-center"
     >
       <LoadingSpinner text="uploading" />
     </div>
-  </Transition>
+  </TransitionFade>
 </template>
 
 <script setup lang="ts">
 import LoadingSpinner from './LoadingSpinner.vue'
+import TransitionFade from './TransitionFade.vue'
 
 import { isError, reqUpload } from '../api'
 import { useRouter } from 'vue-router'
@@ -27,10 +22,9 @@ const router = useRouter()
 
 const { loading, load } = useLoading(reqUpload)
 
-document.onpaste = async (event: ClipboardEvent) => {
+const paste = async (event: ClipboardEvent) => {
   const items = event.clipboardData?.items
   if (!items) return
-
   const blob = items[0]?.getAsFile()
   if (!blob) return
 
