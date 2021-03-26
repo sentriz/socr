@@ -19,7 +19,6 @@ import { useRouter } from 'vue-router'
 import useLoading from '../composables/useLoading'
 
 const router = useRouter()
-
 const { loading, load } = useLoading(reqUpload)
 
 const paste = async (event: ClipboardEvent) => {
