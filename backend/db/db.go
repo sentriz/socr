@@ -4,6 +4,8 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"log"
+	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/georgysavva/scany/pgxscan"
@@ -19,11 +21,12 @@ type DB struct {
 }
 
 func New(dsn string) (*DB, error) {
-	pool, err := pgxpool.Connect(context.Background(), dsn)
+	pool, err := waitConnect(context.Background(), dsn, 500*time.Millisecond, 10)
 	if err != nil {
 		return nil, fmt.Errorf("create and connect pool: %w", err)
 	}
 
+	log.Println("executing schema")
 	if _, err := pool.Exec(context.Background(), schema); err != nil {
 		return nil, fmt.Errorf("executing schema: %w", err)
 	}
@@ -32,6 +35,18 @@ func New(dsn string) (*DB, error) {
 		Pool:                 pool,
 		StatementBuilderType: sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
 	}, nil
+}
+
+func waitConnect(ctx context.Context, dsn string, interval time.Duration, times int) (*pgxpool.Pool, error) {
+	var pool *pgxpool.Pool
+	var err error
+	for i := 0; i < times; i++ {
+		if pool, err = pgxpool.Connect(ctx, dsn); err == nil {
+			return pool, nil
+		}
+		time.Sleep(interval)
+	}
+	return nil, fmt.Errorf("failed after %d tries: %w", times, err)
 }
 
 func (db *DB) CreateScreenshot(screenshot *Screenshot) (*Screenshot, error) {
