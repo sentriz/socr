@@ -22,7 +22,7 @@
 <script setup lang="ts">
 import ScreenshotHighlight from './ScreenshotHighlight.vue'
 import TransitionFade from './TransitionFade.vue'
-import TransitionSlide from './TransitionSlide.vue'
+import TransitionSlide from './TransitionSlideX.vue'
 import ScreenshotBackground from './ScreenshotBackground.vue'
 import SearchSidebarHeader from './SearchSidebarHeader.vue'
 

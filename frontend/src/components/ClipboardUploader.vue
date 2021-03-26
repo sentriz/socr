@@ -1,18 +1,11 @@
 <template>
-  <TransitionFade>
-    <div
-      @paste="paste"
-      v-if="loading"
-      class="z-10 fixed inset-0 bg-gray-700 bg-opacity-75 transition-opacity flex items-center justify-center"
-    >
-      <LoadingSpinner text="uploading" />
-    </div>
-  </TransitionFade>
+  <!-- TODO: make paste work here with no pointer events -->
+  <div class="fixed inset-0 pointer-events-none" @paste="paste" />
+  <LoadingModal :loading="loading" text="uploading" />
 </template>
 
 <script setup lang="ts">
-import LoadingSpinner from './LoadingSpinner.vue'
-import TransitionFade from './TransitionFade.vue'
+import LoadingModal from './LoadingModal.vue'
 
 import { isError, reqUpload } from '../api'
 import { useRouter } from 'vue-router'

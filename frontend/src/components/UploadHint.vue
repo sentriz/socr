@@ -6,14 +6,19 @@
       <span>select file to upload or just paste</span>
     </div>
   </div>
+  <LoadingModal :loading="loading" text="uploading" />
 </template>
 
 <script setup lang="ts">
+import LoadingModal from './LoadingModal.vue'
+
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { isError, reqUpload } from '../api'
+import useLoading from '../composables/useLoading'
 
 const router = useRouter()
+const { loading, load } = useLoading(reqUpload)
 
 const elm = ref<HTMLInputElement>()
 
@@ -25,7 +30,7 @@ const select = async () => {
   const formData = new FormData()
   formData.append('i', file)
 
-  const resp = await reqUpload(formData)
+  const resp = await load(formData)
   if (isError(resp)) return
 
   router.push({ name: 'public', params: { hash: resp.result.id } })
