@@ -3,8 +3,8 @@
     <div v-if="screenshot" class="z-10 fixed inset-0 bg-gray-700 bg-opacity-75 transition-opacity" />
   </TransitionFade>
   <TransitionSlide>
-    <div v-if="screenshot" ref="content" class="z-20 fixed inset-y-0 right-0 max-w-lg w-full overflow-y-auto">
-      <div class="space-y-6 bg-gray-100 p-6 h-full">
+    <div v-if="screenshot" ref="content" class="z-20 fixed inset-y-0 right-0 max-w-lg w-full">
+      <div class="space-y-6 bg-gray-100 p-6 h-full overflow-y-auto">
         <SearchSidebarHeader :hash="screenshot.hash" />
         <ScreenshotBackground :hash="screenshot.hash" class="box p-3">
           <ScreenshotHighlight :hash="screenshot.hash" class="mx-auto" />
