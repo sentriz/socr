@@ -53,6 +53,6 @@ const highlightedBlocksIndexes = computed(() => {
   return new Set(hashBlocks.map((blocks) => blocks.index))
 })
 
-const content = ref(null)
+const content = ref<HTMLElement>()
 onClickOutside(content, () => router.push({ name: 'search' }))
 </script>

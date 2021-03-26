@@ -43,6 +43,6 @@ const choose = (index: number) => {
   close()
 }
 
-const elm = ref(null)
+const elm = ref<HTMLElement>()
 onClickOutside(elm, () => close())
 </script>
