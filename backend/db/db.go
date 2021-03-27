@@ -101,7 +101,7 @@ func (db *DB) GetScreenshotByHashWithRelations(hash string) (*Screenshot, error)
 		From("blocks").
 		Where("screenshot_id = screenshots.id")
 	colAggAliases := db.
-		Select("json_agg(dir_infos.directory_alias)").
+		Select("json_agg(distinct dir_infos.directory_alias)").
 		From("dir_infos").
 		Where("screenshot_id = screenshots.id")
 
