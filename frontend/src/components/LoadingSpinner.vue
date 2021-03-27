@@ -1,6 +1,7 @@
 <template>
-  <div class="p-3 text-center text-gray-600 bg-gray-200 rounded">
-    <i class="animate-spin fas fa-circle-notch mr-1"></i> {{ props.text || 'loading' }}
+  <div class="flex items-center justify-center gap-2 p-3 text-gray-600 bg-gray-200 rounded">
+    <i class="animate-spin fas fa-circle-notch" />
+    <span>{{ props.text || 'loading' }}</span>
   </div>
 </template>
 

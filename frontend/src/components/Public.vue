@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-100">
+  <div class="bg-gray-50 min-h-screen">
     <div class="container flex flex-col gap-6 p-6 mx-auto">
       <!-- block image or loading -->
       <ScreenshotBackground v-show="imageHave" :hash="screenshot?.hash || ''" class="box p-3">
