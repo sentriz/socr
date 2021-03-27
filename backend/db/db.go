@@ -171,6 +171,7 @@ func (db *DB) CreateDirInfo(dirInfo *DirInfo) (*DirInfo, error) {
 		Insert("dir_infos").
 		Columns("screenshot_id", "filename", "directory_alias").
 		Values(dirInfo.ScreenshotID, dirInfo.Filename, dirInfo.DirectoryAlias).
+		Suffix("on conflict do nothing").
 		Suffix("returning *")
 
 	sql, args, _ := q.ToSql()
