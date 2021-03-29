@@ -65,10 +65,18 @@ func (c *Server) Router() *mux.Router {
 	rAPIKey.HandleFunc("/api/upload", c.ServeUpload)
 
 	// frontend fallback route
-	frontendFS := http.FS(frontend.FS)
-	r.NotFoundHandler = http.FileServer(frontendFS)
+	r.Handle("/assets/{filename}", http.FileServer(http.FS(frontend.Assets)))
+	r.Handle("/favicon.ico", bytesHandler("image/x-icon", frontend.Favicon))
+	r.NotFoundHandler = bytesHandler("text/html", frontend.Index)
 
 	return r
+}
+
+func bytesHandler(contentType string, bytes []byte) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Add("content-type", contentType)
+		w.Write(bytes)
+	})
 }
 
 func (c *Server) EmitUpdatesScanner() {
