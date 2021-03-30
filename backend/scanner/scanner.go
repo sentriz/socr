@@ -144,6 +144,9 @@ func (s *Scanner) collectDirectoryItems() ([]*collectedDirectoryItem, error) {
 			return nil, fmt.Errorf("listing dir %q: %w", dir, err)
 		}
 		for _, file := range files {
+			if file.IsDir() {
+				continue
+			}
 			fileName := file.Name()
 			info, err := file.Info()
 			if err != nil {
