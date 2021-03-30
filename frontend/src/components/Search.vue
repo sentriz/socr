@@ -41,6 +41,7 @@ import { watch, computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDebounce } from '@vueuse/core'
 import { isError, SortOrder, reqDirectories } from '../api'
+import type { PayloadSearch } from '../api'
 import useStore from '../composables/useStore'
 import useInfiniteScroll from '../composables/useInfiniteScroll'
 import useLoading from '../composables/useLoading'
@@ -78,10 +79,16 @@ const fetchScreenshots = async () => {
   if (loading.value) return
   if (!respHasMore.value) return
 
+  const req: PayloadSearch = {
+    body: reqQuery.value,
+    limit: reqPageSize,
+    offset: reqPageSize * reqPageNum.value,
+    sort: { field: reqSortOption.value.field, order: reqSortOption.value.order },
+    directory: reqFilterOption.value.directory,
+  }
+
   console.log('loading page #%d', reqPageNum.value)
-  const offset = reqPageSize * reqPageNum.value
-  const sort = { field: reqSortOption.value.field, order: reqSortOption.value.order }
-  const resp = await load(reqPageSize, offset, sort, reqQuery.value, reqFilterOption.value.directory)
+  const resp = await load(req)
   if (isError(resp)) return
 
   respTook.value = (resp.result.took || 0) / 10 ** 6

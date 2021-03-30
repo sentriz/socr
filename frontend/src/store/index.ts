@@ -1,6 +1,6 @@
 import { reactive, readonly, InjectionKey } from 'vue'
-import { reqSearch, reqScreenshot, isError, PayloadSort, Block } from '../api'
-import type { Reponse, Screenshot, Search } from '../api'
+import { reqSearch, reqScreenshot, isError, Block } from '../api'
+import type { Reponse, Screenshot, Search, PayloadSearch } from '../api'
 
 const screenshotsLoadState = async (state: State, resp?: Screenshot[]) => {
   if (!resp) return
@@ -34,14 +34,8 @@ const createStore = () => {
 
   return {
     state: readonly(state),
-    async loadScreenshots(
-      limit: number,
-      offset: number,
-      sort: PayloadSort,
-      body: string,
-      directory?: string,
-    ): Reponse<Search> {
-      const resp = await reqSearch({ limit, offset, sort, body, directory })
+    async loadScreenshots(payload: PayloadSearch): Reponse<Search> {
+      const resp = await reqSearch(payload)
       if (isError(resp)) return resp
       screenshotsLoadState(state, resp.result.screenshots)
       return resp
