@@ -37,7 +37,7 @@ import LoadingSpinner from './LoadingSpinner.vue'
 import UploaderClipboard from './UploaderClipboard.vue'
 import UploaderFile from './UploaderFile.vue'
 
-import { ref, watch, computed, onMounted } from 'vue'
+import { watch, computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDebounce } from '@vueuse/core'
 import { isError, SortOrder, reqDirectories } from '../api'
@@ -52,15 +52,17 @@ const { loading, load } = useLoading(store.loadScreenshots)
 const sidebarHash = computed(() => (route.params.hash as string) || '')
 
 const reqQuery = ref('')
+const reqPageNum = ref(0)
 const reqQueryDebounced = useDebounce(reqQuery, 100)
 const reqPageSize = 25
-const reqPageNum = ref(0)
 
 type Sort = { label: string; icon: string; field: string; order: SortOrder }
 const reqSortSimilarity: Sort = { label: 'similarity', icon: 'fas fa-search', field: 'similarity', order: SortOrder.Desc }
 const reqSortTimeDesc: Sort = { label: 'time desc', icon: 'fas fa-chevron-down', field: 'timestamp', order: SortOrder.Desc }
 const reqSortTimeAsc: Sort = { label: 'time asc', icon: 'fas fa-chevron-up', field: 'timestamp', order: SortOrder.Asc }
-const reqSortOptions = ref([reqSortTimeDesc, reqSortTimeAsc])
+const reqSortOptionsDefault = [reqSortTimeDesc, reqSortTimeAsc]
+const reqSortOptionsSimilarity = [reqSortSimilarity, reqSortTimeDesc, reqSortTimeAsc]
+const reqSortOptions = ref(reqSortOptionsDefault)
 const reqSortOption = ref(reqSortTimeDesc)
 
 type Filter = { label: string; icon: string; directory?: string }
@@ -93,47 +95,45 @@ const fetchScreenshots = async () => {
   }
 }
 
-const clearParameters = () => {
+const resetParameters = () => {
   reqPageNum.value = 0
   respPages.value = []
   respHasMore.value = true
+}
 
-  // 🤔
+const resetFilters = () => {
   if (reqQuery.value && !reqSortOptions.value.includes(reqSortSimilarity)) {
-    reqSortOptions.value.splice(0, 0, reqSortSimilarity)
+    reqSortOptions.value = reqSortOptionsSimilarity
     reqSortOption.value = reqSortSimilarity
   }
   if (!reqQuery.value && reqSortOptions.value.includes(reqSortSimilarity)) {
-    reqSortOptions.value.splice(0, 1)
+    reqSortOptions.value = reqSortOptionsDefault
     reqSortOption.value = reqSortTimeDesc
   }
 }
 
-const clearFetchScreenshots = () => {
-  clearParameters()
-  fetchScreenshots()
-}
-
-// fetch screenshots on reaching the bottom of page
 const scroller = useInfiniteScroll(fetchScreenshots)
 
-// fetch screenshots on filter, sort, or query change
-watch(reqSortOption, clearFetchScreenshots)
-watch(reqFilterOption, clearFetchScreenshots)
-watch(reqQueryDebounced, clearFetchScreenshots, { immediate: true })
+watch([reqSortOption, reqFilterOption, reqQueryDebounced], () => {
+  resetParameters()
+  resetFilters()
+  fetchScreenshots()
+})
 
-// fetch directories for dropdown on mount
+onMounted(async () => {
+  await fetchScreenshots()
+})
+
 onMounted(async () => {
   const resp = await reqDirectories()
   if (isError(resp)) return
 
-  reqFilterOptions.value = [
-    ...reqFilterOptions.value,
-    ...resp.result.map((d) => ({
-      label: d.directory_alias,
-      icon: d.is_uploads ? 'fas fa-folder-plus' : 'fas fa-folder',
-      directory: d.directory_alias,
-    })),
-  ]
+  for (const dir of resp.result) {
+    reqFilterOptions.value.push({
+      label: dir.directory_alias,
+      icon: dir.is_uploads ? 'fas fa-folder-plus' : 'fas fa-folder',
+      directory: dir.directory_alias,
+    })
+  }
 })
 </script>

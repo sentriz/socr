@@ -4,7 +4,7 @@
   </TransitionFade>
   <TransitionSlide>
     <div v-if="screenshot" ref="content" class="fixed inset-y-0 right-0 z-20 w-full max-w-lg">
-      <div class="h-full p-6 space-y-6 overflow-y-auto bg-gray-50">
+      <div class="bg-gray-50 h-full p-6 space-y-6 overflow-y-auto">
         <SearchSidebarHeader :hash="screenshot.hash" />
         <ScreenshotBackground :hash="screenshot.hash" class="box p-3">
           <ScreenshotHighlight :hash="screenshot.hash" class="mx-auto" />
