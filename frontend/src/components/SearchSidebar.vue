@@ -1,14 +1,14 @@
 <template>
-  <TransitionFade>
+  <transition-fade>
     <div v-if="screenshot" class="fixed inset-0 z-10 transition-opacity bg-gray-700 bg-opacity-75" />
-  </TransitionFade>
-  <TransitionSlide>
+  </transition-fade>
+  <transition-slide>
     <div v-if="screenshot" ref="content" class="fixed inset-y-0 right-0 z-20 w-full max-w-lg">
       <div class="bg-gray-50 h-full p-6 space-y-6 overflow-y-auto">
-        <SearchSidebarHeader :hash="screenshot.hash" />
-        <ScreenshotBackground :hash="screenshot.hash" class="box p-3">
-          <ScreenshotHighlight :hash="screenshot.hash" class="mx-auto" />
-        </ScreenshotBackground>
+        <search-sidebar-header :hash="screenshot.hash" />
+        <screenshot-background :hash="screenshot.hash" class="box p-3">
+          <screenshot-highlight :hash="screenshot.hash" class="mx-auto" />
+        </screenshot-background>
         <div v-if="blocks.length" class="box padded font-mono text-sm bg-gray-200">
           <p v-for="(block, i) in blocks" :key="i" :class="{ 'bg-yellow-300': highlightedBlocksIndexes.has(i) }">
             {{ block.body }}
@@ -16,7 +16,7 @@
         </div>
       </div>
     </div>
-  </TransitionSlide>
+  </transition-slide>
 </template>
 
 <script setup lang="ts">

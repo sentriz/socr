@@ -6,22 +6,22 @@
     </router-link>
     <!-- right -->
     <div class="md:flex-row flex flex-col items-end justify-end gap-6">
-      <BadgeGroup label="created">
-        <Badge class="text-pink-900 bg-pink-200" :title="screenshot.timestamp">
+      <badge-group label="created">
+        <badge class="text-pink-900 bg-pink-200" :title="screenshot.timestamp">
           {{ timestampRelative }}
-        </Badge>
-      </BadgeGroup>
-      <BadgeGroup v-if="screenshot.directories?.length" label="directories">
-        <Badge v-for="(dir, i) in screenshot.directories" :key="i" class="text-blue-900 bg-blue-200">{{ dir }}</Badge>
-      </BadgeGroup>
-      <BadgeGroup>
-        <Badge class="text-indigo-900 bg-indigo-200" icon="fas fa-external-link-alt">
+        </badge>
+      </badge-group>
+      <badge-group v-if="screenshot.directories?.length" label="directories">
+        <badge v-for="(dir, i) in screenshot.directories" :key="i" class="text-blue-900 bg-blue-200">{{ dir }}</badge>
+      </badge-group>
+      <badge-group>
+        <badge class="text-indigo-900 bg-indigo-200" icon="fas fa-external-link-alt">
           <a :href="screenshotRaw" target="_blank">raw</a>
-        </Badge>
-        <Badge class="text-green-900 bg-green-200" icon="fas fa-external-link-alt">
+        </badge>
+        <badge class="text-green-900 bg-green-200" icon="fas fa-external-link-alt">
           <router-link :to="{ name: 'public', params: { hash: screenshot.hash } }">public</router-link>
-        </Badge>
-      </BadgeGroup>
+        </badge>
+      </badge-group>
     </div>
   </div>
 </template>

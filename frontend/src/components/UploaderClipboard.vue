@@ -1,5 +1,5 @@
 <template>
-  <LoadingModal :loading="loading" text="uploading from clipboard" />
+  <loading-modal :loading="loading" text="uploading from clipboard" />
 </template>
 
 <script setup lang="ts">

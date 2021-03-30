@@ -2,7 +2,7 @@
   <div class="flex items-center justify-center min-h-screen bg-gray-200">
     <div class="w-full max-w-xs m-8 space-y-4">
       <div class="p-8 space-y-6 bg-white rounded shadow-md">
-        <Logo class="w-9/12 mx-auto" />
+        <logo class="w-9/12 mx-auto" />
         <div>
           <label class="inp-label" for="username">username</label>
           <input class="inp w-full shadow" hash="username" type="text" placeholder="mark_e_smith" v-model="username" />

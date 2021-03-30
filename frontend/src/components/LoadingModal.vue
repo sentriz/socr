@@ -1,12 +1,12 @@
 <template>
-  <TransitionFade>
+  <transition-fade>
     <div
       v-if="loading"
       class="fixed inset-0 z-10 flex items-center justify-center transition-opacity bg-gray-700 bg-opacity-75"
     >
-      <LoadingSpinner :text="props.text" />
+      <loading-spinner :text="props.text" />
     </div>
-  </TransitionFade>
+  </transition-fade>
 </template>
 
 <script setup lang="ts">

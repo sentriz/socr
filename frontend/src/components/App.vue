@@ -1,6 +1,6 @@
 <template>
-  <RouterView />
-  <ToastOverlay />
+  <router-view />
+  <toast-overlay />
 </template>
 
 <script setup lang="ts">

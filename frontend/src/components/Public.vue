@@ -2,17 +2,17 @@
   <div class="bg-gray-50 min-h-screen">
     <div class="container flex flex-col gap-6 p-6 mx-auto">
       <!-- block image or loading -->
-      <ScreenshotBackground v-show="imageHave" :hash="screenshot?.hash || ''" class="box p-3">
+      <screenshot-background v-show="imageHave" :hash="screenshot?.hash || ''" class="box p-3">
         <img class="mx-auto" :src="image" @load="imageLoaded" />
-      </ScreenshotBackground>
-      <LoadingSpinner v-show="!imageHave" class="bg-gray-100" text="processing image" />
+      </screenshot-background>
+      <loading-spinner v-show="!imageHave" class="bg-gray-100" text="processing image" />
       <!-- block text or loading -->
       <div v-show="blocks.length" class="box padded font-mono text-sm bg-white">
         <p v-for="(block, i) in blocks" :key="i">
           {{ block.body }}
         </p>
       </div>
-      <LoadingSpinner v-show="!blocks.length" class="bg-gray-100" text="processing text" />
+      <loading-spinner v-show="!blocks.length" class="bg-gray-100" text="processing text" />
     </div>
   </div>
 </template>

@@ -1,15 +1,15 @@
 <template>
   <h2>importer</h2>
-  <SettingsImporter />
+  <settings-importer />
   <hr />
   <div class="flex flex-wrap gap-3">
     <div class="flex-auto">
       <h2>about</h2>
-      <SettingsAbout />
+      <settings-about />
     </div>
     <div class="flex-auto">
       <h2>screenshots</h2>
-      <SettingsDirectories />
+      <settings-directories />
     </div>
   </div>
 </template>

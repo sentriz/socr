@@ -6,7 +6,7 @@
       <span>upload or paste file</span>
     </div>
   </div>
-  <LoadingModal :loading="loading" text="uploading from file" />
+  <loading-modal :loading="loading" text="uploading from file" />
 </template>
 
 <script setup lang="ts">

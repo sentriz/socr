@@ -2,8 +2,8 @@
   <div class="space-y-6">
     <div class="md:flex-row flex flex-col gap-2">
       <input v-model="reqQuery" class="inp w-full" type="text" placeholder="enter screenshot text query" />
-      <SearchFilter label="sort by" :items="reqSortOptions" v-model:selected="reqSortOption" />
-      <SearchFilter label="directory" :items="reqFilterOptions" v-model:selected="reqFilterOption" />
+      <search-filter label="sort by" :items="reqSortOptions" v-model:selected="reqSortOption" />
+      <search-filter label="directory" :items="reqFilterOptions" v-model:selected="reqFilterOption" />
     </div>
     <div ref="scroller">
       <p v-if="!loading" class="text-right text-gray-500">fetched {{ respTook.toFixed(2) }}ms</p>
@@ -13,19 +13,19 @@
           <hr class="m-0" />
         </div>
         <div class="col-resp gap-x-4 space-y-4">
-          <ScreenshotBackground v-for="hash in page" :key="hash" :hash="hash" class="shadow-lg">
+          <screenshot-background v-for="hash in page" :key="hash" :hash="hash" class="shadow-lg">
             <router-link :to="{ name: 'search', params: { hash } }">
-              <ScreenshotHighlight :hash="hash" class="mx-auto" />
+              <screenshot-highlight :hash="hash" class="mx-auto" />
             </router-link>
-          </ScreenshotBackground>
+          </screenshot-background>
         </div>
       </div>
     </div>
-    <LoadingSpinner v-if="loading" />
+    <loading-spinner v-if="loading" />
   </div>
-  <SearchSidebar :hash="sidebarHash" />
-  <UploaderClipboard />
-  <UploaderFile />
+  <search-sidebar :hash="sidebarHash" />
+  <uploader-clipboard />
+  <uploader-file />
 </template>
 
 <script setup lang="ts">
