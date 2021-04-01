@@ -15,9 +15,9 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/jackc/pgx/v4"
 
-	"go.senan.xyz/socr/backend/db"
-	"go.senan.xyz/socr/backend/directories"
-	"go.senan.xyz/socr/backend/importer"
+	"go.senan.xyz/socr/db"
+	"go.senan.xyz/socr/directories"
+	"go.senan.xyz/socr/importer"
 )
 
 type Scanner struct {

@@ -12,8 +12,8 @@ import (
 	"github.com/cespare/xxhash"
 	"github.com/jackc/pgx/v4"
 
-	"go.senan.xyz/socr/backend/db"
-	"go.senan.xyz/socr/backend/imagery"
+	"go.senan.xyz/socr/db"
+	"go.senan.xyz/socr/imagery"
 )
 
 type Decoded struct {

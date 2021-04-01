@@ -13,14 +13,14 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 
-	"go.senan.xyz/socr/backend/db"
-	"go.senan.xyz/socr/backend/directories"
-	"go.senan.xyz/socr/backend/imagery"
-	"go.senan.xyz/socr/backend/importer"
-	"go.senan.xyz/socr/backend/scanner"
-	"go.senan.xyz/socr/backend/server/auth"
-	"go.senan.xyz/socr/backend/server/resp"
-	"go.senan.xyz/socr/frontend"
+	frontend "go.senan.xyz/socr-frontend"
+	"go.senan.xyz/socr/db"
+	"go.senan.xyz/socr/directories"
+	"go.senan.xyz/socr/imagery"
+	"go.senan.xyz/socr/importer"
+	"go.senan.xyz/socr/scanner"
+	"go.senan.xyz/socr/server/auth"
+	"go.senan.xyz/socr/server/resp"
 )
 
 type Server struct {
@@ -75,7 +75,9 @@ func (c *Server) Router() *mux.Router {
 func bytesHandler(contentType string, bytes []byte) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Add("content-type", contentType)
-		w.Write(bytes)
+		if _, err := w.Write(bytes); err != nil {
+			log.Printf("error writing bytes to client: %v", err)
+		}
 	})
 }
 
@@ -329,7 +331,7 @@ func (c *Server) ServeImportStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 // used for socket upgrader
-// not checking origin here because currenly to become a socket client,
+// not checking origin here because currently to become a socket client,
 // you must know the hash of the media, or else provide a token for sensitive info.
 // if there is a problem with this please let me know
 func CheckOrigin(r *http.Request) bool {
