@@ -3,7 +3,7 @@
     <div class="padded text-gray-600 bg-gray-200 rounded-l">{{ props.label }}</div>
     <div class="relative" v-if="props.items.length">
       <search-filter-item :label="props.selected.label" :icon="props.selected.icon" @click="toggle" />
-      <div v-if="isOpen" class="absolute z-10 py-2 mt-2 bg-white border border-gray-300 rounded">
+      <div v-if="isOpen" class="absolute z-10 py-2 ml-[-1px] mt-2 bg-white border border-gray-300 rounded">
         <search-filter-item
           class="hover:bg-gray-100"
           v-for="(item, idx) in props.items"
