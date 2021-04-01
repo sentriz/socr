@@ -6,29 +6,29 @@ const screenshotsLoadState = async (state: State, resp?: Screenshot[]) => {
   if (!resp) return
   for (const screenshot of resp || []) {
     if (screenshot.blocks) {
-      state.blocks[screenshot.hash] = screenshot.blocks
+      state.blocks.set(screenshot.hash, screenshot.blocks)
       delete screenshot.blocks
     }
     if (screenshot.highlighted_blocks) {
-      state.highlighted_blocks[screenshot.hash] = screenshot.highlighted_blocks
+      state.highlighted_blocks.set(screenshot.hash, screenshot.highlighted_blocks)
       delete screenshot.highlighted_blocks
     }
-    state.screenshots[screenshot.hash] = screenshot
+    state.screenshots.set(screenshot.hash, screenshot)
   }
 }
 
 export interface State {
-  screenshots: { [hash: string]: Screenshot }
-  blocks: { [hash: string]: Block[] }
-  highlighted_blocks: { [hash: string]: Block[] }
+  screenshots: Map<string, Screenshot>
+  blocks: Map<string, Block[]>
+  highlighted_blocks: Map<string, Block[]>
   toast: string
 }
 
 const createStore = () => {
   const state = reactive<State>({
-    screenshots: {},
-    blocks: {},
-    highlighted_blocks: {},
+    screenshots: new Map(),
+    blocks: new Map(),
+    highlighted_blocks: new Map(),
     toast: '',
   })
 
@@ -47,13 +47,13 @@ const createStore = () => {
       return resp
     },
     getScreenshotByHash(hash: string) {
-      return state.screenshots[hash]
+      return state.screenshots.get(hash)
     },
     getBlocksByHash(hash: string) {
-      return state.blocks[hash] || []
+      return state.blocks.get(hash) || []
     },
     getHighlightedBlocksByHash(hash: string) {
-      return state.highlighted_blocks[hash] || []
+      return state.highlighted_blocks.get(hash) || []
     },
     setToast(toast: string) {
       state.toast = toast
