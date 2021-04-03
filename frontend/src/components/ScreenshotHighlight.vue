@@ -2,7 +2,7 @@
   <div class="w-fit relative">
     <img :src="url" />
     <svg
-      v-if="blocks.length"
+      v-if="screenshot && blocks.length"
       :viewBox="`0 0 ${screenshot.dim_width} ${screenshot.dim_height}`"
       class="absolute inset-0 text-yellow-500 text-opacity-50 fill-current"
     >
@@ -31,5 +31,5 @@ const store = useStore()
 
 const screenshot = computed(() => store.getScreenshotByHash(props.hash))
 const blocks = computed(() => store.getHighlightedBlocksByHash(props.hash))
-const url = computed(() => `${urlScreenshot}/${screenshot.value.hash}/raw`)
+const url = computed(() => `${urlScreenshot}/${screenshot.value?.hash}/raw`)
 </script>

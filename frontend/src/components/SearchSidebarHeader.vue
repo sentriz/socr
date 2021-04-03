@@ -5,7 +5,7 @@
       <i class="hover:text-gray-600 fas fa-times-circle text-gray-800"></i>
     </router-link>
     <!-- right -->
-    <div class="md:flex-row flex flex-col items-end justify-end gap-6">
+    <div v-if="screenshot" class="md:flex-row flex flex-col items-end justify-end gap-6">
       <badge-group label="created">
         <badge class="text-pink-900 bg-pink-200" :title="screenshot.timestamp">
           {{ timestampRelative }}
