@@ -23,7 +23,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 FROM debian:buster-slim
 RUN apt-get update -qq
 ENV TESSDATA_PREFIX=/usr/share/tesseract-ocr/4.00/tessdata/
-RUN apt-get install -y -qq tesseract-ocr-eng wait-for-it
+RUN apt-get install -y -qq tesseract-ocr-eng
 
 COPY --from=builder-backend /backend/socr /
 ENV SOCR_LISTEN_ADDR :80
