@@ -4,12 +4,3 @@ RUN apt-get update -qq
 RUN apt-get install -y -qq libtesseract-dev libleptonica-dev
 ENV TESSDATA_PREFIX=/usr/share/tesseract-ocr/4.00/tessdata/
 RUN apt-get install -y -qq tesseract-ocr-eng
-
-WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
-
-ENV SOCR_LISTEN_ADDR :80
-ENV SOCR_DB_DSN postgres://socr:socr@db?sslmode=disable
-
-CMD ["go", "run", "backend/cmd/socr/main.go"]
