@@ -2,9 +2,8 @@ import { reactive, readonly, InjectionKey } from 'vue'
 import { reqSearch, reqScreenshot, isError, Block } from '../api'
 import type { Reponse, Screenshot, Search, PayloadSearch } from '../api'
 
-const screenshotsLoadState = async (state: State, resp?: Screenshot[]) => {
-  if (!resp) return
-  for (const screenshot of resp || []) {
+const screenshotsLoadState = async (state: State, resp: Screenshot[]) => {
+  for (const screenshot of resp) {
     if (screenshot.blocks) {
       state.blocks.set(screenshot.hash, screenshot.blocks)
       delete screenshot.blocks
@@ -37,12 +36,14 @@ const createStore = () => {
     async loadScreenshots(payload: PayloadSearch): Reponse<Search> {
       const resp = await reqSearch(payload)
       if (isError(resp)) return resp
+      if (!resp.result.screenshots?.length) return resp
       screenshotsLoadState(state, resp.result.screenshots)
       return resp
     },
     async loadScreenshot(hash: string): Reponse<Screenshot> {
       const resp = await reqScreenshot(hash)
       if (isError(resp)) return resp
+      if (!resp.result) return resp
       screenshotsLoadState(state, [resp.result])
       return resp
     },
