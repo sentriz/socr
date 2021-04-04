@@ -84,7 +84,8 @@ func (s *Scanner) ScanDirectories() error {
 			s.Updates <- struct{}{}
 			continue
 		}
-		if hash == "" {
+		// skip seen items but make sure we give an updated every 300
+		if hash == "" && idx%300 != 0 {
 			continue
 		}
 		s.Status.LastHash = hash
