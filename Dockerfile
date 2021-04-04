@@ -15,9 +15,9 @@ RUN mkdir /frontend
 COPY --from=builder-frontend /frontend/* /frontend
 WORKDIR /backend
 COPY backend/* .
-RUN	--mount=type=cache,target=/go/pkg/mod \
-	--mount=type=cache,target=/root/.cache/go-build \
-	GOOS=linux go build -o socr cmd/socr/main.go
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    GOOS=linux go build -o socr cmd/socr/socr.go
 
 
 FROM debian:buster-slim
