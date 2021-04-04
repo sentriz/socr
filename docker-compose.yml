@@ -1,0 +1,47 @@
+version: "3"
+networks:
+  internal: null
+  reverse_proxy:
+    external: true
+services:
+  socr_db:
+    environment:
+      - POSTGRES_USER=socr
+      - POSTGRES_PASSWORD=socr
+      - TZ
+    expose:
+      - 5432
+    image: postgres:13.2
+    networks:
+      - internal
+    volumes:
+      - ./db_data:/var/lib/postgresql/data
+  socr:
+    image: sentriz/socr:latest
+    depends_on:
+      - socr_db
+    environment:
+      - TZ
+      - SOCR_LISTEN_ADDR=:80
+      - SOCR_DB_DSN=postgres://socr:socr@socr_db:5432?sslmode=disable
+      - SOCR_HMAC_SECRET=57c7e9ce3bdf663cdf15dc9ca4b7d50d  # change me
+      - SOCR_API_KEY=bcbdf7753d68d9a1fbb68e25591965fb      # change me
+      - SOCR_LOGIN_USERNAME=username                       # change me
+      - SOCR_LOGIN_PASSWORD=password                       # change me
+      - SOCR_DIR_EXAMPLE_A=/screenshots/example_a          # change or add more of me
+      - SOCR_DIR_EXAMPLE_B=/screenshots/example_b          # change or add more of me
+      - SOCR_DIR_UPLOADS=/screenshots/uploads
+    expose:
+      - 80
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.socr.entrypoints: web
+      traefik.http.routers.socr.rule: Host(`socr.example.com`)
+      traefik.http.services.socr.loadbalancer.server.port: 80
+    networks:
+      - internal
+      - reverse_proxy
+    volumes:
+      - ./screenshots/example_a:/screenshots/example_a:ro
+      - ./screenshots/example_b:/screenshots/example_b:ro
+      - ./screenshots/uploads:/screenshots/uploads
