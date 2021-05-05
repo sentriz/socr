@@ -1,6 +1,6 @@
 module.exports = {
   mode: 'jit',
-  purge: ['index.html', './src/**/*.vue'],
+  purge: ['index.html', './frontend/**/*.vue'],
   theme: {
     screens: {
       sm: '640px',

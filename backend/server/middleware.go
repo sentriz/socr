@@ -7,8 +7,8 @@ import (
 
 	"github.com/gorilla/handlers"
 
-	"go.senan.xyz/socr/server/auth"
-	"go.senan.xyz/socr/server/resp"
+	"go.senan.xyz/socr/backend/server/auth"
+	"go.senan.xyz/socr/backend/server/resp"
 )
 
 func (c *Server) WithCORS() func(http.Handler) http.Handler {

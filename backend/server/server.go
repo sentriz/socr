@@ -13,14 +13,14 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 
-	frontend "go.senan.xyz/socr-frontend"
-	"go.senan.xyz/socr/db"
-	"go.senan.xyz/socr/directories"
-	"go.senan.xyz/socr/imagery"
-	"go.senan.xyz/socr/importer"
-	"go.senan.xyz/socr/scanner"
-	"go.senan.xyz/socr/server/auth"
-	"go.senan.xyz/socr/server/resp"
+	"go.senan.xyz/socr"
+	"go.senan.xyz/socr/backend/db"
+	"go.senan.xyz/socr/backend/directories"
+	"go.senan.xyz/socr/backend/imagery"
+	"go.senan.xyz/socr/backend/importer"
+	"go.senan.xyz/socr/backend/scanner"
+	"go.senan.xyz/socr/backend/server/auth"
+	"go.senan.xyz/socr/backend/server/resp"
 )
 
 type Server struct {
@@ -65,9 +65,9 @@ func (c *Server) Router() *mux.Router {
 	rAPIKey.HandleFunc("/api/upload", c.ServeUpload)
 
 	// frontend fallback route
-	r.Handle("/assets/{filename}", http.FileServer(http.FS(frontend.Assets)))
-	r.Handle("/favicon.ico", bytesHandler("image/x-icon", frontend.Favicon))
-	r.NotFoundHandler = bytesHandler("text/html", frontend.Index)
+	r.Handle("/assets/{filename}", http.FileServer(http.FS(socr.Assets)))
+	r.Handle("/favicon.ico", bytesHandler("image/x-icon", socr.Favicon))
+	r.NotFoundHandler = bytesHandler("text/html", socr.Index)
 
 	return r
 }

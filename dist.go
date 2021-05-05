@@ -1,4 +1,4 @@
-package frontend
+package socr
 
 import (
 	"embed"

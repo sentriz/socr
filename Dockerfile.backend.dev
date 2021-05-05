@@ -1,5 +1,5 @@
 FROM golang:1.16
-WORKDIR /backend
+WORKDIR /src
 
 RUN apt-get update -qq
 RUN apt-get install -y -qq libtesseract-dev libleptonica-dev

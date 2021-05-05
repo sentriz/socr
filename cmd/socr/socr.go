@@ -11,12 +11,12 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"go.senan.xyz/socr/db"
-	"go.senan.xyz/socr/directories"
-	"go.senan.xyz/socr/imagery"
-	"go.senan.xyz/socr/importer"
-	"go.senan.xyz/socr/scanner"
-	"go.senan.xyz/socr/server"
+	"go.senan.xyz/socr/backend/db"
+	"go.senan.xyz/socr/backend/directories"
+	"go.senan.xyz/socr/backend/imagery"
+	"go.senan.xyz/socr/backend/importer"
+	"go.senan.xyz/socr/backend/scanner"
+	"go.senan.xyz/socr/backend/server"
 )
 
 const uploadsAlias = "uploads"
