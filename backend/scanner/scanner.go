@@ -184,7 +184,7 @@ func (s *Scanner) scanDirectoryItem(dirAlias, dir, fileName string, modTime time
 		return "", fmt.Errorf("decode screenshot: %w", err)
 	}
 
-	timestamp := guessFileCreated(fileName, modTime)
+	timestamp := GuessFileCreated(fileName, modTime)
 	if err := s.Importer.ImportScreenshot(decoded, timestamp, dirAlias, fileName); err != nil {
 		return "", fmt.Errorf("importing screenshot: %w", err)
 	}
@@ -194,7 +194,7 @@ func (s *Scanner) scanDirectoryItem(dirAlias, dir, fileName string, modTime time
 
 var fileStampExpr = regexp.MustCompile(`(?:\D|^)(?P<ymd>(?:19|20)\d{6})\D?(?P<hms>\d{6})(?:\D|$)`)
 
-func guessFileCreated(fileName string, modTime time.Time) time.Time {
+func GuessFileCreated(fileName string, modTime time.Time) time.Time {
 	fileName = strings.ToLower(fileName)
 	fileName = strings.TrimPrefix(fileName, "img_")
 	fileName = strings.TrimSuffix(fileName, filepath.Ext(fileName))
