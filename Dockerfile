@@ -1,6 +1,6 @@
 FROM node:16-buster-slim AS builder-frontend
 WORKDIR /frontend
-COPY frontend/* ./
+COPY frontend/ ./
 RUN npm install
 RUN PRODUCTION=true npm run-script build
 
@@ -10,9 +10,9 @@ RUN apt-get update -qq
 RUN apt-get install -y -qq libtesseract-dev libleptonica-dev
 
 RUN mkdir /frontend
-COPY --from=builder-frontend /frontend/* /frontend/
+COPY --from=builder-frontend /frontend/ /frontend/
 WORKDIR /backend
-COPY backend/* ./
+COPY backend/ ./
 RUN GOOS=linux go build -o socr cmd/socr/socr.go
 
 
