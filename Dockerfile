@@ -1,4 +1,4 @@
-FROM node:13-buster-slim AS builder-frontend
+FROM node:16-buster-slim AS builder-frontend
 WORKDIR /frontend
 COPY frontend/* ./
 RUN npm install

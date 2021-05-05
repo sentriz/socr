@@ -1,0 +1,3 @@
+FROM node:16-buster-slim
+WORKDIR /frontend
+CMD [ "npm", "run-script", "dev" ]
