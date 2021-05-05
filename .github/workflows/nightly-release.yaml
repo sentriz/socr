@@ -21,12 +21,16 @@ jobs:
       - name: Lint
         uses: golangci/golangci-lint-action@v2
         with:
-          version: v1.33
+          version: latest
+          working-directory: ./backend
+          skip-go-installation: true
       - name: Test
         run: go test ./...
+        working-directory: ./backend
   build-release:
     name: Build and release Docker image
     runs-on: ubuntu-latest
+    needs: [test]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
