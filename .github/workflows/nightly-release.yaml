@@ -8,18 +8,17 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Go
-        uses: actions/setup-go@v1
-        with:
-          go-version: 1.16.x
-      - name: Checkout code into the Go module directory
-        uses: actions/checkout@v1
+      - name: Install dependencies
+        run: |
+          sudo apt update -qq
+          sudo apt install -y -qq libtesseract-dev libleptonica-dev
+      - name: Checkout
+        uses: actions/checkout@v2
       - name: Lint
         uses: golangci/golangci-lint-action@v2
         with:
           version: latest
           working-directory: ./backend
-          skip-go-installation: true
       - name: Test
         run: go test ./...
         working-directory: ./backend
