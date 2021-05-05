@@ -11,6 +11,7 @@ var Index []byte
 //go:embed dist/favicon.ico
 var Favicon []byte
 
+//nolint:typecheck
 //go:embed dist/assets
 var assets embed.FS
 var Assets, _ = fs.Sub(assets, "dist")

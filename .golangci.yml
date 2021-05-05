@@ -40,7 +40,6 @@ linters:
     - forcetypeassert
     - funlen
     - gocognit
-    - godox
     - gofmt
     - goheader
     - goimports
@@ -51,7 +50,6 @@ linters:
     - nestif
     - nilerr
     - noctx
-    - paralleltest
     - prealloc
     - revive
     - sqlclosecheck
@@ -66,12 +64,12 @@ linters:
 # TODO: fix these
 issues:
   exclude-rules:
-    - text: "should have comment"
+    - text: 'should have comment'
       linters:
         - golint
-    - text: "comment on exported var"
+    - text: 'comment on exported var'
       linters:
         - golint
-    - text: "at least one file in a package should have a package comment"
+    - text: 'at least one file in a package should have a package comment'
       linters:
         - stylecheck
