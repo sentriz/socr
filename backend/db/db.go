@@ -144,7 +144,7 @@ func (db *DB) SearchScreenshots(options SearchScreenshotsOptions) ([]*Screenshot
 			Column(sq.Alias(colAggBlocks, "highlighted_blocks")).
 			Column(sq.Alias(colSimilarity, "similarity")).
 			LeftJoin("blocks on blocks.screenshot_id = screenshots.id").
-			Where("blocks.body % ?", options.Body).
+			Where("blocks.body %> ?", options.Body).
 			GroupBy("screenshots.id")
 	}
 
