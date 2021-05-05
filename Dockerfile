@@ -11,6 +11,7 @@ RUN apt-get install -y -qq libtesseract-dev libleptonica-dev
 
 WORKDIR /src
 COPY . .
+COPY --from=builder-frontend /src/dist dist/
 RUN GOOS=linux go build -o socr cmd/socr/socr.go
 
 

@@ -1,3 +1,4 @@
+//nolint:gochecknoglobals
 package socr
 
 import (
@@ -5,13 +6,6 @@ import (
 	"io/fs"
 )
 
-//go:embed dist/index.html
-var Index []byte
-
-//go:embed dist/favicon.ico
-var Favicon []byte
-
-//nolint:typecheck
-//go:embed dist/assets
-var assets embed.FS
-var Assets, _ = fs.Sub(assets, "dist")
+//go:embed dist
+var dist embed.FS
+var Dist, _ = fs.Sub(dist, "dist")
