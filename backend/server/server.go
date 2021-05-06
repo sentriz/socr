@@ -168,7 +168,7 @@ func (c *Server) ServeStartImport(w http.ResponseWriter, r *http.Request) {
 
 func (c *Server) ServeAbout(w http.ResponseWriter, r *http.Request) {
 	settings := map[string]interface{}{
-		"version":        "development",
+		"version":        socr.Version,
 		"api key":        c.APIKey,
 		"socket clients": len(c.SocketClientsScanner),
 	}
