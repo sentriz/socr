@@ -2,5 +2,5 @@ package scanner_test
 
 import "testing"
 
-// TODO: this
+// TODO: implement this later
 func TestGuessFileCreated(t *testing.T) {}
