@@ -16,6 +16,7 @@ RUN GOOS=linux go build -o socr cmd/socr/socr.go
 
 
 FROM debian:buster-slim
+LABEL org.opencontainers.image.source https://github.com/sentriz/socr
 RUN apt-get update -qq
 ENV TESSDATA_PREFIX=/usr/share/tesseract-ocr/4.00/tessdata/
 RUN apt-get install -y -qq tesseract-ocr-eng
