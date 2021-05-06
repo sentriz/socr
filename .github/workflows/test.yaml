@@ -1,0 +1,24 @@
+name: Lint and test
+on:
+  push:
+    branches:
+      - master
+      - develop
+  pull_request:
+jobs:
+  test:
+    name: Lint and test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt update -qq
+          sudo apt install -y -qq libtesseract-dev libleptonica-dev
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: latest
+      - name: Test
+        run: go test ./...

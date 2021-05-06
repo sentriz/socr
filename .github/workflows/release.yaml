@@ -1,28 +1,11 @@
-name: release
+name: Release
 on:
   push:
     branches:
       - master
 jobs:
-  test:
-    name: Lint and test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Install dependencies
-        run: |
-          sudo apt update -qq
-          sudo apt install -y -qq libtesseract-dev libleptonica-dev
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Lint
-        uses: golangci/golangci-lint-action@v2
-        with:
-          version: latest
-      - name: Test
-        run: go test ./...
   release-please:
     name: Run Release Please
-    needs: [test]
     runs-on: ubuntu-latest
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
@@ -34,7 +17,7 @@ jobs:
         uses: google-github-actions/release-please-action@v2
         id: release
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PR_PAT }}
           release-type: simple
           changelog-path: CHANGELOG.md
           package-name: socr
