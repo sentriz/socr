@@ -10,20 +10,20 @@ jobs:
     name: Lint and test
     runs-on: ubuntu-latest
     steps:
-      - name: Install dependencies
-        run: |
-          sudo apt update -qq
-          sudo apt install -y -qq libtesseract-dev libleptonica-dev
+      - name: Checkout
+        uses: actions/checkout@v2
       - name: Setup Go
         uses: actions/setup-go@v2
         with:
           go-version: 1.16.x
-      - name: Checkout
-        uses: actions/checkout@v2
       - name: Lint
         uses: golangci/golangci-lint-action@v2
         with:
           version: latest
           skip-go-installation: true
+      - name: Install dependencies
+        run: |
+          sudo apt update -qq
+          sudo apt install -y -qq libtesseract-dev libleptonica-dev
       - name: Test
         run: go test ./...
