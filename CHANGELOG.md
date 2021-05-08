@@ -1,5 +1,12 @@
 # Changelog
 
+### [0.1.3](https://www.github.com/sentriz/socr/compare/v0.1.2...v0.1.3) (2021-05-08)
+
+
+### Bug Fixes
+
+* consistent release yaml ([0a8a2e9](https://www.github.com/sentriz/socr/commit/0a8a2e9e270589e3557c073c6a7e50c7854e9050))
+
 ### [0.1.2](https://www.github.com/sentriz/socr/compare/v0.1.1...v0.1.2) (2021-05-08)
 
 
