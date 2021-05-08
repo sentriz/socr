@@ -1,5 +1,12 @@
 # Changelog
 
+### [0.1.2](https://www.github.com/sentriz/socr/compare/v0.1.1...v0.1.2) (2021-05-08)
+
+
+### Bug Fixes
+
+* show version on startup ([9eccd70](https://www.github.com/sentriz/socr/commit/9eccd70554aef1f3a1e5bacffdc191651d16ae5e))
+
 ### [0.1.1](https://www.github.com/sentriz/socr/compare/v0.1.0...v0.1.1) (2021-05-08)
 
 
