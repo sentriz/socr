@@ -1,5 +1,12 @@
 # Changelog
 
+### [0.1.1](https://www.github.com/sentriz/socr/compare/v0.1.0...v0.1.1) (2021-05-08)
+
+
+### Bug Fixes
+
+* **ci:** don't build arm v6 ([23835bc](https://www.github.com/sentriz/socr/commit/23835bcc9ddbedec93d63c3812d07d0142d8b903))
+
 ## 0.1.0 (2021-05-08)
 
 
