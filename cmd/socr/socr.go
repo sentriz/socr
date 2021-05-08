@@ -11,6 +11,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
+	"go.senan.xyz/socr"
 	"go.senan.xyz/socr/backend/db"
 	"go.senan.xyz/socr/backend/directories"
 	"go.senan.xyz/socr/backend/imagery"
@@ -89,6 +90,7 @@ func main() {
 		Handler: router,
 	}
 
+	log.Printf("starting socr v%s", socr.Version)
 	log.Printf("listening on %q", confListenAddr)
 	log.Printf("starting server: %v", server.ListenAndServe())
 }
