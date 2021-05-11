@@ -14,7 +14,6 @@ linters:
     - goconst
     - gocritic
     - gocyclo
-    - golint
     - goprintffuncname
     - gosec
     - gosimple
@@ -66,10 +65,10 @@ issues:
   exclude-rules:
     - text: 'should have comment'
       linters:
-        - golint
-    - text: 'comment on exported var'
+        - revive
+    - text: 'comment on exported'
       linters:
-        - golint
+        - revive
     - text: 'at least one file in a package should have a package comment'
       linters:
         - stylecheck
