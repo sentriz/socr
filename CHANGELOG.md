@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.2.0](https://www.github.com/sentriz/socr/compare/v0.1.3...v0.2.0) (2021-05-12)
+
+
+### Features
+
+* **ci:** pin golangci-lint version ([09be034](https://www.github.com/sentriz/socr/commit/09be03430647724ce15031ea371d4f031d804dbb))
+* **ci:** test before release please, and only run extra tests on develop and pull request ([212587c](https://www.github.com/sentriz/socr/commit/212587c5348812d8f4413f4db12fcbc453c50712))
+* **ci:** use GITHUB_TOKEN for release please ([57cbdd3](https://www.github.com/sentriz/socr/commit/57cbdd300c3b0f103a5481a0a337942bd65d8e04))
+* **deps:** bump deps ([7614aeb](https://www.github.com/sentriz/socr/commit/7614aebee7e669000b008a1638f286a5f0fd8606))
+
+
+### Bug Fixes
+
+* **ci:** trim short hash ([d3ade36](https://www.github.com/sentriz/socr/commit/d3ade36a62c34e00ad0f1ac610f912797eb8d7ff))
+
 ### [0.1.3](https://www.github.com/sentriz/socr/compare/v0.1.2...v0.1.3) (2021-05-08)
 
 
