@@ -1,6 +1,9 @@
 package db
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 type Block struct {
 	ID           int    `db:"id"            json:"id"`
@@ -28,9 +31,11 @@ type Screenshot struct {
 }
 
 type DirInfo struct {
-	ScreenshotID   int    `db:"screenshot_id"   json:"screenshot_id"`
-	Filename       string `db:"filename"        json:"filename"`
-	DirectoryAlias string `db:"directory_alias" json:"directory_alias"`
+	ID             int           `db:"id"              json:"id"`
+	ScreenshotID   sql.NullInt64 `sql:"screenshot_id"   json:"screenshot_id,omitempty"`
+	VideoID        sql.NullInt64 `sql:"video_id"        json:"video_id,omitempty"`
+	Filename       string        `db:"filename"        json:"filename"`
+	DirectoryAlias string        `db:"directory_alias" json:"directory_alias"`
 }
 
 type DirectoryCount struct {

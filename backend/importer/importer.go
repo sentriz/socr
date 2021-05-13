@@ -2,6 +2,7 @@ package importer
 
 import (
 	"bytes"
+	"database/sql"
 	"errors"
 	"fmt"
 	"image"
@@ -144,7 +145,8 @@ func (i *Importer) importScreenshotBlocks(id int, image image.Image) error {
 
 func (i *Importer) importScreenshotDirInfo(id int, dirAlias string, fileName string) error {
 	_, err := i.DB.CreateDirInfo(&db.DirInfo{
-		ScreenshotID:   id,
+		ID:             id,
+		ScreenshotID:   sql.NullInt64{Int64: int64(id), Valid: true},
 		Filename:       fileName,
 		DirectoryAlias: dirAlias,
 	})

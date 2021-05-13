@@ -13,7 +13,7 @@ import (
 )
 
 //nolint:gochecknoglobals
-//go:embed schema.pgsql
+//go:embed schema.sql
 var schema string
 
 type DB struct {
