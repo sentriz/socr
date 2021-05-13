@@ -1,8 +1,14 @@
 create extension if not exists pg_trgm;
 
-create table if not exists screenshots (
+create type media_type as enum (
+    'screenshot',
+    'video'
+);
+
+create table if not exists medias (
     id serial primary key,
-    hash text,
+    type media_type not null,
+    hash text not null,
     timestamp timestamptz not null,
     dim_width int not null,
     dim_height int not null,
@@ -10,16 +16,18 @@ create table if not exists screenshots (
     blurhash text not null
 );
 
+create unique index if not exists idx_medias_hash on medias (hash);
+
 create table if not exists dir_infos (
-    screenshot_id int,
-    filename text,
-    directory_alias text,
-    primary key (screenshot_id, filename, directory_alias)
+    media_id int references medias (id),
+    filename text not null,
+    directory_alias text not null,
+    primary key (media_id, filename, directory_alias)
 );
 
 create table if not exists blocks (
     id serial primary key,
-    screenshot_id integer not null references screenshots (id),
+    media_id integer not null references medias (id),
     index int not null,
     min_x int not null,
     min_y int not null,

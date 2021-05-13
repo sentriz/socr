@@ -16,52 +16,19 @@ import (
 	"go.senan.xyz/socr/backend/imagery"
 )
 
-type Decoded struct {
-	Hash   string
-	Image  image.Image
-	Data   []byte
-	Format imagery.Format
-}
-
-// DecodeImage takes a raw byte slice of an image (png/jpg/etc) decodes it using an appropriate format
-// and encodes it again. Encoding and decoding makes sure the hash will be the same for the same
-// image given different sources. clipboard/filesystem/etc
-func DecodeImage(raw []byte) (*Decoded, error) {
-	mime := http.DetectContentType(raw)
-	format, ok := imagery.FormatFromMIME(mime)
-	if !ok {
-		return nil, fmt.Errorf("unknown image mime %s", mime)
-	}
-	image, err := format.Decode(bytes.NewReader(raw))
-	if err != nil {
-		return nil, fmt.Errorf("decoding image %w", err)
-	}
-	dataBuff := &bytes.Buffer{}
-	if err := format.Encode(dataBuff, image); err != nil {
-		return nil, fmt.Errorf("encoding image: %w", err)
-	}
-	data := dataBuff.Bytes()
-	hash := Hash(data)
-	return &Decoded{
-		Hash:   hash,
-		Image:  image,
-		Data:   data,
-		Format: format,
-	}, nil
-}
-
 type Importer struct {
-	DB      *db.DB
-	Updates chan string
+	DB             *db.DB
+	Updates        chan string
+	DefaultEncoder imagery.EncodeFunc
 }
 
-func (i *Importer) ImportScreenshot(decoded *Decoded, timestamp time.Time, dirAlias, fileName string) error {
-	// insert screenshot and dir info, alert clients with update
-	id, isOld, err := i.importScreenshot(decoded.Hash, decoded.Image, timestamp)
+func (i *Importer) ImportMedia(decoded *Decoded, timestamp time.Time, dirAlias, fileName string) error {
+	// insert media and dir info, alert clients with update
+	id, isOld, err := i.importMedia(decoded.Filetype.Media, decoded.Hash, decoded.Image, timestamp)
 	if err != nil {
-		return fmt.Errorf("insert screenshot: %w", err)
+		return fmt.Errorf("insert media: %w", err)
 	}
-	if err := i.importScreenshotDirInfo(id, dirAlias, fileName); err != nil {
+	if err := i.importDirInfo(id, dirAlias, fileName); err != nil {
 		return fmt.Errorf("insert dir info: %w", err)
 	}
 	i.Updates <- decoded.Hash
@@ -71,7 +38,7 @@ func (i *Importer) ImportScreenshot(decoded *Decoded, timestamp time.Time, dirAl
 	}
 
 	// insert blocks, alert clients with update
-	if err := i.importScreenshotBlocks(id, decoded.Image); err != nil {
+	if err := i.importBlocks(id, decoded.Image); err != nil {
 		return fmt.Errorf("insert blocks: %w", err)
 	}
 	i.Updates <- decoded.Hash
@@ -79,10 +46,10 @@ func (i *Importer) ImportScreenshot(decoded *Decoded, timestamp time.Time, dirAl
 	return nil
 }
 
-func (i *Importer) importScreenshot(hash string, image image.Image, timestamp time.Time) (int, bool, error) {
-	old, err := i.DB.GetScreenshotByHash(hash)
+func (i *Importer) importMedia(typ imagery.Media, hash string, image image.Image, timestamp time.Time) (int, bool, error) {
+	old, err := i.DB.GetMediaByHash(hash)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-		return 0, false, fmt.Errorf("getting screenshot by hash: %w", err)
+		return 0, false, fmt.Errorf("getting media by hash: %w", err)
 	}
 	if err == nil {
 		return old.ID, true, nil
@@ -95,9 +62,15 @@ func (i *Importer) importScreenshot(hash string, image image.Image, timestamp ti
 		return 0, false, fmt.Errorf("calculate blurhash: %w", err)
 	}
 
+	mediaType := db.MediaTypeScreenshot
+	if typ == imagery.MediaVideo {
+		mediaType = db.MediaTypeVideo
+	}
+
 	propSize := image.Bounds().Size()
-	new, err := i.DB.CreateScreenshot(&db.Screenshot{
+	new, err := i.DB.CreateMedia(&db.Media{
 		Hash:           hash,
+		Type:           mediaType,
 		Timestamp:      timestamp,
 		DimWidth:       propSize.X,
 		DimHeight:      propSize.Y,
@@ -105,17 +78,17 @@ func (i *Importer) importScreenshot(hash string, image image.Image, timestamp ti
 		Blurhash:       propBlurhash,
 	})
 	if err != nil {
-		return 0, false, fmt.Errorf("inserting screenshot: %w", err)
+		return 0, false, fmt.Errorf("inserting media: %w", err)
 	}
 
 	return new.ID, false, nil
 }
 
-func (i *Importer) importScreenshotBlocks(id int, image image.Image) error {
+func (i *Importer) importBlocks(id int, image image.Image) error {
 	imageGrey := imagery.GreyScale(image)
 	imageBig := imagery.Resize(imageGrey, imagery.ScaleFactor)
 	imageEncoded := &bytes.Buffer{}
-	if err := imagery.FormatPNG.Encode(imageEncoded, imageBig); err != nil {
+	if err := i.DefaultEncoder(imageEncoded, imageBig); err != nil {
 		return fmt.Errorf("encode scaled and greyed image: %w", err)
 	}
 	rawBlocks, err := imagery.ExtractText(imageEncoded.Bytes())
@@ -127,13 +100,13 @@ func (i *Importer) importScreenshotBlocks(id int, image image.Image) error {
 	for idx, rawBlock := range rawBlocks {
 		rect := imagery.ScaleDownRect(rawBlock.Box)
 		blocks = append(blocks, &db.Block{
-			ScreenshotID: id,
-			Index:        idx,
-			MinX:         rect.Min.X,
-			MinY:         rect.Min.Y,
-			MaxX:         rect.Max.X,
-			MaxY:         rect.Max.Y,
-			Body:         rawBlock.Word,
+			MediaID: id,
+			Index:   idx,
+			MinX:    rect.Min.X,
+			MinY:    rect.Min.Y,
+			MaxX:    rect.Max.X,
+			MaxY:    rect.Max.Y,
+			Body:    rawBlock.Word,
 		})
 	}
 	if err := i.DB.CreateBlocks(blocks); err != nil {
@@ -142,13 +115,13 @@ func (i *Importer) importScreenshotBlocks(id int, image image.Image) error {
 	return nil
 }
 
-func (i *Importer) importScreenshotDirInfo(id int, dirAlias string, fileName string) error {
-	_, err := i.DB.CreateDirInfo(&db.DirInfo{
-		ScreenshotID:   id,
+func (i *Importer) importDirInfo(id int, dirAlias string, fileName string) error {
+	dirInfo := &db.DirInfo{
 		Filename:       fileName,
 		DirectoryAlias: dirAlias,
-	})
-	if err != nil {
+		MediaID:        id,
+	}
+	if _, err := i.DB.CreateDirInfo(dirInfo); err != nil {
 		return fmt.Errorf("insert info dir infos: %w", err)
 	}
 	return nil
@@ -158,4 +131,58 @@ func Hash(bytes []byte) string {
 	sum := xxhash.Sum64(bytes)
 	format := strconv.FormatUint(sum, 16)
 	return format
+}
+
+type Decoded struct {
+	Hash     string
+	Data     []byte
+	Filetype *imagery.Filetype
+	Image    image.Image
+}
+
+func DecodeMedia(raw []byte) (*Decoded, error) {
+	mime := http.DetectContentType(raw)
+	filetype, format := imagery.ReadMIME(mime)
+	if filetype == nil {
+		return nil, fmt.Errorf("unknown image or video mime %q", mime)
+	}
+
+	var hash string
+	var image image.Image
+	switch {
+	// in the case of an image given a raw encoded image, we need to decode and encode it
+	// again before calcuation the hash. this ensures the same image given from different
+	// sources (eg. uploaded or scanned) has the same hash
+	case filetype.IsImage():
+		decodedImage, err := format.Decode(bytes.NewReader(raw))
+		if err != nil {
+			return nil, fmt.Errorf("decoding image: %w", err)
+		}
+		buff := &bytes.Buffer{}
+		if err := format.Encode(buff, decodedImage); err != nil {
+			return nil, fmt.Errorf("encoding image: %w", err)
+		}
+		hash = Hash(buff.Bytes())
+		image = decodedImage
+
+	// in the case of a video, we should just use the first frame as the image, but use
+	// the original data's hash
+	case filetype.IsVideo():
+		thumbImage, err := imagery.VideoThumbnail(raw)
+		if err != nil {
+			return nil, fmt.Errorf("encoding image: %w", err)
+		}
+		hash = Hash(raw)
+		image = thumbImage
+
+	default:
+		return nil, fmt.Errorf("unknown filetype %q", mime)
+	}
+
+	return &Decoded{
+		Hash:     hash,
+		Data:     raw,
+		Filetype: filetype,
+		Image:    image,
+	}, nil
 }

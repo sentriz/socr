@@ -13,7 +13,7 @@ import (
 )
 
 //nolint:gochecknoglobals
-//go:embed schema.pgsql
+//go:embed schema.sql
 var schema string
 
 type DB struct {
@@ -50,19 +50,19 @@ func waitConnect(ctx context.Context, dsn string, interval time.Duration, times 
 	return nil, fmt.Errorf("failed after %d tries: %w", times, err)
 }
 
-func (db *DB) CreateScreenshot(screenshot *Screenshot) (*Screenshot, error) {
+func (db *DB) CreateMedia(media *Media) (*Media, error) {
 	q := db.
-		Insert("screenshots").
-		Columns("hash", "timestamp", "dim_width", "dim_height", "dominant_colour", "blurhash").
-		Values(screenshot.Hash, screenshot.Timestamp, screenshot.DimWidth, screenshot.DimHeight, screenshot.DominantColour, screenshot.Blurhash).
+		Insert("medias").
+		Columns("hash", "type", "timestamp", "dim_width", "dim_height", "dominant_colour", "blurhash").
+		Values(media.Hash, media.Type, media.Timestamp, media.DimWidth, media.DimHeight, media.DominantColour, media.Blurhash).
 		Suffix("returning *")
 
 	sql, args, _ := q.ToSql()
-	var result Screenshot
+	var result Media
 	return &result, pgxscan.Get(context.Background(), db, &result, sql, args...)
 }
 
-type SearchScreenshotsOptions struct {
+type SearchMediasOptions struct {
 	Body      string
 	Directory string
 	Limit     int
@@ -71,54 +71,54 @@ type SearchScreenshotsOptions struct {
 	SortOrder string
 }
 
-func (db *DB) GetScreenshotByID(id int) (*Screenshot, error) {
+func (db *DB) GetMediaByID(id int) (*Media, error) {
 	q := db.
-		Select("screenshots.*").
-		From("screenshots").
+		Select("medias.*").
+		From("medias").
 		Where(sq.Eq{"id": id}).
 		Limit(1)
 
 	sql, args, _ := q.ToSql()
-	var result Screenshot
+	var result Media
 	return &result, pgxscan.Get(context.Background(), db, &result, sql, args...)
 }
 
-func (db *DB) GetScreenshotByHash(hash string) (*Screenshot, error) {
+func (db *DB) GetMediaByHash(hash string) (*Media, error) {
 	q := db.
 		Select("*").
-		From("screenshots").
+		From("medias").
 		Where(sq.Eq{"hash": hash}).
 		Limit(1)
 
 	sql, args, _ := q.ToSql()
-	var result Screenshot
+	var result Media
 	return &result, pgxscan.Get(context.Background(), db, &result, sql, args...)
 }
 
-func (db *DB) GetScreenshotByHashWithRelations(hash string) (*Screenshot, error) {
+func (db *DB) GetMediaByHashWithRelations(hash string) (*Media, error) {
 	colAggBlocks := db.
 		Select("json_agg(blocks order by index)").
 		From("blocks").
-		Where("screenshot_id = screenshots.id")
+		Where("media_id = medias.id")
 	colAggAliases := db.
 		Select("json_agg(distinct dir_infos.directory_alias)").
 		From("dir_infos").
-		Where("screenshot_id = screenshots.id")
+		Where("media_id = medias.id")
 
 	q := db.
-		Select("screenshots.*").
+		Select("medias.*").
 		Column(sq.Alias(colAggBlocks, "blocks")).
 		Column(sq.Alias(colAggAliases, "directories")).
-		From("screenshots").
+		From("medias").
 		Where(sq.Eq{"hash": hash}).
 		Limit(1)
 
 	sql, args, _ := q.ToSql()
-	var result Screenshot
+	var result Media
 	return &result, pgxscan.Get(context.Background(), db, &result, sql, args...)
 }
 
-func (db *DB) SearchScreenshots(options SearchScreenshotsOptions) ([]*Screenshot, error) {
+func (db *DB) SearchMedias(options SearchMediasOptions) ([]*Media, error) {
 	if !isSortField(options.SortField) {
 		return nil, fmt.Errorf("invalid sort field %q provided", options.SortField)
 	}
@@ -127,14 +127,14 @@ func (db *DB) SearchScreenshots(options SearchScreenshotsOptions) ([]*Screenshot
 	}
 
 	q := db.
-		Select("screenshots.*").
-		From("screenshots").
+		Select("medias.*").
+		From("medias").
 		Limit(uint64(options.Limit)).
 		Offset(uint64(options.Offset)).
 		OrderBy(fmt.Sprintf("%s %s", options.SortField, options.SortOrder))
 	if options.Directory != "" {
 		q = q.
-			Join("dir_infos on dir_infos.screenshot_id = screenshots.id").
+			Join("dir_infos on dir_infos.media_id = medias.id").
 			Where(sq.Eq{"dir_infos.directory_alias": options.Directory})
 	}
 	if options.Body != "" {
@@ -143,22 +143,22 @@ func (db *DB) SearchScreenshots(options SearchScreenshotsOptions) ([]*Screenshot
 		q = q.
 			Column(sq.Alias(colAggBlocks, "highlighted_blocks")).
 			Column(sq.Alias(colSimilarity, "similarity")).
-			LeftJoin("blocks on blocks.screenshot_id = screenshots.id").
+			LeftJoin("blocks on blocks.media_id = medias.id").
 			Where("blocks.body %> ?", options.Body).
-			GroupBy("screenshots.id")
+			GroupBy("medias.id")
 	}
 
 	sql, args, _ := q.ToSql()
-	var results []*Screenshot
+	var results []*Media
 	return results, pgxscan.Select(context.Background(), db, &results, sql, args...)
 }
 
 func (db *DB) CreateBlocks(blocks []*Block) error {
 	q := db.
 		Insert("blocks").
-		Columns("screenshot_id", "index", "min_x", "min_y", "max_x", "max_y", "body")
+		Columns("media_id", "index", "min_x", "min_y", "max_x", "max_y", "body")
 	for _, block := range blocks {
-		q = q.Values(block.ScreenshotID, block.Index, block.MinX, block.MinY, block.MaxX, block.MaxY, block.Body)
+		q = q.Values(block.MediaID, block.Index, block.MinX, block.MinY, block.MaxX, block.MaxY, block.Body)
 	}
 
 	sql, args, _ := q.ToSql()
@@ -169,8 +169,8 @@ func (db *DB) CreateBlocks(blocks []*Block) error {
 func (db *DB) CreateDirInfo(dirInfo *DirInfo) (*DirInfo, error) {
 	q := db.
 		Insert("dir_infos").
-		Columns("screenshot_id", "filename", "directory_alias").
-		Values(dirInfo.ScreenshotID, dirInfo.Filename, dirInfo.DirectoryAlias).
+		Columns("media_id", "filename", "directory_alias").
+		Values(dirInfo.MediaID, dirInfo.Filename, dirInfo.DirectoryAlias).
 		Suffix("on conflict do nothing").
 		Suffix("returning *")
 
@@ -194,12 +194,12 @@ func (db *DB) GetDirInfo(directoryAlias string, filename string) (*DirInfo, erro
 	return &result, pgxscan.Get(context.Background(), db, &result, sql, args...)
 }
 
-func (db *DB) GetDirInfoByScreenshotHash(hash string) (*DirInfo, error) {
+func (db *DB) GetDirInfoByMediaHash(hash string) (*DirInfo, error) {
 	q := db.
 		Select("dir_infos.*").
 		From("dir_infos").
-		Join("screenshots on screenshots.id = dir_infos.screenshot_id").
-		Where(sq.Eq{"screenshots.hash": hash}).
+		Join("medias on medias.id = dir_infos.media_id").
+		Where(sq.Eq{"medias.hash": hash}).
 		Limit(1)
 
 	sql, args, _ := q.ToSql()

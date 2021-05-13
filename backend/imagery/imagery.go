@@ -2,6 +2,7 @@
 package imagery
 
 import (
+	"bytes"
 	"fmt"
 	"image"
 	"image/color"
@@ -10,47 +11,72 @@ import (
 	"image/png"
 	"io"
 
+	"github.com/bakape/thumbnailer"
 	"github.com/buckket/go-blurhash"
 	"github.com/cenkalti/dominantcolor"
 	"github.com/nfnt/resize"
 	gosseract "github.com/otiai10/gosseract/v2"
 )
 
-type Filetype string
+const VideoThumbWidth = 1080
+
+type Media int
 
 const (
-	FiletypeGIF  Filetype = "gif"
-	FiletypePNG  Filetype = "png"
-	FiletypeJPEG Filetype = "jpg"
+	MediaImage Media = iota
+	MediaVideo
 )
+
+type MIME string
+
+const (
+	MIMEGIF  MIME = "image/gif"
+	MIMEPNG  MIME = "image/png"
+	MIMEJPEG MIME = "image/jpeg"
+
+	MIMEWebM MIME = "video/webm"
+	MIMEMP4  MIME = "video/mp4"
+	MIMEMPEG MIME = "video/mpeg"
+)
+
+type Filetype struct {
+	Media     Media
+	MIME      MIME
+	Extension string
+}
+
+func (f *Filetype) IsImage() bool { return f.Media == MediaImage }
+func (f *Filetype) IsVideo() bool { return f.Media == MediaVideo }
 
 type EncodeFunc func(io.Writer, image.Image) error
 type DecodeFunc func(io.Reader) (image.Image, error)
 
 type Format struct {
-	Filetype Filetype
-	Decode   DecodeFunc
-	Encode   EncodeFunc
+	Decode DecodeFunc
+	Encode EncodeFunc
 }
 
 func EncodeGIF(in io.Writer, i image.Image) error  { return gif.Encode(in, i, nil) }
 func EncodePNG(in io.Writer, i image.Image) error  { return png.Encode(in, i) }
 func EncodeJPEG(in io.Writer, i image.Image) error { return jpeg.Encode(in, i, nil) }
 
-var (
-	FormatGIF  = Format{FiletypeGIF, gif.Decode, EncodeGIF}
-	FormatPNG  = Format{FiletypePNG, png.Decode, EncodePNG}
-	FormatJPEG = Format{FiletypeJPEG, jpeg.Decode, EncodeJPEG}
-)
-
-func FormatFromMIME(in string) (Format, bool) {
-	data := map[string]Format{
-		"image/gif":  FormatGIF,
-		"image/png":  FormatPNG,
-		"image/jpeg": FormatJPEG,
+func ReadMIME(in string) (*Filetype, *Format) {
+	switch MIME(in) {
+	case MIMEGIF:
+		return &Filetype{MediaImage, MIMEGIF, "gif"}, &Format{gif.Decode, EncodeGIF}
+	case MIMEPNG:
+		return &Filetype{MediaImage, MIMEPNG, "png"}, &Format{png.Decode, EncodePNG}
+	case MIMEJPEG:
+		return &Filetype{MediaImage, MIMEJPEG, "jpg"}, &Format{jpeg.Decode, EncodeJPEG}
+	case MIMEWebM:
+		return &Filetype{MediaVideo, MIMEWebM, "webm"}, nil
+	case MIMEMP4:
+		return &Filetype{MediaVideo, MIMEMP4, "mp4"}, nil
+	case MIMEMPEG:
+		return &Filetype{MediaVideo, MIMEMPEG, "mpeg"}, nil
+	default:
+		return nil, nil
 	}
-	f, ok := data[in]
-	return f, ok
 }
 
 func ExtractText(img []byte) ([]gosseract.BoundingBox, error) {
@@ -114,4 +140,18 @@ func DominantColour(img image.Image) (color.Color, string) {
 	colour := dominantcolor.Find(img)
 	hex := dominantcolor.Hex(colour)
 	return colour, hex
+}
+
+func VideoThumbnail(data []byte) (image.Image, error) {
+	_, thumb, err := thumbnailer.ProcessBuffer(data, thumbnailer.Options{
+		ThumbDims: thumbnailer.Dims{Width: VideoThumbWidth},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("process buffer: %w", err)
+	}
+	buff := bytes.NewBuffer(thumb.Data)
+	if thumb.IsPNG {
+		return png.Decode(buff)
+	}
+	return jpeg.Decode(buff)
 }

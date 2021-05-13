@@ -16,7 +16,6 @@ import (
 	"go.senan.xyz/socr"
 	"go.senan.xyz/socr/backend/db"
 	"go.senan.xyz/socr/backend/directories"
-	"go.senan.xyz/socr/backend/imagery"
 	"go.senan.xyz/socr/backend/importer"
 	"go.senan.xyz/socr/backend/scanner"
 	"go.senan.xyz/socr/backend/server/auth"
@@ -36,7 +35,6 @@ type Server struct {
 	LoginUsername           string
 	LoginPassword           string
 	APIKey                  string
-	DefaultFormat           imagery.Format
 }
 
 func (c *Server) Router() *mux.Router {
@@ -45,8 +43,8 @@ func (c *Server) Router() *mux.Router {
 	r.Use(c.WithCORS())
 	r.Use(c.WithLogging())
 	r.HandleFunc("/api/authenticate", c.ServeAuthenticate)
-	r.HandleFunc("/api/screenshot/{hash}/raw", c.ServeScreenshotRaw)
-	r.HandleFunc("/api/screenshot/{hash}", c.ServeScreenshot)
+	r.HandleFunc("/api/media/{hash}/raw", c.ServeMediaRaw)
+	r.HandleFunc("/api/media/{hash}", c.ServeMedia)
 	r.HandleFunc("/api/websocket", c.ServeWebSocket)
 
 	// begin authenticated routes
@@ -127,15 +125,15 @@ func (c *Server) ServeUpload(w http.ResponseWriter, r *http.Request) {
 		resp.Errorf(w, http.StatusBadRequest, "read form file: %v", err)
 		return
 	}
-	decoded, err := importer.DecodeImage(raw)
+	decoded, err := importer.DecodeMedia(raw)
 	if err != nil {
-		resp.Errorf(w, http.StatusBadRequest, "decoding screenshot: %v", err)
+		resp.Errorf(w, http.StatusBadRequest, "decoding media: %v", err)
 		return
 	}
 
 	timestamp := time.Now().Format(time.RFC3339)
 	uploadsDir := c.Directories[c.DirectoriesUploadsAlias]
-	fileName := fmt.Sprintf("%s.%s", timestamp, decoded.Format.Filetype)
+	fileName := fmt.Sprintf("%s.%s", timestamp, decoded.Filetype.Extension)
 	filePath := filepath.Join(uploadsDir, fileName)
 	if err := os.WriteFile(filePath, raw, 0600); err != nil {
 		resp.Errorf(w, 500, "write upload to disk: %v", err)
@@ -144,8 +142,8 @@ func (c *Server) ServeUpload(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		timestamp := time.Now()
-		if err := c.Importer.ImportScreenshot(decoded, timestamp, c.DirectoriesUploadsAlias, fileName); err != nil {
-			log.Printf("error processing screenshot %s: %v", decoded.Hash, err)
+		if err := c.Importer.ImportMedia(decoded, timestamp, c.DirectoriesUploadsAlias, fileName); err != nil {
+			log.Printf("error processing media %s: %v", decoded.Hash, err)
 			return
 		}
 	}()
@@ -201,29 +199,29 @@ func (c *Server) ServeDirectories(w http.ResponseWriter, r *http.Request) {
 	resp.Write(w, counts)
 }
 
-func (c *Server) ServeScreenshotRaw(w http.ResponseWriter, r *http.Request) {
+func (c *Server) ServeMediaRaw(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	row, err := c.DB.GetDirInfoByScreenshotHash(vars["hash"])
+	row, err := c.DB.GetDirInfoByMediaHash(vars["hash"])
 	if err != nil {
-		resp.Errorf(w, http.StatusBadRequest, "requested screenshot not found: %v", err)
+		resp.Errorf(w, http.StatusBadRequest, "requested media not found: %v", err)
 		return
 	}
 	directory, ok := c.Directories[row.DirectoryAlias]
 	if !ok {
-		resp.Errorf(w, 500, "screenshot has invalid alias %q", row.DirectoryAlias)
+		resp.Errorf(w, 500, "media has invalid alias %q", row.DirectoryAlias)
 		return
 	}
 	http.ServeFile(w, r, filepath.Join(directory, row.Filename))
 }
 
-func (c *Server) ServeScreenshot(w http.ResponseWriter, r *http.Request) {
+func (c *Server) ServeMedia(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	screenshot, err := c.DB.GetScreenshotByHashWithRelations(vars["hash"])
+	media, err := c.DB.GetMediaByHashWithRelations(vars["hash"])
 	if err != nil {
-		resp.Errorf(w, http.StatusBadRequest, "requested screenshot not found: %v", err)
+		resp.Errorf(w, http.StatusBadRequest, "requested media not found: %v", err)
 		return
 	}
-	resp.Write(w, screenshot)
+	resp.Write(w, media)
 }
 
 type ServeSearchPayload struct {
@@ -245,7 +243,7 @@ func (c *Server) ServeSearch(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	start := time.Now()
-	screenshots, err := c.DB.SearchScreenshots(db.SearchScreenshotsOptions{
+	medias, err := c.DB.SearchMedias(db.SearchMediasOptions{
 		Body:      payload.Body,
 		Offset:    payload.Offset,
 		Limit:     payload.Limit,
@@ -254,16 +252,16 @@ func (c *Server) ServeSearch(w http.ResponseWriter, r *http.Request) {
 		Directory: payload.Directory,
 	})
 	if err != nil {
-		resp.Errorf(w, 500, "searching screenshots: %v", err)
+		resp.Errorf(w, 500, "searching medias: %v", err)
 		return
 	}
 
 	resp.Write(w, struct {
-		Screenshots []*db.Screenshot `json:"screenshots"`
-		Took        time.Duration    `json:"took"`
+		Medias []*db.Media   `json:"medias"`
+		Took   time.Duration `json:"took"`
 	}{
-		Screenshots: screenshots,
-		Took:        time.Since(start),
+		Medias: medias,
+		Took:   time.Since(start),
 	})
 }
 
@@ -283,7 +281,7 @@ func (c *Server) ServeWebSocket(w http.ResponseWriter, r *http.Request) {
 		}
 		c.SocketClientsScanner[conn] = struct{}{}
 	}
-	if w := params.Get("want_screenshot_hash"); w != "" {
+	if w := params.Get("want_media_hash"); w != "" {
 		if _, ok := c.SocketClientsImporter[w]; !ok {
 			c.SocketClientsImporter[w] = map[*websocket.Conn]struct{}{}
 		}
