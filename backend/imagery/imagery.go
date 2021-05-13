@@ -16,41 +16,47 @@ import (
 	gosseract "github.com/otiai10/gosseract/v2"
 )
 
-type Filetype string
-
-const (
-	FiletypeGIF  Filetype = "gif"
-	FiletypePNG  Filetype = "png"
-	FiletypeJPEG Filetype = "jpg"
-)
+type Filetype struct {
+	MIME      string
+	Extension string
+}
 
 type EncodeFunc func(io.Writer, image.Image) error
 type DecodeFunc func(io.Reader) (image.Image, error)
 
 type Format struct {
-	Filetype Filetype
-	Decode   DecodeFunc
-	Encode   EncodeFunc
+	Decode DecodeFunc
+	Encode EncodeFunc
 }
 
 func EncodeGIF(in io.Writer, i image.Image) error  { return gif.Encode(in, i, nil) }
 func EncodePNG(in io.Writer, i image.Image) error  { return png.Encode(in, i) }
 func EncodeJPEG(in io.Writer, i image.Image) error { return jpeg.Encode(in, i, nil) }
 
-var (
-	FormatGIF  = Format{FiletypeGIF, gif.Decode, EncodeGIF}
-	FormatPNG  = Format{FiletypePNG, png.Decode, EncodePNG}
-	FormatJPEG = Format{FiletypeJPEG, jpeg.Decode, EncodeJPEG}
-)
-
-func FormatFromMIME(in string) (Format, bool) {
-	data := map[string]Format{
-		"image/gif":  FormatGIF,
-		"image/png":  FormatPNG,
-		"image/jpeg": FormatJPEG,
+func ImageFromMIME(in string) (*Filetype, *Format) {
+	switch in {
+	case "image/gif":
+		return &Filetype{"image/gif", "gif"}, &Format{gif.Decode, EncodeGIF}
+	case "image/png":
+		return &Filetype{"image/png", "png"}, &Format{png.Decode, EncodePNG}
+	case "image/jpeg":
+		return &Filetype{"image/jpeg", "jpg"}, &Format{jpeg.Decode, EncodeJPEG}
+	default:
+		return nil, nil
 	}
-	f, ok := data[in]
-	return f, ok
+}
+
+func VideoFromMIME(in string) *Filetype {
+	switch in {
+	case "video/webm":
+		return &Filetype{"video/webm", "webm"}
+	case "video/mp4":
+		return &Filetype{"video/mp4", "mp4"}
+	case "video/mpeg":
+		return &Filetype{"video/mpeg", "mpeg"}
+	default:
+		return nil
+	}
 }
 
 func ExtractText(img []byte) ([]gosseract.BoundingBox, error) {

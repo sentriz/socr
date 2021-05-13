@@ -171,7 +171,7 @@ func (s *Scanner) scanDirectoryItem(dirAlias, dir, fileName string, modTime time
 		return "", nil
 	}
 
-	log.Printf("importing new screenshot. alias %q, filename %q", dirAlias, fileName)
+	log.Printf("importing new item. alias %q, filename %q", dirAlias, fileName)
 
 	filePath := filepath.Join(dir, fileName)
 	raw, err := os.ReadFile(filePath)
@@ -179,7 +179,7 @@ func (s *Scanner) scanDirectoryItem(dirAlias, dir, fileName string, modTime time
 		return "", fmt.Errorf("open file: %w", err)
 	}
 
-	decoded, err := importer.DecodeImage(raw)
+	decoded, err := importer.DecodeItem(raw)
 	if err != nil {
 		return "", fmt.Errorf("decode screenshot: %w", err)
 	}

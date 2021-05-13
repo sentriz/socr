@@ -47,8 +47,9 @@ func main() {
 	defer dbConn.Close()
 
 	importr := &importer.Importer{
-		DB:      dbConn,
-		Updates: make(chan string),
+		DB:             dbConn,
+		Updates:        make(chan string),
+		DefaultEncoder: imagery.EncodePNG,
 	}
 	scanr := &scanner.Scanner{
 		Running:                 new(int32),
@@ -73,7 +74,6 @@ func main() {
 		LoginUsername:         confLoginUsername,
 		LoginPassword:         confLoginPassword,
 		APIKey:                confAPIKey,
-		DefaultFormat:         imagery.FormatPNG,
 	}
 
 	go servr.EmitUpdatesScanner()

@@ -18,21 +18,30 @@ import (
 )
 
 type Decoded struct {
-	Hash   string
+	Hash     string
+	Data     []byte
+	Filetype *imagery.Filetype
+
+	// image only
 	Image  image.Image
-	Data   []byte
-	Format imagery.Format
+	Format *imagery.Format
 }
 
-// DecodeImage takes a raw byte slice of an image (png/jpg/etc) decodes it using an appropriate format
+// DecodeItem takes a raw byte slice of an image (png/jpg/etc) decodes it using an appropriate format
 // and encodes it again. Encoding and decoding makes sure the hash will be the same for the same
 // image given different sources. clipboard/filesystem/etc
-func DecodeImage(raw []byte) (*Decoded, error) {
+func DecodeItem(raw []byte) (*Decoded, error) {
 	mime := http.DetectContentType(raw)
-	format, ok := imagery.FormatFromMIME(mime)
-	if !ok {
-		return nil, fmt.Errorf("unknown image mime %s", mime)
+	if filetype, format := imagery.ImageFromMIME(mime); filetype != nil {
+		return decodeImage(raw, filetype, format)
 	}
+	if filetype := imagery.VideoFromMIME(mime); filetype != nil {
+		return decodeVideo(raw, filetype)
+	}
+	return nil, fmt.Errorf("unknown image or video mime %q", mime)
+}
+
+func decodeImage(raw []byte, filetype *imagery.Filetype, format *imagery.Format) (*Decoded, error) {
 	image, err := format.Decode(bytes.NewReader(raw))
 	if err != nil {
 		return nil, fmt.Errorf("decoding image %w", err)
@@ -44,16 +53,27 @@ func DecodeImage(raw []byte) (*Decoded, error) {
 	data := dataBuff.Bytes()
 	hash := Hash(data)
 	return &Decoded{
-		Hash:   hash,
-		Image:  image,
-		Data:   data,
-		Format: format,
+		Hash:     hash,
+		Data:     data,
+		Filetype: filetype,
+		Image:    image,
+		Format:   format,
+	}, nil
+}
+
+func decodeVideo(raw []byte, filetype *imagery.Filetype) (*Decoded, error) {
+	hash := Hash(raw)
+	return &Decoded{
+		Hash:     hash,
+		Data:     raw,
+		Filetype: filetype,
 	}, nil
 }
 
 type Importer struct {
-	DB      *db.DB
-	Updates chan string
+	DB             *db.DB
+	Updates        chan string
+	DefaultEncoder imagery.EncodeFunc
 }
 
 func (i *Importer) ImportScreenshot(decoded *Decoded, timestamp time.Time, dirAlias, fileName string) error {
@@ -116,7 +136,7 @@ func (i *Importer) importScreenshotBlocks(id int, image image.Image) error {
 	imageGrey := imagery.GreyScale(image)
 	imageBig := imagery.Resize(imageGrey, imagery.ScaleFactor)
 	imageEncoded := &bytes.Buffer{}
-	if err := imagery.FormatPNG.Encode(imageEncoded, imageBig); err != nil {
+	if err := i.DefaultEncoder(imageEncoded, imageBig); err != nil {
 		return fmt.Errorf("encode scaled and greyed image: %w", err)
 	}
 	rawBlocks, err := imagery.ExtractText(imageEncoded.Bytes())

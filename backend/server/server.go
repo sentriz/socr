@@ -16,7 +16,6 @@ import (
 	"go.senan.xyz/socr"
 	"go.senan.xyz/socr/backend/db"
 	"go.senan.xyz/socr/backend/directories"
-	"go.senan.xyz/socr/backend/imagery"
 	"go.senan.xyz/socr/backend/importer"
 	"go.senan.xyz/socr/backend/scanner"
 	"go.senan.xyz/socr/backend/server/auth"
@@ -36,7 +35,6 @@ type Server struct {
 	LoginUsername           string
 	LoginPassword           string
 	APIKey                  string
-	DefaultFormat           imagery.Format
 }
 
 func (c *Server) Router() *mux.Router {
@@ -127,7 +125,7 @@ func (c *Server) ServeUpload(w http.ResponseWriter, r *http.Request) {
 		resp.Errorf(w, http.StatusBadRequest, "read form file: %v", err)
 		return
 	}
-	decoded, err := importer.DecodeImage(raw)
+	decoded, err := importer.DecodeItem(raw)
 	if err != nil {
 		resp.Errorf(w, http.StatusBadRequest, "decoding screenshot: %v", err)
 		return
@@ -135,7 +133,7 @@ func (c *Server) ServeUpload(w http.ResponseWriter, r *http.Request) {
 
 	timestamp := time.Now().Format(time.RFC3339)
 	uploadsDir := c.Directories[c.DirectoriesUploadsAlias]
-	fileName := fmt.Sprintf("%s.%s", timestamp, decoded.Format.Filetype)
+	fileName := fmt.Sprintf("%s.%s", timestamp, decoded.Filetype)
 	filePath := filepath.Join(uploadsDir, fileName)
 	if err := os.WriteFile(filePath, raw, 0600); err != nil {
 		resp.Errorf(w, 500, "write upload to disk: %v", err)
