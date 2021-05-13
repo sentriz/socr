@@ -24,7 +24,7 @@ type Importer struct {
 
 func (i *Importer) ImportMedia(decoded *Decoded, timestamp time.Time, dirAlias, fileName string) error {
 	// insert media and dir info, alert clients with update
-	id, isOld, err := i.importMedia(decoded.Filetype.Media, decoded.Hash, decoded.Image, timestamp)
+	id, isOld, err := i.importMedia(decoded.Filetype, decoded.Hash, decoded.Image, timestamp)
 	if err != nil {
 		return fmt.Errorf("insert media: %w", err)
 	}
@@ -46,7 +46,7 @@ func (i *Importer) ImportMedia(decoded *Decoded, timestamp time.Time, dirAlias, 
 	return nil
 }
 
-func (i *Importer) importMedia(typ imagery.Media, hash string, image image.Image, timestamp time.Time) (int, bool, error) {
+func (i *Importer) importMedia(filetype *imagery.Filetype, hash string, image image.Image, timestamp time.Time) (int, bool, error) {
 	old, err := i.DB.GetMediaByHash(hash)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return 0, false, fmt.Errorf("getting media by hash: %w", err)
@@ -62,15 +62,11 @@ func (i *Importer) importMedia(typ imagery.Media, hash string, image image.Image
 		return 0, false, fmt.Errorf("calculate blurhash: %w", err)
 	}
 
-	mediaType := db.MediaTypeScreenshot
-	if typ == imagery.MediaVideo {
-		mediaType = db.MediaTypeVideo
-	}
-
 	propSize := image.Bounds().Size()
 	new, err := i.DB.CreateMedia(&db.Media{
 		Hash:           hash,
-		Type:           mediaType,
+		Type:           db.MediaType(filetype.Type),
+		MIME:           string(filetype.MIME),
 		Timestamp:      timestamp,
 		DimWidth:       propSize.X,
 		DimHeight:      propSize.Y,

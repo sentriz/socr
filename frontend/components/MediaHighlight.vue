@@ -1,6 +1,9 @@
 <template>
   <div class="w-fit relative">
-    <img :src="url" />
+    <img v-if="media?.type === 'image'" :src="url" />
+    <video controls v-if="media?.type === 'video'">
+      <source :src="url" :type="media.mime" />
+    </video>
     <svg
       v-if="media && blocks.length"
       :viewBox="`0 0 ${media.dim_width} ${media.dim_height}`"

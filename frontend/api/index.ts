@@ -138,7 +138,7 @@ export interface Block {
   body: string
 }
 
-export type MediaType = "screenshot" | "video"
+export type MediaType = 'image' | 'video'
 
 export interface Media {
   id: number

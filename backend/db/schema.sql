@@ -1,13 +1,14 @@
 create extension if not exists pg_trgm;
 
 create type media_type as enum (
-    'screenshot',
+    'image',
     'video'
 );
 
 create table if not exists medias (
     id serial primary key,
     type media_type not null,
+    mime text not null,
     hash text not null,
     timestamp timestamptz not null,
     dim_width int not null,

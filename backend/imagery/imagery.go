@@ -20,11 +20,11 @@ import (
 
 const VideoThumbWidth = 1080
 
-type Media int
+type Type string
 
 const (
-	MediaImage Media = iota
-	MediaVideo
+	TypeImage Type = "image"
+	TypeVideo Type = "video"
 )
 
 type MIME string
@@ -40,13 +40,13 @@ const (
 )
 
 type Filetype struct {
-	Media     Media
+	Type      Type
 	MIME      MIME
 	Extension string
 }
 
-func (f *Filetype) IsImage() bool { return f.Media == MediaImage }
-func (f *Filetype) IsVideo() bool { return f.Media == MediaVideo }
+func (f *Filetype) IsImage() bool { return f.Type == TypeImage }
+func (f *Filetype) IsVideo() bool { return f.Type == TypeVideo }
 
 type EncodeFunc func(io.Writer, image.Image) error
 type DecodeFunc func(io.Reader) (image.Image, error)
@@ -63,17 +63,17 @@ func EncodeJPEG(in io.Writer, i image.Image) error { return jpeg.Encode(in, i, n
 func ReadMIME(in string) (*Filetype, *Format) {
 	switch MIME(in) {
 	case MIMEGIF:
-		return &Filetype{MediaImage, MIMEGIF, "gif"}, &Format{gif.Decode, EncodeGIF}
+		return &Filetype{TypeImage, MIMEGIF, "gif"}, &Format{gif.Decode, EncodeGIF}
 	case MIMEPNG:
-		return &Filetype{MediaImage, MIMEPNG, "png"}, &Format{png.Decode, EncodePNG}
+		return &Filetype{TypeImage, MIMEPNG, "png"}, &Format{png.Decode, EncodePNG}
 	case MIMEJPEG:
-		return &Filetype{MediaImage, MIMEJPEG, "jpg"}, &Format{jpeg.Decode, EncodeJPEG}
+		return &Filetype{TypeImage, MIMEJPEG, "jpg"}, &Format{jpeg.Decode, EncodeJPEG}
 	case MIMEWebM:
-		return &Filetype{MediaVideo, MIMEWebM, "webm"}, nil
+		return &Filetype{TypeVideo, MIMEWebM, "webm"}, nil
 	case MIMEMP4:
-		return &Filetype{MediaVideo, MIMEMP4, "mp4"}, nil
+		return &Filetype{TypeVideo, MIMEMP4, "mp4"}, nil
 	case MIMEMPEG:
-		return &Filetype{MediaVideo, MIMEMPEG, "mpeg"}, nil
+		return &Filetype{TypeVideo, MIMEMPEG, "mpeg"}, nil
 	default:
 		return nil, nil
 	}

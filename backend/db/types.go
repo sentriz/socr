@@ -18,13 +18,14 @@ type Block struct {
 type MediaType string
 
 const (
-	MediaTypeScreenshot MediaType = "screenshot"
-	MediaTypeVideo      MediaType = "video"
+	MediaTypeImage MediaType = "image"
+	MediaTypeVideo MediaType = "video"
 )
 
 type Media struct {
 	ID                int       `db:"id"                 json:"id"`
 	Type              MediaType `db:"type"               json:"type"`
+	MIME              string    `db:"mime"               json:"mime"`
 	Hash              string    `db:"hash"               json:"hash"`
 	Timestamp         time.Time `db:"timestamp"          json:"timestamp"`
 	DimWidth          int       `db:"dim_width"          json:"dim_width"`

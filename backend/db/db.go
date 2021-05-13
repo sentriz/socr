@@ -53,8 +53,8 @@ func waitConnect(ctx context.Context, dsn string, interval time.Duration, times 
 func (db *DB) CreateMedia(media *Media) (*Media, error) {
 	q := db.
 		Insert("medias").
-		Columns("hash", "type", "timestamp", "dim_width", "dim_height", "dominant_colour", "blurhash").
-		Values(media.Hash, media.Type, media.Timestamp, media.DimWidth, media.DimHeight, media.DominantColour, media.Blurhash).
+		Columns("hash", "type", "mime", "timestamp", "dim_width", "dim_height", "dominant_colour", "blurhash").
+		Values(media.Hash, media.Type, media.MIME, media.Timestamp, media.DimWidth, media.DimHeight, media.DominantColour, media.Blurhash).
 		Suffix("returning *")
 
 	sql, args, _ := q.ToSql()
