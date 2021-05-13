@@ -192,19 +192,26 @@ func (s *Scanner) scanDirectoryItem(dirAlias, dir, fileName string, modTime time
 	return decoded.Hash, nil
 }
 
-var fileStampExpr = regexp.MustCompile(`(?:\D|^)(?P<ymd>(?:19|20)\d{6})\D?(?P<hms>\d{6})(?:\D|$)`)
+var fileStampExpr = regexp.MustCompile(`(?:\D|^)(?P<ymd>(?:19|20|21)\d{6})\D?(?P<hms>\d{6})(?:\D|$)`)
 
 func GuessFileCreated(fileName string, modTime time.Time) time.Time {
-	fileName = strings.ToLower(fileName)
+	fileName = strings.TrimPrefix(fileName, "IMG_")
+	fileName = strings.TrimPrefix(fileName, "VID_")
 	fileName = strings.TrimPrefix(fileName, "img_")
+	fileName = strings.TrimPrefix(fileName, "vid_")
 	fileName = strings.TrimSuffix(fileName, filepath.Ext(fileName))
 
-	// first try use the date parse library
+	// first try RFC3339
+	if guessed, err := time.Parse(time.RFC3339, fileName); err == nil {
+		return guessed
+	}
+
+	// if that doesn't work, try the date parse library
 	if guessed, err := dateparse.ParseLocal(fileName); err == nil {
 		return guessed
 	}
 
-	// if that doesn't work, try find a YYYYMMDD-HHMMSS pattern
+	// maybe a YYYYMMDD-HHMMSS pattern
 	if m := fileStampExpr.FindStringSubmatch(fileName); len(m) > 0 {
 		ymd := m[fileStampExpr.SubexpIndex("ymd")]
 		hms := m[fileStampExpr.SubexpIndex("hms")]
