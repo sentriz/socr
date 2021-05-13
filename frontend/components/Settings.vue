@@ -8,7 +8,7 @@
       <settings-about />
     </div>
     <div class="flex-auto">
-      <h2>screenshots</h2>
+      <h2>medias</h2>
       <settings-directories />
     </div>
   </div>

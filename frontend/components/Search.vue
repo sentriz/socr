@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6">
     <div class="md:flex-row flex flex-col gap-2">
-      <input v-model="reqQuery" class="inp w-full" type="text" placeholder="enter screenshot text query" />
+      <input v-model="reqQuery" class="inp w-full" type="text" placeholder="enter media text query" />
       <search-filter label="sort by" :items="reqSortOptions" v-model:selected="reqSortOption" />
       <search-filter label="directory" :items="reqFilterOptions" v-model:selected="reqFilterOption" />
     </div>
@@ -13,11 +13,11 @@
           <hr class="m-0" />
         </div>
         <div class="col-resp gap-x-4 space-y-4">
-          <screenshot-background v-for="hash in page" :key="hash" :hash="hash" class="shadow-lg">
+          <media-background v-for="hash in page" :key="hash" :hash="hash" class="shadow-lg">
             <router-link :to="{ name: 'search', params: { hash } }">
-              <screenshot-highlight :hash="hash" class="mx-auto" />
+              <media-highlight :hash="hash" class="mx-auto" />
             </router-link>
-          </screenshot-background>
+          </media-background>
         </div>
       </div>
     </div>
@@ -29,8 +29,8 @@
 </template>
 
 <script setup lang="ts">
-import ScreenshotHighlight from './ScreenshotHighlight.vue'
-import ScreenshotBackground from './ScreenshotBackground.vue'
+import MediaHighlight from './MediaHighlight.vue'
+import MediaBackground from './MediaBackground.vue'
 import SearchSidebar from './SearchSidebar.vue'
 import SearchFilter from './SearchFilter.vue'
 import LoadingSpinner from './LoadingSpinner.vue'
@@ -48,7 +48,7 @@ import useLoading from '../composables/useLoading'
 
 const store = useStore()
 const route = useRoute()
-const { loading, load } = useLoading(store.loadScreenshots)
+const { loading, load } = useLoading(store.loadMedias)
 
 const sidebarHash = computed(() => (route.params.hash as string) || '')
 
@@ -75,7 +75,7 @@ const respTook = ref(0)
 const respHasMore = ref(true)
 const respPages = ref<string[][]>([])
 
-const fetchScreenshots = async () => {
+const fetchMedias = async () => {
   if (loading.value) return
   if (!respHasMore.value) return
 
@@ -92,13 +92,13 @@ const fetchScreenshots = async () => {
   if (isError(resp)) return
 
   respTook.value = (resp.result.took || 0) / 10 ** 6
-  respHasMore.value = !!resp.result.screenshots?.length
+  respHasMore.value = !!resp.result.medias?.length
   if (!respHasMore.value) return
 
   reqPageNum.value++
   respPages.value.push([])
-  for (const screenshot of resp.result.screenshots || []) {
-    respPages.value[respPages.value.length - 1].push(screenshot.hash)
+  for (const media of resp.result.medias || []) {
+    respPages.value[respPages.value.length - 1].push(media.hash)
   }
 }
 
@@ -119,16 +119,16 @@ const resetFilters = () => {
   }
 }
 
-const scroller = useInfiniteScroll(fetchScreenshots)
+const scroller = useInfiniteScroll(fetchMedias)
 
 watch([reqSortOption, reqFilterOption, reqQueryDebounced], () => {
   resetParameters()
   resetFilters()
-  fetchScreenshots()
+  fetchMedias()
 })
 
 onMounted(async () => {
-  await fetchScreenshots()
+  await fetchMedias()
 })
 
 onMounted(async () => {

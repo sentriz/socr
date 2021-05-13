@@ -15,9 +15,9 @@ const props = defineProps<{
 const ALPHA = '88'
 const store = useStore()
 
-const screenshot = computed(() => store.getScreenshotByHash(props.hash))
+const media = computed(() => store.getMediaByHash(props.hash))
 const dominantStyle = computed(() => {
-  const backgroundColor = `${screenshot.value?.dominant_colour}${ALPHA}`
+  const backgroundColor = `${media.value?.dominant_colour}${ALPHA}`
   return { backgroundColor }
 })
 </script>

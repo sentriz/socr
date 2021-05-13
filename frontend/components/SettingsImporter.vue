@@ -58,7 +58,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { newSocketAuth, urlScreenshot, reqStartImport, reqImportStatus, isError } from '../api'
+import { newSocketAuth, urlMedia, reqStartImport, reqImportStatus, isError } from '../api'
 import type { ImportStatus } from '../api'
 
 const status = ref<ImportStatus | undefined>()
@@ -72,7 +72,7 @@ const requestImportStatus = async () => {
 
 const url = computed(() => {
   if (!status.value?.last_hash) return null
-  return `${urlScreenshot}/${status.value.last_hash}/raw`
+  return `${urlMedia}/${status.value.last_hash}/raw`
 })
 
 const progress = computed(() => {

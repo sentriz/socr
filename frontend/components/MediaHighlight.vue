@@ -2,8 +2,8 @@
   <div class="w-fit relative">
     <img :src="url" />
     <svg
-      v-if="screenshot && blocks.length"
-      :viewBox="`0 0 ${screenshot.dim_width} ${screenshot.dim_height}`"
+      v-if="media && blocks.length"
+      :viewBox="`0 0 ${media.dim_width} ${media.dim_height}`"
       class="absolute inset-0 text-yellow-500 text-opacity-50 fill-current"
     >
       <rect
@@ -20,7 +20,7 @@
 
 <script setup lang="ts">
 import { defineProps, computed } from 'vue'
-import { urlScreenshot } from '../api'
+import { urlMedia } from '../api'
 import useStore from '../composables/useStore'
 
 const props = defineProps<{
@@ -29,7 +29,7 @@ const props = defineProps<{
 
 const store = useStore()
 
-const screenshot = computed(() => store.getScreenshotByHash(props.hash))
+const media = computed(() => store.getMediaByHash(props.hash))
 const blocks = computed(() => store.getHighlightedBlocksByHash(props.hash))
-const url = computed(() => `${urlScreenshot}/${screenshot.value?.hash}/raw`)
+const url = computed(() => `${urlMedia}/${media.value?.hash}/raw`)
 </script>

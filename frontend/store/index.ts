@@ -1,23 +1,23 @@
 import { reactive, readonly, InjectionKey } from 'vue'
-import { reqSearch, reqScreenshot, isError, Block } from '../api'
-import type { Reponse, Screenshot, Search, PayloadSearch } from '../api'
+import { reqSearch, reqMedia, isError, Block } from '../api'
+import type { Reponse, Media, Search, PayloadSearch } from '../api'
 
-const screenshotsLoadState = async (state: State, resp: Screenshot[]) => {
-  for (const screenshot of resp) {
-    if (screenshot.blocks) {
-      state.blocks.set(screenshot.hash, screenshot.blocks)
-      delete screenshot.blocks
+const mediasLoadState = async (state: State, resp: Media[]) => {
+  for (const media of resp) {
+    if (media.blocks) {
+      state.blocks.set(media.hash, media.blocks)
+      delete media.blocks
     }
-    if (screenshot.highlighted_blocks) {
-      state.highlighted_blocks.set(screenshot.hash, screenshot.highlighted_blocks)
-      delete screenshot.highlighted_blocks
+    if (media.highlighted_blocks) {
+      state.highlighted_blocks.set(media.hash, media.highlighted_blocks)
+      delete media.highlighted_blocks
     }
-    state.screenshots.set(screenshot.hash, screenshot)
+    state.medias.set(media.hash, media)
   }
 }
 
 export interface State {
-  screenshots: Map<string, Screenshot>
+  medias: Map<string, Media>
   blocks: Map<string, Block[]>
   highlighted_blocks: Map<string, Block[]>
   toast: string
@@ -25,7 +25,7 @@ export interface State {
 
 const createStore = () => {
   const state = reactive<State>({
-    screenshots: new Map(),
+    medias: new Map(),
     blocks: new Map(),
     highlighted_blocks: new Map(),
     toast: '',
@@ -33,22 +33,22 @@ const createStore = () => {
 
   return {
     state: readonly(state),
-    async loadScreenshots(payload: PayloadSearch): Reponse<Search> {
+    async loadMedias(payload: PayloadSearch): Reponse<Search> {
       const resp = await reqSearch(payload)
       if (isError(resp)) return resp
-      if (!resp.result.screenshots?.length) return resp
-      screenshotsLoadState(state, resp.result.screenshots)
+      if (!resp.result.medias?.length) return resp
+      mediasLoadState(state, resp.result.medias)
       return resp
     },
-    async loadScreenshot(hash: string): Reponse<Screenshot> {
-      const resp = await reqScreenshot(hash)
+    async loadMedia(hash: string): Reponse<Media> {
+      const resp = await reqMedia(hash)
       if (isError(resp)) return resp
       if (!resp.result) return resp
-      screenshotsLoadState(state, [resp.result])
+      mediasLoadState(state, [resp.result])
       return resp
     },
-    getScreenshotByHash(hash: string) {
-      return state.screenshots.get(hash)
+    getMediaByHash(hash: string) {
+      return state.medias.get(hash)
     },
     getBlocksByHash(hash: string) {
       return state.blocks.get(hash) || []

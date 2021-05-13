@@ -1,6 +1,6 @@
 import router from '../router'
 
-export const urlScreenshot = '/api/screenshot'
+export const urlMedia = '/api/media'
 export const urlSearch = '/api/search'
 export const urlStartImport = '/api/start_import'
 export const urlAuthenticate = '/api/authenticate'
@@ -82,8 +82,8 @@ export const reqStartImport = () => {
   return req<{}, StartImport>('post', urlStartImport)
 }
 
-export const reqScreenshot = (id: string) => {
-  return req<{}, Screenshot>('get', `${urlScreenshot}/${id}`)
+export const reqMedia = (id: string) => {
+  return req<{}, Media>('get', `${urlMedia}/${id}`)
 }
 
 export const reqAbout = () => {
@@ -116,7 +116,7 @@ const socketHost = window.location.host
 
 interface SocketParams {
   want_settings?: 0 | 1
-  want_screenshot_hash?: string
+  want_media_hash?: string
   token?: string
 }
 
@@ -129,7 +129,7 @@ export const newSocket = (params: SocketParams) => {
 
 export interface Block {
   id: number
-  screenshot_id: number
+  media_id: number
   index: number
   min_x: number
   min_y: number
@@ -138,8 +138,11 @@ export interface Block {
   body: string
 }
 
-export interface Screenshot {
+export type MediaType = "screenshot" | "video"
+
+export interface Media {
   id: number
+  type: MediaType
   hash: string
   timestamp: any
   dim_width: number
@@ -156,7 +159,7 @@ export interface Similarity {
 }
 
 export interface Search {
-  screenshots?: (Screenshot & Similarity)[]
+  medias?: (Media & Similarity)[]
   took: number
 }
 
