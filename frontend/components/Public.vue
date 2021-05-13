@@ -2,10 +2,10 @@
   <div class="bg-gray-50 min-h-screen">
     <div class="container flex flex-col gap-6 p-6 mx-auto">
       <!-- block image or loading -->
-      <media-background v-show="imageHave" :hash="media?.hash || ''" class="box p-3">
-        <img class="mx-auto" :src="image" @load="imageLoaded" />
+      <media-background v-show="mediaHave" :hash="media?.hash" class="box p-3">
+        <media-highlight controls :hash="media?.hash" class="mx-auto" @loaded="mediaLoaded" />
       </media-background>
-      <loading-spinner v-show="!imageHave" class="bg-gray-100" text="processing image" />
+      <loading-spinner v-show="!mediaHave" class="bg-gray-100" text="processing image" />
       <!-- block text or loading -->
       <div v-show="blocks.length" class="box padded font-mono text-sm bg-white">
         <p v-for="(block, i) in blocks" :key="i">
@@ -19,6 +19,7 @@
 
 <script setup lang="ts">
 import MediaBackground from './MediaBackground.vue'
+import MediaHighlight from './MediaHighlight.vue'
 import LoadingSpinner from './LoadingSpinner.vue'
 
 import { ref, computed, onMounted } from 'vue'
@@ -30,19 +31,15 @@ const store = useStore()
 const route = useRoute()
 const hash = (route.params.hash as string) || ''
 
-const image = ref('')
-const imageHave = ref(false)
-const imageLoaded = (_: Event) => {
-  imageHave.value = true
+const mediaHave = ref(false)
+const mediaLoaded = (_: Event) => {
+  mediaHave.value = true
 }
 
 const media = computed(() => store.getMediaByHash(hash))
 const blocks = computed(() => store.getBlocksByHash(hash))
 
 const requestMedia = async () => {
-  const now = new Date()
-  image.value = `${urlMedia}/${hash}/raw?t=${now.valueOf()}`
-
   await store.loadMedia(hash)
 }
 

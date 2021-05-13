@@ -1,5 +1,5 @@
 <template>
-  <input class="hidden" ref="elm" type="file" accept="image/*" @change="select" />
+  <input class="hidden" ref="elm" type="file" accept="image/*, video/*" @change="select" />
   <div class="hover:opacity-100 padded fixed bottom-0 right-0 bg-gray-200 rounded-tl opacity-75">
     <div class="hover:text-gray-900 hover:cursor-pointer flex items-center gap-2 text-gray-600" @click="click">
       <i class="fas fa-upload text-sm"></i>

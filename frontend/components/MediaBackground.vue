@@ -9,13 +9,13 @@ import { defineProps, computed } from 'vue'
 import useStore from '../composables/useStore'
 
 const props = defineProps<{
-  hash: string
+  hash?: string
 }>()
 
 const ALPHA = '88'
 const store = useStore()
 
-const media = computed(() => store.getMediaByHash(props.hash))
+const media = computed(() => store.getMediaByHash(props.hash || ''))
 const dominantStyle = computed(() => {
   const backgroundColor = `${media.value?.dominant_colour}${ALPHA}`
   return { backgroundColor }

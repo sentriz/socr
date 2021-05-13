@@ -7,7 +7,7 @@
       <div class="bg-gray-50 h-full p-6 space-y-6 overflow-y-auto">
         <search-sidebar-header :hash="media.hash" />
         <media-background :hash="media.hash" class="box p-3">
-          <media-highlight :hash="media.hash" class="mx-auto" />
+          <media-highlight controls :hash="media.hash" class="mx-auto" />
         </media-background>
         <div v-if="blocks.length" class="box padded font-mono text-sm bg-gray-200">
           <p v-for="(block, i) in blocks" :key="i" :class="{ 'bg-yellow-300': highlightedBlocksIndexes.has(i) }">
@@ -20,10 +20,10 @@
 </template>
 
 <script setup lang="ts">
+import MediaBackground from './MediaBackground.vue'
 import MediaHighlight from './MediaHighlight.vue'
 import TransitionFade from './TransitionFade.vue'
 import TransitionSlide from './TransitionSlideX.vue'
-import MediaBackground from './MediaBackground.vue'
 import SearchSidebarHeader from './SearchSidebarHeader.vue'
 
 import { computed, defineProps, ref, watch } from 'vue'
