@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.0](https://www.github.com/sentriz/socr/compare/v0.2.0...v0.3.0) (2021-05-13)
+
+
+### Features
+
+* **importer:** expand importer for video mimes ([4316396](https://www.github.com/sentriz/socr/commit/4316396d7e935dbb106eb5ed023532585f7996bf))
+* **sql:** update schema for videos ([254fe71](https://www.github.com/sentriz/socr/commit/254fe7128a73d01f884b2aeb25c0af2e34b1946f))
+
+
+### Bug Fixes
+
+* **scanner:** try RFC3339 and add some shit tests ([d108241](https://www.github.com/sentriz/socr/commit/d1082412a440e6c852357516eb1d9daeec834e39))
+
 ## [0.2.0](https://www.github.com/sentriz/socr/compare/v0.1.3...v0.2.0) (2021-05-12)
 
 
