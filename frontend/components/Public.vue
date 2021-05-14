@@ -32,7 +32,7 @@ const route = useRoute()
 const hash = (route.params.hash as string) || ''
 
 const mediaHave = ref(false)
-const mediaLoaded = () => mediaHave.value = true
+const mediaLoaded = () => (mediaHave.value = true)
 
 const media = computed(() => store.getMediaByHash(hash))
 const blocks = computed(() => store.getBlocksByHash(hash))

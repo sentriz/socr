@@ -3,7 +3,8 @@
     <div class="md:flex-row flex flex-col gap-2">
       <input v-model="reqQuery" class="inp w-full" type="text" placeholder="enter media text query" />
       <search-filter label="sort by" :items="reqSortOptions" v-model:selected="reqSortOption" />
-      <search-filter label="directory" :items="reqFilterOptions" v-model:selected="reqFilterOption" />
+      <search-filter label="media" :items="reqMediaOptions" v-model:selected="reqMediaOption" />
+      <search-filter label="directory" :items="reqDirOptions" v-model:selected="reqDirOption" />
     </div>
     <div ref="scroller">
       <p v-if="!loading" class="text-right text-gray-500">fetched {{ respTook.toFixed(2) }}ms</p>
@@ -41,7 +42,7 @@ import { watch, computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDebounce } from '@vueuse/core'
 import { isError, SortOrder, reqDirectories } from '../api'
-import type { PayloadSearch } from '../api'
+import type { PayloadSearch, MediaType } from '../api'
 import useStore from '../composables/useStore'
 import useInfiniteScroll from '../composables/useInfiniteScroll'
 import useLoading from '../composables/useLoading'
@@ -66,10 +67,17 @@ const reqSortOptionsSimilarity = [reqSortSimilarity, reqSortTimeDesc, reqSortTim
 const reqSortOptions = ref(reqSortOptionsDefault)
 const reqSortOption = ref(reqSortTimeDesc)
 
-type Filter = { label: string; icon: string; directory?: string }
-const reqFilterAll: Filter = { label: 'all', icon: 'fas fa-asterisk' }
-const reqFilterOptions = ref([reqFilterAll])
-const reqFilterOption = ref(reqFilterAll)
+type Dir = { label: string; icon: string; directory?: string }
+const reqDirAll: Dir = { label: 'all', icon: 'fas fa-asterisk' }
+const reqDirOptions = ref([reqDirAll])
+const reqDirOption = ref(reqDirAll)
+
+type Media = { label: string; icon: string; media?: MediaType }
+const reqMediaAny: Media = { label: 'any', icon: 'fas fa-asterisk' }
+const reqMediaImage: Media = { label: 'image', icon: 'fas fa-video', media: 'image' }
+const reqMediaVideo: Media = { label: 'video', icon: 'fas fa-image', media: 'video' }
+const reqMediaOptions = ref([reqMediaAny, reqMediaImage, reqMediaVideo])
+const reqMediaOption = ref(reqMediaAny)
 
 const respTook = ref(0)
 const respHasMore = ref(true)
@@ -84,7 +92,8 @@ const fetchMedias = async () => {
     limit: reqPageSize,
     offset: reqPageSize * reqPageNum.value,
     sort: { field: reqSortOption.value.field, order: reqSortOption.value.order },
-    directory: reqFilterOption.value.directory,
+    directory: reqDirOption.value.directory,
+    media: reqMediaOption.value.media,
   }
 
   console.log('loading page #%d', reqPageNum.value)
@@ -108,7 +117,7 @@ const resetParameters = () => {
   respHasMore.value = true
 }
 
-const resetFilters = () => {
+const resetDirs = () => {
   if (reqQuery.value && !reqSortOptions.value.includes(reqSortSimilarity)) {
     reqSortOptions.value = reqSortOptionsSimilarity
     reqSortOption.value = reqSortSimilarity
@@ -121,9 +130,9 @@ const resetFilters = () => {
 
 const scroller = useInfiniteScroll(fetchMedias)
 
-watch([reqSortOption, reqFilterOption, reqQueryDebounced], () => {
+watch([reqSortOption, reqDirOption, reqMediaOption, reqQueryDebounced], () => {
   resetParameters()
-  resetFilters()
+  resetDirs()
   fetchMedias()
 })
 
@@ -136,7 +145,7 @@ onMounted(async () => {
   if (isError(resp)) return
 
   for (const dir of resp.result) {
-    reqFilterOptions.value.push({
+    reqDirOptions.value.push({
       label: dir.directory_alias,
       icon: dir.is_uploads ? 'fas fa-folder-plus' : 'fas fa-folder',
       directory: dir.directory_alias,

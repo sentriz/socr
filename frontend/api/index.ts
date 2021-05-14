@@ -63,6 +63,7 @@ export interface PayloadSearch {
   offset: number
   sort: PayloadSort
   directory?: string
+  media?: MediaType
 }
 
 export const reqSearch = (data: PayloadSearch) => {
