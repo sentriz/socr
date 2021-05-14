@@ -1,5 +1,12 @@
 # Changelog
 
+### [0.2.2](https://www.github.com/sentriz/socr/compare/v0.2.1...v0.2.2) (2021-05-14)
+
+
+### Bug Fixes
+
+* **ci:** install build deps for prod image ([f3528ba](https://www.github.com/sentriz/socr/commit/f3528ba688f485d68f6c494c0775d1a964e47198))
+
 ### [0.2.1](https://www.github.com/sentriz/socr/compare/v0.1.3...v0.2.1) (2021-05-14)
 
 
