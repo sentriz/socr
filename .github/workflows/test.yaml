@@ -18,7 +18,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update -qq
-          sudo apt install -y -qq libtesseract-dev libleptonica-dev ffmpeg build-essential libavcodec-dev libavutil-dev libavformat-dev libswscale-dev libgraphicsmagick1-dev
+          sudo apt install -y -qq build-essential libtesseract-dev libleptonica-dev libavcodec-dev libavutil-dev libavformat-dev libswscale-dev libgraphicsmagick1-dev
       - name: Lint
         uses: golangci/golangci-lint-action@v2
         with:

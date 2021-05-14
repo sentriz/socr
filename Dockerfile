@@ -7,7 +7,7 @@ RUN PRODUCTION=true npm run-script build
 
 FROM golang:1.16-buster AS builder-backend
 RUN apt-get update -qq
-RUN apt-get install -y -qq libtesseract-dev libleptonica-dev
+RUN apt-get install -y -qq build-essential libtesseract-dev libleptonica-dev libavcodec-dev libavutil-dev libavformat-dev libswscale-dev libgraphicsmagick1-dev
 
 WORKDIR /src
 COPY . .
@@ -19,7 +19,7 @@ FROM debian:buster-slim
 LABEL org.opencontainers.image.source https://github.com/sentriz/socr
 RUN apt-get update -qq
 ENV TESSDATA_PREFIX=/usr/share/tesseract-ocr/4.00/tessdata/
-RUN apt-get install -y -qq tesseract-ocr-eng ffmpeg
+RUN apt-get install -y -qq tesseract-ocr-eng
 
 COPY --from=builder-backend /src/socr /
 ENV SOCR_LISTEN_ADDR :80
