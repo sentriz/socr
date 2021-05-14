@@ -65,6 +65,7 @@ func (db *DB) CreateMedia(media *Media) (*Media, error) {
 type SearchMediasOptions struct {
 	Body      string
 	Directory string
+	Media     MediaType
 	Limit     int
 	Offset    int
 	SortField string
@@ -125,6 +126,9 @@ func (db *DB) SearchMedias(options SearchMediasOptions) ([]*Media, error) {
 	if !isSortOrder(options.SortOrder) {
 		return nil, fmt.Errorf("invalid sort order %q provided", options.SortOrder)
 	}
+	if options.Media != "" && !isMediaType(options.Media) {
+		return nil, fmt.Errorf("invalid media type %q provided", options.Media)
+	}
 
 	q := db.
 		Select("medias.*").
@@ -146,6 +150,9 @@ func (db *DB) SearchMedias(options SearchMediasOptions) ([]*Media, error) {
 			LeftJoin("blocks on blocks.media_id = medias.id").
 			Where("blocks.body %> ?", options.Body).
 			GroupBy("medias.id")
+	}
+	if options.Media != "" {
+		q = q.Where(sq.Eq{"medias.type": options.Media})
 	}
 
 	sql, args, _ := q.ToSql()
@@ -222,19 +229,25 @@ func (db *DB) CountDirectories() ([]*DirectoryCount, error) {
 }
 
 func isSortField(f string) bool {
-	fields := map[string]struct{}{
-		"timestamp":  {},
-		"similarity": {},
+	switch f {
+	case "timestamp", "similarity":
+		return true
 	}
-	_, ok := fields[f]
-	return ok
+	return false
 }
 
 func isSortOrder(f string) bool {
-	fields := map[string]struct{}{
-		"asc":  {},
-		"desc": {},
+	switch f {
+	case "asc", "dec":
+		return true
 	}
-	_, ok := fields[f]
-	return ok
+	return false
+}
+
+func isMediaType(f MediaType) bool {
+	switch f {
+	case MediaTypeImage, MediaTypeVideo:
+		return true
+	}
+	return false
 }

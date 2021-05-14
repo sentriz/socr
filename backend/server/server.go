@@ -227,6 +227,7 @@ func (c *Server) ServeMedia(w http.ResponseWriter, r *http.Request) {
 type ServeSearchPayload struct {
 	Body      string `json:"body"`
 	Directory string `json:"directory"`
+	Media     string `json:"media"`
 	Limit     int    `json:"limit"`
 	Offset    int    `json:"offset"`
 	Sort      struct {
@@ -250,6 +251,7 @@ func (c *Server) ServeSearch(w http.ResponseWriter, r *http.Request) {
 		SortField: payload.Sort.Field,
 		SortOrder: payload.Sort.Order,
 		Directory: payload.Directory,
+		Media:     db.MediaType(payload.Media),
 	})
 	if err != nil {
 		resp.Errorf(w, 500, "searching medias: %v", err)
