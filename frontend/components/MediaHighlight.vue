@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, computed } from 'vue'
+import { defineProps, computed, defineEmit } from 'vue'
 import { urlMedia } from '../api'
 import useStore from '../composables/useStore'
 
@@ -32,7 +32,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmit<(e: string) => void>()
-const loaded = emit('loaded')
+const loaded = () => emit('loaded')
 
 const store = useStore()
 

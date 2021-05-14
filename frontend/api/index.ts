@@ -143,6 +143,7 @@ export type MediaType = 'image' | 'video'
 export interface Media {
   id: number
   type: MediaType
+  mime: string
   hash: string
   timestamp: any
   dim_width: number

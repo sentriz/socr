@@ -24,7 +24,7 @@ import LoadingSpinner from './LoadingSpinner.vue'
 
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { urlMedia, newSocket } from '../api'
+import { newSocket } from '../api'
 import useStore from '../composables/useStore'
 
 const store = useStore()
@@ -32,9 +32,7 @@ const route = useRoute()
 const hash = (route.params.hash as string) || ''
 
 const mediaHave = ref(false)
-const mediaLoaded = (_: Event) => {
-  mediaHave.value = true
-}
+const mediaLoaded = () => mediaHave.value = true
 
 const media = computed(() => store.getMediaByHash(hash))
 const blocks = computed(() => store.getBlocksByHash(hash))
