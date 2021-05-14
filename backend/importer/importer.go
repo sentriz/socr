@@ -26,7 +26,7 @@ func (i *Importer) ImportMedia(decoded *Decoded, timestamp time.Time, dirAlias, 
 	// insert media and dir info, alert clients with update
 	id, isOld, err := i.importMedia(decoded.Filetype, decoded.Hash, decoded.Image, timestamp)
 	if err != nil {
-		return fmt.Errorf("insert media: %w", err)
+		return fmt.Errorf("insert media with props: %w", err)
 	}
 	if err := i.importDirInfo(id, dirAlias, fileName); err != nil {
 		return fmt.Errorf("insert dir info: %w", err)
