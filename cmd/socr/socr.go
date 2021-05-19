@@ -46,6 +46,11 @@ func main() {
 	}
 	defer dbConn.Close()
 
+	if err := dbConn.Migrate(); err != nil {
+		log.Printf("error running migrations: %v", err)
+		return
+	}
+
 	importr := &importer.Importer{
 		DB:             dbConn,
 		Updates:        make(chan string),

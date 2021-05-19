@@ -2,19 +2,23 @@ package db
 
 import (
 	"context"
-	_ "embed" //nolint:golint
+	"embed"
 	"fmt"
+	"io"
+	"io/fs"
 	"log"
+	"sort"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/georgysavva/scany/pgxscan"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 //nolint:gochecknoglobals
-//go:embed schema.sql
-var schema string
+//go:embed migrations
+var migrations embed.FS
 
 type DB struct {
 	*pgxpool.Pool
@@ -25,11 +29,6 @@ func New(dsn string) (*DB, error) {
 	pool, err := waitConnect(context.Background(), dsn, 500*time.Millisecond, 10)
 	if err != nil {
 		return nil, fmt.Errorf("create and connect pool: %w", err)
-	}
-
-	log.Println("executing schema")
-	if _, err := pool.Exec(context.Background(), schema); err != nil {
-		return nil, fmt.Errorf("executing schema: %w", err)
 	}
 
 	return &DB{
@@ -48,6 +47,65 @@ func waitConnect(ctx context.Context, dsn string, interval time.Duration, times 
 		time.Sleep(interval)
 	}
 	return nil, fmt.Errorf("failed after %d tries: %w", times, err)
+}
+
+func (db *DB) SchemaVersion() (int, error) {
+	q := db.
+		Select("version").
+		From("schema_version")
+
+	sql, args, _ := q.ToSql()
+	var result int
+	return result, pgxscan.Get(context.Background(), db, &result, sql, args...)
+}
+
+func (db *DB) SetSchemaVersion(version int) error {
+	q := db.
+		Update("schema_version").
+		Set("version", version)
+
+	sql, args, _ := q.ToSql()
+	_, err := db.Exec(context.Background(), sql, args...)
+	return err
+}
+
+func (db *DB) Migrate() error {
+	files, err := fs.Glob(migrations, "*/*.sql")
+	if err != nil {
+		return fmt.Errorf("globbing migrations: %w", err)
+	}
+
+	sort.Strings(files)
+
+	// select the last version from the db. an err is likely relation
+	// schema_version doesn't exist, meaning the first migration hasn't
+	// run yet. so we can take the zero value to be true
+	versionCurrent, _ := db.SchemaVersion()
+	versionTotal := len(files)
+
+	for i := versionCurrent; i < versionTotal; i++ {
+		fileName := files[i]
+		infoName := fmt.Sprintf("%d/%d %q", i+1, versionTotal, fileName)
+
+		log.Printf("running migration %s", infoName)
+
+		migration, _ := migrations.Open(files[i])
+		migrationBytes, _ := io.ReadAll(migration)
+
+		err := db.BeginFunc(context.Background(), func(tx pgx.Tx) error {
+			_, err := tx.Exec(context.Background(), string(migrationBytes))
+			return err
+		})
+		if err != nil {
+			return fmt.Errorf("running %s: %w", infoName, err)
+		}
+
+		if err := db.SetSchemaVersion(i + 1); err != nil {
+			return fmt.Errorf("updating version: %w", err)
+		}
+	}
+
+	return nil
 }
 
 func (db *DB) CreateMedia(media *Media) (*Media, error) {

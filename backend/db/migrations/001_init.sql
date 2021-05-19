@@ -1,11 +1,18 @@
-create extension if not exists pg_trgm;
+create extension pg_trgm;
+
+create table schema_version (
+    version smallint primary key
+);
+
+insert into schema_version
+    values (0);
 
 create type media_type as enum (
     'image',
     'video'
 );
 
-create table if not exists medias (
+create table medias (
     id serial primary key,
     type media_type not null,
     mime text not null,
@@ -17,16 +24,16 @@ create table if not exists medias (
     blurhash text not null
 );
 
-create unique index if not exists idx_medias_hash on medias (hash);
+create unique index idx_medias_hash on medias (hash);
 
-create table if not exists dir_infos (
+create table dir_infos (
     media_id int references medias (id),
     filename text not null,
     directory_alias text not null,
     primary key (media_id, filename, directory_alias)
 );
 
-create table if not exists blocks (
+create table blocks (
     id serial primary key,
     media_id integer not null references medias (id),
     index int not null,
@@ -37,5 +44,5 @@ create table if not exists blocks (
     body text not null
 );
 
-create index if not exists idx_blocks_body on blocks using gin (body gin_trgm_ops);
+create index idx_blocks_body on blocks using gin (body gin_trgm_ops);
 
