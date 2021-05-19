@@ -296,7 +296,7 @@ func isSortField(f string) bool {
 
 func isSortOrder(f string) bool {
 	switch f {
-	case "asc", "dec":
+	case "asc", "desc":
 		return true
 	}
 	return false
