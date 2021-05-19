@@ -19,7 +19,9 @@ FROM debian:buster-slim
 LABEL org.opencontainers.image.source https://github.com/sentriz/socr
 RUN apt-get update -qq
 ENV TESSDATA_PREFIX=/usr/share/tesseract-ocr/4.00/tessdata/
-RUN apt-get install -y -qq tesseract-ocr-eng
+
+# TODO: static build in previous build step to avoid this
+RUN apt-get install -y -qq tesseract-ocr-eng build-essential libtesseract-dev libleptonica-dev libavcodec-dev libavutil-dev libavformat-dev libswscale-dev libgraphicsmagick1-dev
 
 COPY --from=builder-backend /src/socr /
 ENV SOCR_LISTEN_ADDR :80
