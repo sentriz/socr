@@ -37,7 +37,6 @@ linters:
     - exportloopref
     - forbidigo
     - forcetypeassert
-    - funlen
     - gocognit
     - gofmt
     - goheader
