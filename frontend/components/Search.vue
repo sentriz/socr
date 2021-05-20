@@ -74,8 +74,8 @@ const reqDirOption = ref(reqDirAll)
 
 type Media = { label: string; icon: string; media?: MediaType }
 const reqMediaAny: Media = { label: 'any', icon: 'fas fa-asterisk' }
-const reqMediaImage: Media = { label: 'image', icon: 'fas fa-video', media: 'image' }
-const reqMediaVideo: Media = { label: 'video', icon: 'fas fa-image', media: 'video' }
+const reqMediaImage: Media = { label: 'image', icon: 'fas fa-image', media: 'image' }
+const reqMediaVideo: Media = { label: 'video', icon: 'fas fa-video', media: 'video' }
 const reqMediaOptions = ref([reqMediaAny, reqMediaImage, reqMediaVideo])
 const reqMediaOption = ref(reqMediaAny)
 
