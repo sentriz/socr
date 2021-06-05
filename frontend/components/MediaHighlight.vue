@@ -1,7 +1,7 @@
 <template>
   <div class="w-fit relative">
     <img v-if="media?.type === 'image'" :src="`${url}?u=${new Date()}`" @load="loaded" />
-    <video v-if="media?.type === 'video'" :controls="props.controls" @load="loaded">
+    <video v-if="media?.type === 'video'" :controls="props.controls" @loadstart="loaded">
       <source :src="url" :type="media.mime" />
     </video>
     <svg
