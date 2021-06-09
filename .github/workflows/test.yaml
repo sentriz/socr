@@ -17,8 +17,10 @@ jobs:
           node-version: 16
       - name: Install dependencies
         run: npm install
-      - name: Check
-        run: npm run check
+      - name: Check types
+        run: npm run check-types
+      - name: Check formatting
+        run: npm run check-formatting
   test-backend:
     name: Lint and test backend
     runs-on: ubuntu-latest

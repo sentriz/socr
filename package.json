@@ -4,7 +4,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
-    "check": "vue-tsc --noEmit"
+    "check-types": "vue-tsc --noEmit",
+    "check-formatting": "prettier --check $(git ls-files | grep -E '.(ts|vue|js|json)$')"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.15.3",
