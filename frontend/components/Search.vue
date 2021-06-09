@@ -41,8 +41,8 @@ import UploaderFile from './UploaderFile.vue'
 import { watch, computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDebounce } from '@vueuse/core'
-import { isError, SortOrder, reqDirectories } from '../api'
-import type { PayloadSearch, MediaType } from '../api'
+import { isError, SortOrder, reqDirectories, MediaType } from '../api'
+import type { PayloadSearch } from '../api'
 import useStore from '../composables/useStore'
 import useInfiniteScroll from '../composables/useInfiniteScroll'
 import useLoading from '../composables/useLoading'
@@ -74,8 +74,8 @@ const reqDirOption = ref(reqDirAll)
 
 type Media = { label: string; icon: string; media?: MediaType }
 const reqMediaAny: Media = { label: 'any', icon: 'fas fa-asterisk' }
-const reqMediaImage: Media = { label: 'image', icon: 'fas fa-image', media: 'image' }
-const reqMediaVideo: Media = { label: 'video', icon: 'fas fa-video', media: 'video' }
+const reqMediaImage: Media = { label: 'image', icon: 'fas fa-image', media: MediaType.Image }
+const reqMediaVideo: Media = { label: 'video', icon: 'fas fa-video', media: MediaType.Video }
 const reqMediaOptions = ref([reqMediaAny, reqMediaImage, reqMediaVideo])
 const reqMediaOption = ref(reqMediaAny)
 

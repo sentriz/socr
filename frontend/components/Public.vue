@@ -1,18 +1,20 @@
 <template>
-  <div class="bg-gray-50 min-h-screen">
-    <div class="container flex flex-col gap-6 p-6 mx-auto">
+  <div class="bg-gray-50 flex items-center min-h-screen">
+    <div class="container p-6 mx-auto space-y-6">
       <!-- block image or loading -->
       <media-background v-show="mediaHave" :hash="media?.hash" class="box p-3">
         <media-highlight controls :hash="media?.hash" class="mx-auto" @loaded="mediaLoaded" />
       </media-background>
       <loading-spinner v-show="!mediaHave" class="bg-gray-100" text="processing image" />
       <!-- block text or loading -->
-      <div v-show="blocks.length" class="box padded font-mono text-sm bg-white">
-        <p v-for="(block, i) in blocks" :key="i">
-          {{ block.body }}
-        </p>
-      </div>
-      <loading-spinner v-show="!blocks.length" class="bg-gray-100" text="processing text" />
+      <template v-if="!isVideo">
+        <div v-show="blocks.length" class="box padded font-mono text-sm bg-white">
+          <p v-for="(block, i) in blocks" :key="i">
+            {{ block.body }}
+          </p>
+        </div>
+        <loading-spinner v-show="!blocks.length" class="bg-gray-100" text="processing text" />
+      </template>
     </div>
   </div>
 </template>
@@ -24,7 +26,7 @@ import LoadingSpinner from './LoadingSpinner.vue'
 
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { newSocket } from '../api'
+import { newSocket, MediaType } from '../api'
 import useStore from '../composables/useStore'
 
 const store = useStore()
@@ -36,6 +38,7 @@ const mediaLoaded = () => (mediaHave.value = true)
 
 const media = computed(() => store.getMediaByHash(hash))
 const blocks = computed(() => store.getBlocksByHash(hash))
+const isVideo = computed(() => media.value?.type === MediaType.Video)
 
 const requestMedia = async () => {
   await store.loadMedia(hash)

@@ -139,7 +139,10 @@ export interface Block {
   body: string
 }
 
-export type MediaType = 'image' | 'video'
+export enum MediaType {
+  Image = 'image',
+  Video = 'video',
+}
 
 export interface Media {
   id: number
