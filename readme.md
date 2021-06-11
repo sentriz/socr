@@ -1,3 +1,5 @@
+![](.github/socr.png)
+
 ## socr
 
 please see example [docker-compose](./docker-compose.yml) and run
