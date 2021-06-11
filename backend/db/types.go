@@ -4,15 +4,16 @@ import (
 	"time"
 )
 
+type BlockID int
 type Block struct {
-	ID      int    `db:"id"       json:"id"`
-	MediaID int    `db:"media_id" json:"media_id"`
-	Index   int    `db:"index"    json:"index"`
-	MinX    int    `db:"min_x"    json:"min_x"`
-	MinY    int    `db:"min_y"    json:"min_y"`
-	MaxX    int    `db:"max_x"    json:"max_x"`
-	MaxY    int    `db:"max_y"    json:"max_y"`
-	Body    string `db:"body"     json:"body"`
+	ID      BlockID `db:"id"       json:"id"`
+	MediaID MediaID `db:"media_id" json:"media_id"`
+	Index   int     `db:"index"    json:"index"`
+	MinX    int     `db:"min_x"    json:"min_x"`
+	MinY    int     `db:"min_y"    json:"min_y"`
+	MaxX    int     `db:"max_x"    json:"max_x"`
+	MaxY    int     `db:"max_y"    json:"max_y"`
+	Body    string  `db:"body"     json:"body"`
 }
 
 type MediaType string
@@ -22,8 +23,9 @@ const (
 	MediaTypeVideo MediaType = "video"
 )
 
+type MediaID int
 type Media struct {
-	ID                int       `db:"id"                 json:"id"`
+	ID                MediaID   `db:"id"                 json:"id"`
 	Type              MediaType `db:"type"               json:"type"`
 	MIME              string    `db:"mime"               json:"mime"`
 	Hash              string    `db:"hash"               json:"hash"`
@@ -39,9 +41,9 @@ type Media struct {
 }
 
 type DirInfo struct {
-	MediaID        int    `db:"media_id"        json:"media_id"`
-	Filename       string `db:"filename"        json:"filename"`
-	DirectoryAlias string `db:"directory_alias" json:"directory_alias"`
+	MediaID        MediaID `db:"media_id"        json:"media_id"`
+	Filename       string  `db:"filename"        json:"filename"`
+	DirectoryAlias string  `db:"directory_alias" json:"directory_alias"`
 }
 
 type DirectoryCount struct {

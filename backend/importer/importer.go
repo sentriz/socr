@@ -46,7 +46,7 @@ func (i *Importer) ImportMedia(decoded *Decoded, timestamp time.Time, dirAlias, 
 	return nil
 }
 
-func (i *Importer) importMedia(filetype *imagery.Filetype, hash string, image image.Image, timestamp time.Time) (int, bool, error) {
+func (i *Importer) importMedia(filetype *imagery.Filetype, hash string, image image.Image, timestamp time.Time) (db.MediaID, bool, error) {
 	old, err := i.DB.GetMediaByHash(hash)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return 0, false, fmt.Errorf("getting media by hash: %w", err)
@@ -80,7 +80,7 @@ func (i *Importer) importMedia(filetype *imagery.Filetype, hash string, image im
 	return new.ID, false, nil
 }
 
-func (i *Importer) importBlocks(id int, image image.Image) error {
+func (i *Importer) importBlocks(id db.MediaID, image image.Image) error {
 	imageGrey := imagery.GreyScale(image)
 	imageBig := imagery.Resize(imageGrey, imagery.ScaleFactor)
 	imageEncoded := &bytes.Buffer{}
@@ -111,7 +111,7 @@ func (i *Importer) importBlocks(id int, image image.Image) error {
 	return nil
 }
 
-func (i *Importer) importDirInfo(id int, dirAlias string, fileName string) error {
+func (i *Importer) importDirInfo(id db.MediaID, dirAlias string, fileName string) error {
 	dirInfo := &db.DirInfo{
 		Filename:       fileName,
 		DirectoryAlias: dirAlias,
