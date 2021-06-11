@@ -81,11 +81,11 @@ func (db *DB) Migrate() error {
 	// schema_version doesn't exist, meaning the first migration hasn't
 	// run yet. so we can take the zero value to be true
 	versionCurrent, _ := db.SchemaVersion()
-	versionTotal := len(files)
+	versionLatest := len(files)
 
-	for i := versionCurrent; i < versionTotal; i++ {
+	for i := versionCurrent; i < versionLatest; i++ {
 		fileName := files[i]
-		infoName := fmt.Sprintf("%d/%d %q", i+1, versionTotal, fileName)
+		infoName := fmt.Sprintf("%d/%d %q", i+1, versionLatest, fileName)
 
 		log.Printf("running migration %s", infoName)
 
