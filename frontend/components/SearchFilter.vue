@@ -21,10 +21,11 @@ import SearchFilterItem from './SearchFilterItem.vue'
 
 import { onClickOutside } from '@vueuse/core'
 import { defineProps, defineEmit, ref } from 'vue'
+import type { Component } from 'vue'
 
 interface Item {
   label: string
-  icon: string
+  icon: Component
 }
 
 const emit = defineEmit<(e: string, v: Item) => void>()

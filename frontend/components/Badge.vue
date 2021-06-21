@@ -1,14 +1,5 @@
 <template>
-  <span class="inline-block px-2 space-x-1 text-white rounded">
-    <i v-if="props.icon" :class="props.icon" class="text-sm" />
-    <span><slot /></span>
+  <span class="inline-flex items-center gap-0.5 py-1 px-2 h-6 space-x-1 text-md text-white rounded">
+    <slot />
   </span>
 </template>
-
-<script setup lang="ts">
-import { defineProps } from 'vue'
-
-const props = defineProps<{
-  icon?: string
-}>()
-</script>

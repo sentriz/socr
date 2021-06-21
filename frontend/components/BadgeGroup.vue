@@ -1,7 +1,7 @@
 <template>
-  <span class="whitespace-nowrap">
-    {{ props.label }}
-    <span class="space-x-2">
+  <span class="whitespace-nowrap inline-flex items-center gap-2 leading-none">
+    <span v-if="props.label">{{ props.label }}</span>
+    <span class="inline-flex items-center space-x-2">
       <slot />
     </span>
   </span>

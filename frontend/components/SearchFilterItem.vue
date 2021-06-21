@@ -1,15 +1,16 @@
 <template>
-  <div class="padded w-full space-x-3 text-gray-800 cursor-pointer">
-    <i :class="props.icon"></i>
+  <div class="padded flex items-center w-full space-x-3 text-gray-800 cursor-pointer">
+    <component :is="props.icon" class="h-5" />
     <span class="select-none">{{ props.label }}</span>
   </div>
 </template>
 
 <script setup lang="ts">
 import { defineProps } from 'vue'
+import type { Component } from 'vue'
 
 const props = defineProps<{
   label: string
-  icon: string
+  icon: Component
 }>()
 </script>

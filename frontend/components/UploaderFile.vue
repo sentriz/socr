@@ -2,7 +2,7 @@
   <input class="hidden" ref="elm" type="file" accept="image/*, video/*" @change="select" />
   <div class="hover:opacity-100 padded fixed bottom-0 right-0 bg-gray-200 rounded-tl opacity-75">
     <div class="hover:text-gray-900 hover:cursor-pointer flex items-center gap-2 text-gray-600" @click="click">
-      <i class="fas fa-upload text-sm"></i>
+      <upload-icon class="h-5" />
       <span>upload or paste file</span>
     </div>
   </div>
@@ -16,6 +16,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { isError, reqUpload } from '../api'
 import useLoading from '../composables/useLoading'
+import { UploadIcon } from 'heroicons-vue3/outline'
 
 const router = useRouter()
 const { loading, load } = useLoading(reqUpload)

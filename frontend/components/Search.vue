@@ -39,6 +39,7 @@ import UploaderClipboard from './UploaderClipboard.vue'
 import UploaderFile from './UploaderFile.vue'
 
 import { watch, computed, onMounted, ref } from 'vue'
+import type { Component } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDebounce } from '@vueuse/core'
 import { isError, SortOrder, reqDirectories, MediaType } from '../api'
@@ -46,6 +47,16 @@ import type { PayloadSearch } from '../api'
 import useStore from '../composables/useStore'
 import useInfiniteScroll from '../composables/useInfiniteScroll'
 import useLoading from '../composables/useLoading'
+import {
+  SearchIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  DocumentDuplicateIcon,
+  CameraIcon,
+  VideoCameraIcon,
+  FolderAddIcon,
+  FolderIcon,
+} from 'heroicons-vue3/outline'
 
 const store = useStore()
 const route = useRoute()
@@ -58,24 +69,24 @@ const reqPageNum = ref(0)
 const reqQueryDebounced = useDebounce(reqQuery, 100)
 const reqPageSize = 25
 
-type Sort = { label: string; icon: string; field: string; order: SortOrder }
-const reqSortSimilarity: Sort = { label: 'similarity', icon: 'fas fa-search', field: 'similarity', order: SortOrder.Desc }
-const reqSortTimeDesc: Sort = { label: 'time desc', icon: 'fas fa-chevron-down', field: 'timestamp', order: SortOrder.Desc }
-const reqSortTimeAsc: Sort = { label: 'time asc', icon: 'fas fa-chevron-up', field: 'timestamp', order: SortOrder.Asc }
+type Sort = { label: string; icon: Component; field: string; order: SortOrder }
+const reqSortSimilarity: Sort = { label: 'similarity', icon: SearchIcon, field: 'similarity', order: SortOrder.Desc }
+const reqSortTimeDesc: Sort = { label: 'time desc', icon: ChevronDownIcon, field: 'timestamp', order: SortOrder.Desc }
+const reqSortTimeAsc: Sort = { label: 'time asc', icon: ChevronUpIcon, field: 'timestamp', order: SortOrder.Asc }
 const reqSortOptionsDefault = [reqSortTimeDesc, reqSortTimeAsc]
 const reqSortOptionsSimilarity = [reqSortSimilarity, reqSortTimeDesc, reqSortTimeAsc]
 const reqSortOptions = ref(reqSortOptionsDefault)
 const reqSortOption = ref(reqSortTimeDesc)
 
-type Dir = { label: string; icon: string; directory?: string }
-const reqDirAll: Dir = { label: 'all', icon: 'fas fa-asterisk' }
+type Dir = { label: string; icon: Component; directory?: string }
+const reqDirAll: Dir = { label: 'all', icon: DocumentDuplicateIcon }
 const reqDirOptions = ref([reqDirAll])
 const reqDirOption = ref(reqDirAll)
 
-type Media = { label: string; icon: string; media?: MediaType }
-const reqMediaAny: Media = { label: 'any', icon: 'fas fa-asterisk' }
-const reqMediaImage: Media = { label: 'image', icon: 'fas fa-image', media: MediaType.Image }
-const reqMediaVideo: Media = { label: 'video', icon: 'fas fa-video', media: MediaType.Video }
+type Media = { label: string; icon: Component; media?: MediaType }
+const reqMediaAny: Media = { label: 'any', icon: DocumentDuplicateIcon }
+const reqMediaImage: Media = { label: 'image', icon: CameraIcon, media: MediaType.Image }
+const reqMediaVideo: Media = { label: 'video', icon: VideoCameraIcon, media: MediaType.Video }
 const reqMediaOptions = ref([reqMediaAny, reqMediaImage, reqMediaVideo])
 const reqMediaOption = ref(reqMediaAny)
 
@@ -147,7 +158,7 @@ onMounted(async () => {
   for (const dir of resp.result) {
     reqDirOptions.value.push({
       label: dir.directory_alias,
-      icon: dir.is_uploads ? 'fas fa-folder-plus' : 'fas fa-folder',
+      icon: dir.is_uploads ? FolderAddIcon : FolderIcon,
       directory: dir.directory_alias,
     })
   }
