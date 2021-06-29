@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -44,6 +45,7 @@ func (c *Server) Router() *mux.Router {
 	r.Use(c.WithLogging())
 	r.HandleFunc("/api/authenticate", c.ServeAuthenticate)
 	r.HandleFunc("/api/media/{hash}/raw", c.ServeMediaRaw)
+	r.HandleFunc("/api/media/{hash}/thumb", c.ServeMediaThumb)
 	r.HandleFunc("/api/media/{hash}", c.ServeMedia)
 	r.HandleFunc("/api/websocket", c.ServeWebSocket)
 
@@ -201,7 +203,12 @@ func (c *Server) ServeDirectories(w http.ResponseWriter, r *http.Request) {
 
 func (c *Server) ServeMediaRaw(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	row, err := c.DB.GetDirInfoByMediaHash(vars["hash"])
+	hash := vars["hash"]
+	if hash == "" {
+		resp.Errorf(w, http.StatusBadRequest, "no media hash provided")
+		return
+	}
+	row, err := c.DB.GetDirInfoByMediaHash(hash)
 	if err != nil {
 		resp.Errorf(w, http.StatusBadRequest, "requested media not found: %v", err)
 		return
@@ -214,9 +221,29 @@ func (c *Server) ServeMediaRaw(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, filepath.Join(directory, row.Filename))
 }
 
+func (c *Server) ServeMediaThumb(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	hash := vars["hash"]
+	if hash == "" {
+		resp.Errorf(w, http.StatusBadRequest, "no media hash provided")
+		return
+	}
+	row, err := c.DB.GetThumbnailByMediaHash(hash)
+	if err != nil {
+		resp.Errorf(w, http.StatusBadRequest, "requested media not found: %v", err)
+		return
+	}
+	http.ServeContent(w, r, hash, row.Timestamp, bytes.NewReader(row.Data))
+}
+
 func (c *Server) ServeMedia(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	media, err := c.DB.GetMediaByHashWithRelations(vars["hash"])
+	hash := vars["hash"]
+	if hash == "" {
+		resp.Errorf(w, http.StatusBadRequest, "no media hash provided")
+		return
+	}
+	media, err := c.DB.GetMediaByHashWithRelations(hash)
 	if err != nil {
 		resp.Errorf(w, http.StatusBadRequest, "requested media not found: %v", err)
 		return

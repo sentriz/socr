@@ -1,9 +1,9 @@
 <template>
   <div class="w-fit relative">
-    <img v-if="media?.type === 'image'" :src="`${url}?u=${new Date()}`" @load="loaded" />
-    <video v-if="media?.type === 'video'" :controls="props.controls" @loadstart="loaded">
+    <video v-if="rich && media?.type === MediaType.Video" controls @loadstart="loaded">
       <source :src="url" :type="media.mime" />
     </video>
+    <img v-else :src="url" @load="loaded" />
     <svg
       v-if="media && blocks.length"
       :viewBox="`0 0 ${media.dim_width} ${media.dim_height}`"
@@ -23,12 +23,12 @@
 
 <script setup lang="ts">
 import { defineProps, computed, defineEmit } from 'vue'
-import { urlMedia } from '../api'
+import { urlMedia, MediaType } from '../api'
 import useStore from '../composables/useStore'
 
 const props = defineProps<{
   hash?: string
-  controls?: boolean
+  rich?: boolean
 }>()
 
 const emit = defineEmit<(e: string) => void>()
@@ -38,5 +38,10 @@ const store = useStore()
 
 const media = computed(() => store.getMediaByHash(props.hash || ''))
 const blocks = computed(() => store.getHighlightedBlocksByHash(props.hash || ''))
-const url = computed(() => `${urlMedia}/${media.value?.hash}/raw`)
+const url = computed(
+  () =>
+    props.rich
+      ? `${urlMedia}/${media.value?.hash}/raw` // full image or video
+      : `${urlMedia}/${media.value?.hash}/thumb`, // ~200px thumb
+)
 </script>

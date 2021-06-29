@@ -102,11 +102,15 @@ const (
 	ScaleFactor = 3
 )
 
-func Resize(img image.Image, factor int) image.Image {
+func ResizeFactor(img image.Image, factor int) image.Image {
 	return resize.Resize(
 		uint(img.Bounds().Max.X*factor), 0,
 		img, resize.Lanczos3,
 	)
+}
+
+func Resize(img image.Image, width, height uint) image.Image {
+	return resize.Resize(width, height, img, resize.Lanczos3)
 }
 
 func ScaleDownRect(rect image.Rectangle) image.Rectangle {

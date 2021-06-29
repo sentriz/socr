@@ -244,6 +244,18 @@ func (db *DB) CreateDirInfo(dirInfo *DirInfo) (*DirInfo, error) {
 	return &result, pgxscan.Get(context.Background(), db, &result, sql, args...)
 }
 
+func (db *DB) CreateThumbnail(thumbnail *Thumbnail) (*Thumbnail, error) {
+	q := db.
+		Insert("thumbnails").
+		Columns("media_id", "mime", "dim_width", "dim_height", "timestamp", "data").
+		Values(thumbnail.MediaID, thumbnail.MIME, thumbnail.DimWidth, thumbnail.DimHeight, thumbnail.Timestamp, thumbnail.Data).
+		Suffix("returning *")
+
+	sql, args, _ := q.ToSql()
+	var result Thumbnail
+	return &result, pgxscan.Get(context.Background(), db, &result, sql, args...)
+}
+
 func (db *DB) GetDirInfo(directoryAlias string, filename string) (*DirInfo, error) {
 	q := db.
 		Select("*").
@@ -269,6 +281,19 @@ func (db *DB) GetDirInfoByMediaHash(hash string) (*DirInfo, error) {
 
 	sql, args, _ := q.ToSql()
 	var result DirInfo
+	return &result, pgxscan.Get(context.Background(), db, &result, sql, args...)
+}
+
+func (db *DB) GetThumbnailByMediaHash(hash string) (*Thumbnail, error) {
+	q := db.
+		Select("thumbnails.*").
+		From("thumbnails").
+		Join("medias on medias.id = thumbnails.media_id").
+		Where(sq.Eq{"medias.hash": hash}).
+		Limit(1)
+
+	sql, args, _ := q.ToSql()
+	var result Thumbnail
 	return &result, pgxscan.Get(context.Background(), db, &result, sql, args...)
 }
 

@@ -21,6 +21,7 @@ import (
 )
 
 const uploadsAlias = "uploads"
+const thumbnailWidth uint = 315
 
 var (
 	confListenAddr    = mustEnv("SOCR_LISTEN_ADDR")
@@ -55,6 +56,8 @@ func main() {
 		DB:             dbConn,
 		Updates:        make(chan string),
 		DefaultEncoder: imagery.EncodePNG,
+		DefaultMIME:    imagery.MIMEPNG,
+		ThumbnailWidth: thumbnailWidth,
 	}
 	scanr := &scanner.Scanner{
 		Running:                 new(int32),

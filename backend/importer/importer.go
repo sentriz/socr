@@ -20,16 +20,21 @@ type Importer struct {
 	DB             *db.DB
 	Updates        chan string
 	DefaultEncoder imagery.EncodeFunc
+	DefaultMIME    imagery.MIME
+	ThumbnailWidth uint
 }
 
 func (i *Importer) ImportMedia(decoded *Decoded, timestamp time.Time, dirAlias, fileName string) error {
-	// insert media and dir info, alert clients with update
+	// insert media, thumbnail, and dir info, alert clients with update
 	id, isOld, err := i.importMedia(decoded.Filetype, decoded.Hash, decoded.Image, timestamp)
 	if err != nil {
-		return fmt.Errorf("insert media with props: %w", err)
+		return fmt.Errorf("import media with props: %w", err)
 	}
 	if err := i.importDirInfo(id, dirAlias, fileName); err != nil {
-		return fmt.Errorf("insert dir info: %w", err)
+		return fmt.Errorf("import dir info: %w", err)
+	}
+	if err := i.importThumbnail(id, decoded.Image); err != nil {
+		return fmt.Errorf("import thumbnail: %w", err)
 	}
 	i.Updates <- decoded.Hash
 
@@ -39,7 +44,7 @@ func (i *Importer) ImportMedia(decoded *Decoded, timestamp time.Time, dirAlias, 
 
 	// insert blocks, alert clients with update
 	if err := i.importBlocks(id, decoded.Image); err != nil {
-		return fmt.Errorf("insert blocks: %w", err)
+		return fmt.Errorf("import blocks: %w", err)
 	}
 	i.Updates <- decoded.Hash
 
@@ -62,14 +67,14 @@ func (i *Importer) importMedia(filetype *imagery.Filetype, hash string, image im
 		return 0, false, fmt.Errorf("calculate blurhash: %w", err)
 	}
 
-	propSize := image.Bounds().Size()
+	propDimensions := image.Bounds().Size()
 	new, err := i.DB.CreateMedia(&db.Media{
 		Hash:           hash,
 		Type:           db.MediaType(filetype.Type),
 		MIME:           string(filetype.MIME),
 		Timestamp:      timestamp,
-		DimWidth:       propSize.X,
-		DimHeight:      propSize.Y,
+		DimWidth:       propDimensions.X,
+		DimHeight:      propDimensions.Y,
 		DominantColour: propDominantColour,
 		Blurhash:       propBlurhash,
 	})
@@ -82,7 +87,7 @@ func (i *Importer) importMedia(filetype *imagery.Filetype, hash string, image im
 
 func (i *Importer) importBlocks(id db.MediaID, image image.Image) error {
 	imageGrey := imagery.GreyScale(image)
-	imageBig := imagery.Resize(imageGrey, imagery.ScaleFactor)
+	imageBig := imagery.ResizeFactor(imageGrey, imagery.ScaleFactor)
 	imageEncoded := &bytes.Buffer{}
 	if err := i.DefaultEncoder(imageEncoded, imageBig); err != nil {
 		return fmt.Errorf("encode scaled and greyed image: %w", err)
@@ -107,6 +112,29 @@ func (i *Importer) importBlocks(id db.MediaID, image image.Image) error {
 	}
 	if err := i.DB.CreateBlocks(blocks); err != nil {
 		return fmt.Errorf("inserting blocks: %w", err)
+	}
+	return nil
+}
+
+func (i *Importer) importThumbnail(id db.MediaID, image image.Image) error {
+	resized := imagery.Resize(image, i.ThumbnailWidth, 0)
+	dimensions := resized.Bounds().Size()
+
+	var data bytes.Buffer
+	if err := i.DefaultEncoder(&data, resized); err != nil {
+		return fmt.Errorf("encoding thumbnail: %w", err)
+	}
+
+	thumbnail := &db.Thumbnail{
+		MediaID:   id,
+		MIME:      string(i.DefaultMIME),
+		DimWidth:  dimensions.X,
+		DimHeight: dimensions.Y,
+		Timestamp: time.Now(),
+		Data:      data.Bytes(),
+	}
+	if _, err := i.DB.CreateThumbnail(thumbnail); err != nil {
+		return fmt.Errorf("insert thumbnail: %w", err)
 	}
 	return nil
 }

@@ -40,6 +40,17 @@ type Media struct {
 	Directories       []string  `db:"directories"        json:"directories,omitempty"`
 }
 
+type ThumbnailID int
+type Thumbnail struct {
+	ID        ThumbnailID `db:"id"         json:"id"`
+	MediaID   MediaID     `db:"media_id"   json:"media_id"`
+	MIME      string      `db:"mime"       json:"mime"`
+	DimWidth  int         `db:"dim_width"  json:"dim_width"`
+	DimHeight int         `db:"dim_height" json:"dim_height"`
+	Timestamp time.Time   `db:"timestamp"  json:"timestamp"`
+	Data      []byte      `db:"data"       json:"-"`
+}
+
 type DirInfo struct {
 	MediaID        MediaID `db:"media_id"        json:"media_id"`
 	Filename       string  `db:"filename"        json:"filename"`
