@@ -1,6 +1,6 @@
 <template>
   <div class="w-fit relative">
-    <video v-if="rich && media?.type === MediaType.Video" controls @loadstart="loaded">
+    <video v-if="rich && media?.type === MediaType.Video" :controls="true" @loadstart="loaded">
       <source :src="url" :type="media.mime" />
     </video>
     <img v-else :src="url" @load="loaded" />
@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, computed, defineEmit } from 'vue'
+import { computed } from 'vue'
 import { urlMedia, MediaType } from '../api'
 import useStore from '../composables/useStore'
 
@@ -31,7 +31,7 @@ const props = defineProps<{
   rich?: boolean
 }>()
 
-const emit = defineEmit<(e: string) => void>()
+const emit = defineEmits<{ (e: 'loaded'): void }>()
 const loaded = () => emit('loaded')
 
 const store = useStore()

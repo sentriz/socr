@@ -10,7 +10,6 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps } from 'vue'
 import LoadingSpinner from './LoadingSpinner.vue'
 import TransitionFade from './TransitionFade.vue'
 

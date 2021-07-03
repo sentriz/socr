@@ -32,7 +32,7 @@
 import BadgeGroup from './BadgeGroup.vue'
 import Badge from './Badge.vue'
 
-import { computed, defineProps } from 'vue'
+import { computed } from 'vue'
 import { urlMedia } from '../api/'
 import useStore from '../composables/useStore'
 import { useTimeAgo } from '@vueuse/core'

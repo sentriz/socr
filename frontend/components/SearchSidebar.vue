@@ -26,7 +26,7 @@ import TransitionFade from './TransitionFade.vue'
 import TransitionSlide from './TransitionSlideX.vue'
 import SearchSidebarHeader from './SearchSidebarHeader.vue'
 
-import { computed, defineProps, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import useStore from '../composables/useStore'
 import { onClickOutside } from '@vueuse/core'
 import { useRouter } from 'vue-router'
