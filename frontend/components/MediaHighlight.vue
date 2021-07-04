@@ -18,12 +18,16 @@
         :height="b.max_y - b.min_y"
       />
     </svg>
+    <div v-if="!rich && media?.type === MediaType.Video" class="top-2 right-2 bg-black/80 absolute p-2 rounded-md">
+      <video-camera-icon class="h-5 text-white" />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import { urlMedia, MediaType } from '../api'
+import { VideoCameraIcon } from 'heroicons-vue3/outline'
 import useStore from '../composables/useStore'
 
 const props = defineProps<{
