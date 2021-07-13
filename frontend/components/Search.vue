@@ -23,6 +23,7 @@
       </div>
     </div>
     <loading-spinner v-if="loading" />
+    <search-no-results v-else-if="respPages.length === 0" />
   </div>
   <search-sidebar :hash="sidebarHash" />
   <uploader-clipboard />
@@ -37,6 +38,7 @@ import SearchFilter from './SearchFilter.vue'
 import LoadingSpinner from './LoadingSpinner.vue'
 import UploaderClipboard from './UploaderClipboard.vue'
 import UploaderFile from './UploaderFile.vue'
+import SearchNoResults from './SearchNoResults.vue'
 
 import { watch, computed, onMounted, ref } from 'vue'
 import type { Component } from 'vue'
@@ -66,7 +68,7 @@ const sidebarHash = computed(() => (route.params.hash as string) || '')
 
 const reqQuery = ref('')
 const reqPageNum = ref(0)
-const reqQueryDebounced = useDebounce(reqQuery, 100)
+const reqQueryDebounced = useDebounce(reqQuery, 200)
 const reqPageSize = 25
 
 type Sort = { label: string; icon: Component; field: string; order: SortOrder }
