@@ -68,7 +68,7 @@ const sidebarHash = computed(() => (route.params.hash as string) || '')
 
 const reqQuery = ref('')
 const reqPageNum = ref(0)
-const reqQueryDebounced = useDebounce(reqQuery, 200)
+const reqQueryDebounced = useDebounce(reqQuery, 500)
 const reqPageSize = 25
 
 type Sort = { label: string; icon: Component; field: string; order: SortOrder }
