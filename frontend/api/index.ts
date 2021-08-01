@@ -128,9 +128,12 @@ export const newSocket = (params: SocketParams) => {
   return new WebSocket(`${socketProtocol}//${socketHost}${urlSocket}?${paramsEnc}`)
 }
 
+type ID<U> = number & { __kind: U }
+
+export type BlockID = ID<'Block ID'>
 export interface Block {
-  id: number
-  media_id: number
+  id: BlockID
+  media_id: MediaID
   index: number
   min_x: number
   min_y: number
@@ -144,8 +147,9 @@ export enum MediaType {
   Video = 'video',
 }
 
+export type MediaID = ID<'Media ID'>
 export interface Media {
-  id: number
+  id: MediaID
   type: MediaType
   mime: string
   hash: string
@@ -194,5 +198,5 @@ export interface ImportStatus {
 }
 
 export interface Upload {
-  id: string
+  id: MediaID
 }
