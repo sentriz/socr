@@ -25,5 +25,5 @@
 
 <script setup lang="ts">
 import NavItem from './NavItem.vue'
-import { SearchIcon, CogIcon, LogoutIcon } from 'heroicons-vue3/outline'
+import { SearchIcon, CogIcon, LogoutIcon } from '@heroicons/vue/outline'
 </script>

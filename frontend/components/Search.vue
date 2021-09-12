@@ -58,7 +58,7 @@ import {
   VideoCameraIcon,
   FolderAddIcon,
   FolderIcon,
-} from 'heroicons-vue3/outline'
+} from '@heroicons/vue/outline'
 
 const store = useStore()
 const route = useRoute()

@@ -16,7 +16,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { isError, reqUpload } from '../api'
 import useLoading from '../composables/useLoading'
-import { UploadIcon } from 'heroicons-vue3/outline'
+import { UploadIcon } from '@heroicons/vue/outline'
 
 const router = useRouter()
 const { loading, load } = useLoading(reqUpload)

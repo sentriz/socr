@@ -36,7 +36,7 @@ import { computed } from 'vue'
 import { urlMedia } from '../api/'
 import useStore from '../composables/useStore'
 import { useTimeAgo } from '@vueuse/core'
-import { XIcon, ExternalLinkIcon } from 'heroicons-vue3/outline'
+import { XIcon, ExternalLinkIcon } from '@heroicons/vue/outline'
 
 const props = defineProps<{
   hash: string

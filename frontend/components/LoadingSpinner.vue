@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts">
-import { RefreshIcon } from 'heroicons-vue3/outline'
+import { RefreshIcon } from '@heroicons/vue/outline'
 
 const props = defineProps<{
   text?: string

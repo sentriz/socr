@@ -27,7 +27,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { urlMedia, MediaType } from '../api'
-import { VideoCameraIcon } from 'heroicons-vue3/outline'
+import { VideoCameraIcon } from '@heroicons/vue/outline'
 import useStore from '../composables/useStore'
 
 const props = defineProps<{
