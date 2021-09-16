@@ -2,6 +2,7 @@ import { createRouter, createWebHistory, NavigationGuard, RouteRecordRaw } from 
 
 import Search from '../components/Search.vue'
 import Settings from '../components/Settings.vue'
+import Importer from '../components/Importer.vue'
 import Login from '../components/Login.vue'
 import Home from '../components/Home.vue'
 import Public from '../components/Public.vue'
@@ -42,6 +43,11 @@ const routes: RouteRecordRaw[] = [
         path: 'search/:hash?',
         name: 'search',
         component: Search,
+      },
+      {
+        path: 'importer',
+        name: 'importer',
+        component: Importer,
       },
       {
         path: 'settings',

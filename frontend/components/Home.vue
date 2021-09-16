@@ -6,6 +6,10 @@
           <template v-slot:icon><search-icon class="h-5" /></template>
           <template v-slot:name>search</template>
         </nav-item>
+        <nav-item :to="{ name: 'importer' }">
+          <template v-slot:icon><eye-icon class="h-5" /></template>
+          <template v-slot:name>importer</template>
+        </nav-item>
         <nav-item :to="{ name: 'settings' }">
           <template v-slot:icon><cog-icon class="h-5" /></template>
           <template v-slot:name>settings</template>
@@ -25,5 +29,5 @@
 
 <script setup lang="ts">
 import NavItem from './NavItem.vue'
-import { SearchIcon, CogIcon, LogoutIcon } from '@heroicons/vue/outline'
+import { SearchIcon, CogIcon, EyeIcon, LogoutIcon } from '@heroicons/vue/outline'
 </script>

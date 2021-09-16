@@ -1,5 +1,22 @@
 <template>
-  <div class="md:grid-cols-3 grid grid-cols-1 gap-3">
+  <div class="p-3 text-gray-700 bg-gray-100 rounded-lg">
+    after you have set socr up with your various source directories <br />
+    (for example
+    <span class="code">desktop</span>, <span class="code">phone</span>, <span class="code">phone recordings</span>,
+    <span class="code">uploads</span>) <br /><br />
+    then socr can import media a number of ways, including:
+    <ul>
+      <li>&mdash; manual upload from UI, where media is added straight to the <span class="code">uploads</span> dir</li>
+      <li>&mdash; watching source directories for new media</li>
+      <li>&mdash; manually scanning your selected source directories</li>
+      <li class="text-gray-400">&mdash; periodic scans of the folders, coming soon</li>
+    </ul>
+    <br />
+    as the watcher, by design, will only import new media that is sees, it can sometimes be handy to trigger a manual scan an
+    import. so, if this is a fresh socr installation, click "start import" below to iterate all your socr directories and
+    import old media 👍
+  </div>
+  <div class="md:grid-cols-3 grid grid-cols-1 gap-3 mt-6">
     <!-- status table -->
     <table class="col-span-full md:col-span-2 bg-white">
       <colgroup>
@@ -10,9 +27,8 @@
         <td :colspan="2" class="padded border">
           <div class="space-between flex items-center justify-between py-3">
             <span v-if="status?.running && status.last_hash">
-              added
-              <span class="px-2 font-mono text-sm bg-gray-300 rounded">{{ status.last_hash }}</span>
-            </span>
+              added <span class="code">{{ status.last_hash }}</span></span
+            >
             <span v-else-if="status?.running">running</span>
             <span v-else>finished</span>
             <button class="btn" :disabled="status?.running" @click="reqStartImport">start import</button>
@@ -57,9 +73,9 @@
 </template>
 
 <script setup lang="ts">
+import type { ImportStatus } from '../api'
 import { ref, onMounted, computed } from 'vue'
 import { newSocketAuth, urlMedia, reqStartImport, reqImportStatus, isError } from '../api'
-import type { ImportStatus } from '../api'
 
 const status = ref<ImportStatus | undefined>()
 
