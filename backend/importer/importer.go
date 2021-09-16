@@ -25,7 +25,6 @@ type Importer struct {
 }
 
 func (i *Importer) ImportMedia(decoded *Decoded, timestamp time.Time, dirAlias, fileName string) error {
-	// insert media, thumbnail, and dir info, alert clients with update
 	id, isOld, err := i.importMedia(decoded.Filetype, decoded.Hash, decoded.Image, timestamp)
 	if err != nil {
 		return fmt.Errorf("import media with props: %w", err)
@@ -33,16 +32,15 @@ func (i *Importer) ImportMedia(decoded *Decoded, timestamp time.Time, dirAlias, 
 	if err := i.importDirInfo(id, dirAlias, fileName); err != nil {
 		return fmt.Errorf("import dir info: %w", err)
 	}
-	if err := i.importThumbnail(id, decoded.Image); err != nil {
-		return fmt.Errorf("import thumbnail: %w", err)
-	}
 	i.Updates <- decoded.Hash
 
 	if isOld {
 		return nil
 	}
 
-	// insert blocks, alert clients with update
+	if err := i.importThumbnail(id, decoded.Image); err != nil {
+		return fmt.Errorf("import thumbnail: %w", err)
+	}
 	if err := i.importBlocks(id, decoded.Image); err != nil {
 		return fmt.Errorf("import blocks: %w", err)
 	}
