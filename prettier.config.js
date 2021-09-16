@@ -3,4 +3,5 @@ module.exports = {
   trailingComma: 'all',
   semi: false,
   singleQuote: true,
+  plugins: ['prettier-plugin-tailwind-css'],
 }
