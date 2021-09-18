@@ -17,60 +17,112 @@ import (
 	"go.senan.xyz/socr"
 	"go.senan.xyz/socr/backend/db"
 	"go.senan.xyz/socr/backend/directories"
+	"go.senan.xyz/socr/backend/imagery"
 	"go.senan.xyz/socr/backend/importer"
-	"go.senan.xyz/socr/backend/scanner"
 	"go.senan.xyz/socr/backend/server/auth"
 	"go.senan.xyz/socr/backend/server/resp"
 )
 
 type Server struct {
-	DB                      *db.DB
-	Directories             directories.Directories
-	DirectoriesUploadsAlias string
-	SocketUpgrader          websocket.Upgrader
-	Importer                *importer.Importer
-	Scanner                 *scanner.Scanner
-	SocketClientsScanner    map[*websocket.Conn]struct{}
-	SocketClientsImporter   map[string]map[*websocket.Conn]struct{}
-	HMACSecret              string
-	LoginUsername           string
-	LoginPassword           string
-	APIKey                  string
+	db                      *db.DB
+	directories             directories.Directories
+	directoriesUploadsAlias string
+	socketUpgrader          websocket.Upgrader
+	importer                *importer.Importer
+	socketClientsScanner    map[*websocket.Conn]struct{}
+	socketClientsImporter   map[imagery.Hash]map[*websocket.Conn]struct{}
+	hmacSecret              string
+	loginUsername           string
+	loginPassword           string
+	apiKey                  string
+	socketMedias            chan imagery.Hash
+	socketScannerUpdates    chan struct{}
 }
 
-func (c *Server) Router() *mux.Router {
+func New(db *db.DB, importr *importer.Importer, directories directories.Directories, uploadsAlias string, hmacSecret, loginUsername, loginPassword, apkKey string) *Server {
+	servr := &Server{
+		db:                      db,
+		directories:             directories,
+		directoriesUploadsAlias: uploadsAlias,
+		socketUpgrader:          websocket.Upgrader{CheckOrigin: CheckOrigin},
+		importer:                importr,
+		socketClientsScanner:    map[*websocket.Conn]struct{}{},
+		socketClientsImporter:   map[imagery.Hash]map[*websocket.Conn]struct{}{},
+		hmacSecret:              hmacSecret,
+		loginUsername:           loginUsername,
+		loginPassword:           loginPassword,
+		apiKey:                  apkKey,
+		socketMedias:            make(chan imagery.Hash),
+		socketScannerUpdates:    make(chan struct{}),
+	}
+	importr.AddNotifyMediaFunc(func(hash imagery.Hash) {
+		servr.socketMedias <- hash
+	})
+	importr.AddNotifyProgressFunc(func() {
+		servr.socketScannerUpdates <- struct{}{}
+	})
+	return servr
+}
+
+func (s *Server) Router() *mux.Router {
 	// begin normal routes
 	r := mux.NewRouter()
-	r.Use(c.WithCORS())
-	r.Use(c.WithLogging())
-	r.HandleFunc("/api/authenticate", c.ServeAuthenticate)
-	r.HandleFunc("/api/media/{hash}/raw", c.ServeMediaRaw)
-	r.HandleFunc("/api/media/{hash}/thumb", c.ServeMediaThumb)
-	r.HandleFunc("/api/media/{hash}", c.ServeMedia)
-	r.HandleFunc("/api/websocket", c.ServeWebSocket)
+	r.Use(s.WithCORS())
+	r.Use(s.WithLogging())
+	r.HandleFunc("/api/authenticate", s.serveAuthenticate)
+	r.HandleFunc("/api/media/{hash}/raw", s.serveMediaRaw)
+	r.HandleFunc("/api/media/{hash}/thumb", s.serveMediaThumb)
+	r.HandleFunc("/api/media/{hash}", s.serveMedia)
+	r.HandleFunc("/api/websocket", s.serveWebSocket)
 
 	// begin authenticated routes
 	rJWT := r.NewRoute().Subrouter()
-	rJWT.Use(c.WithJWT())
-	rJWT.HandleFunc("/api/ping", c.ServePing)
-	rJWT.HandleFunc("/api/start_import", c.ServeStartImport)
-	rJWT.HandleFunc("/api/about", c.ServeAbout)
-	rJWT.HandleFunc("/api/directories", c.ServeDirectories)
-	rJWT.HandleFunc("/api/import_status", c.ServeImportStatus)
-	rJWT.HandleFunc("/api/search", c.ServeSearch)
+	rJWT.Use(s.WithJWT())
+	rJWT.HandleFunc("/api/ping", s.servePing)
+	rJWT.HandleFunc("/api/start_import", s.serveStartImport)
+	rJWT.HandleFunc("/api/about", s.serveAbout)
+	rJWT.HandleFunc("/api/directories", s.serveDirectories)
+	rJWT.HandleFunc("/api/import_status", s.serveImportStatus)
+	rJWT.HandleFunc("/api/search", s.serveSearch)
 
 	// begin api key routes
 	rAPIKey := r.NewRoute().Subrouter()
-	rAPIKey.Use(c.WithJWTOrAPIKey())
-	rAPIKey.HandleFunc("/api/upload", c.ServeUpload)
+	rAPIKey.Use(s.WithJWTOrAPIKey())
+	rAPIKey.HandleFunc("/api/upload", s.serveUpload)
 
 	// frontend fallback route
-	r.NotFoundHandler = c.FrontendHandler()
+	r.NotFoundHandler = s.serveFrontend()
 
 	return r
 }
 
-func (c *Server) FrontendHandler() http.Handler {
+func (s *Server) SocketNotifyScannerUpdate() {
+	for range s.socketScannerUpdates {
+		for client := range s.socketClientsScanner {
+			if err := client.WriteMessage(websocket.TextMessage, []byte(nil)); err != nil {
+				log.Printf("error writing to socket client: %v", err)
+				client.Close()
+				delete(s.socketClientsScanner, client)
+				continue
+			}
+		}
+	}
+}
+
+func (s *Server) SocketNotifyMedia() {
+	for hash := range s.socketMedias {
+		for client := range s.socketClientsImporter[hash] {
+			if err := client.WriteMessage(websocket.TextMessage, []byte(nil)); err != nil {
+				log.Printf("error writing to socket client: %v", err)
+				client.Close()
+				delete(s.socketClientsImporter[hash], client)
+				continue
+			}
+		}
+	}
+}
+
+func (s *Server) serveFrontend() http.Handler {
 	fs := http.FS(socr.Dist)
 	srv := http.FileServer(fs)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -81,33 +133,7 @@ func (c *Server) FrontendHandler() http.Handler {
 	})
 }
 
-func (c *Server) EmitUpdatesScanner() {
-	for range c.Scanner.Updates {
-		for client := range c.SocketClientsScanner {
-			if err := client.WriteMessage(websocket.TextMessage, []byte(nil)); err != nil {
-				log.Printf("error writing to socket client: %v", err)
-				client.Close()
-				delete(c.SocketClientsScanner, client)
-				continue
-			}
-		}
-	}
-}
-
-func (c *Server) EmitUpdatesImporter() {
-	for id := range c.Importer.Updates {
-		for client := range c.SocketClientsImporter[id] {
-			if err := client.WriteMessage(websocket.TextMessage, []byte(nil)); err != nil {
-				log.Printf("error writing to socket client: %v", err)
-				client.Close()
-				delete(c.SocketClientsImporter[id], client)
-				continue
-			}
-		}
-	}
-}
-
-func (c *Server) ServePing(w http.ResponseWriter, r *http.Request) {
+func (s *Server) servePing(w http.ResponseWriter, r *http.Request) {
 	resp.Write(w, struct {
 		Status string `json:"status"`
 	}{
@@ -115,7 +141,7 @@ func (c *Server) ServePing(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (c *Server) ServeUpload(w http.ResponseWriter, r *http.Request) {
+func (s *Server) serveUpload(w http.ResponseWriter, r *http.Request) {
 	infile, _, err := r.FormFile("i")
 	if err != nil {
 		resp.Errorf(w, http.StatusBadRequest, "get form file: %v", err)
@@ -124,18 +150,18 @@ func (c *Server) ServeUpload(w http.ResponseWriter, r *http.Request) {
 	defer infile.Close()
 	raw, err := io.ReadAll(infile)
 	if err != nil {
-		resp.Errorf(w, http.StatusBadRequest, "read form file: %v", err)
+		resp.Errorf(w, http.StatusInternalServerError, "read form file: %v", err)
 		return
 	}
-	decoded, err := importer.DecodeMedia(raw)
+	fileType, mime, extension, image, hash, err := imagery.DecodeAndHash(raw)
 	if err != nil {
-		resp.Errorf(w, http.StatusBadRequest, "decoding media: %v", err)
+		resp.Errorf(w, http.StatusInternalServerError, "decoding media: %v", err)
 		return
 	}
 
 	timestamp := time.Now().Format(time.RFC3339)
-	uploadsDir := c.Directories[c.DirectoriesUploadsAlias]
-	fileName := fmt.Sprintf("%s.%s", timestamp, decoded.Filetype.Extension)
+	uploadsDir := s.directories[s.directoriesUploadsAlias]
+	fileName := fmt.Sprintf("%s.%s", timestamp, extension)
 	filePath := filepath.Join(uploadsDir, fileName)
 	if err := os.WriteFile(filePath, raw, 0600); err != nil {
 		resp.Errorf(w, 500, "write upload to disk: %v", err)
@@ -144,8 +170,8 @@ func (c *Server) ServeUpload(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		timestamp := time.Now()
-		if err := c.Importer.ImportMedia(decoded, timestamp, c.DirectoriesUploadsAlias, fileName); err != nil {
-			log.Printf("error processing media %s: %v", decoded.Hash, err)
+		if err := s.importer.ImportMedia(fileType, mime, extension, image, hash, s.directoriesUploadsAlias, fileName, timestamp); err != nil {
+			log.Printf("error processing media %s: %v", hash, err)
 			return
 		}
 	}()
@@ -153,26 +179,26 @@ func (c *Server) ServeUpload(w http.ResponseWriter, r *http.Request) {
 	resp.Write(w, struct {
 		ID string `json:"id"`
 	}{
-		ID: decoded.Hash,
+		ID: string(hash),
 	})
 }
 
-func (c *Server) ServeStartImport(w http.ResponseWriter, r *http.Request) {
+func (s *Server) serveStartImport(w http.ResponseWriter, r *http.Request) {
 	go func() {
-		if err := c.Scanner.ScanDirectories(); err != nil {
+		if err := s.importer.ScanDirectories(); err != nil {
 			log.Printf("error importing: %v", err)
 		}
 	}()
 	resp.Write(w, struct{}{})
 }
 
-func (c *Server) ServeAbout(w http.ResponseWriter, r *http.Request) {
+func (s *Server) serveAbout(w http.ResponseWriter, r *http.Request) {
 	settings := map[string]interface{}{
 		"version":        socr.Version,
-		"api key":        c.APIKey,
-		"socket clients": len(c.SocketClientsScanner),
+		"api key":        s.apiKey,
+		"socket clients": len(s.socketClientsScanner),
 	}
-	for alias, path := range c.Directories {
+	for alias, path := range s.directories {
 		key := fmt.Sprintf("directory %q", alias)
 		settings[key] = path
 	}
@@ -184,8 +210,8 @@ type DirectoryCount struct {
 	IsUploads bool `json:"is_uploads,omitempty"`
 }
 
-func (c *Server) ServeDirectories(w http.ResponseWriter, r *http.Request) {
-	rawCounts, err := c.DB.CountDirectories()
+func (s *Server) serveDirectories(w http.ResponseWriter, r *http.Request) {
+	rawCounts, err := s.db.CountDirectories()
 	if err != nil {
 		resp.Errorf(w, 500, "counting directories by alias: %v", err)
 		return
@@ -195,25 +221,25 @@ func (c *Server) ServeDirectories(w http.ResponseWriter, r *http.Request) {
 	for _, raw := range rawCounts {
 		counts = append(counts, &DirectoryCount{
 			DirectoryCount: raw,
-			IsUploads:      raw.DirectoryAlias == c.DirectoriesUploadsAlias,
+			IsUploads:      raw.DirectoryAlias == s.directoriesUploadsAlias,
 		})
 	}
 	resp.Write(w, counts)
 }
 
-func (c *Server) ServeMediaRaw(w http.ResponseWriter, r *http.Request) {
+func (s *Server) serveMediaRaw(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	hash := vars["hash"]
 	if hash == "" {
 		resp.Errorf(w, http.StatusBadRequest, "no media hash provided")
 		return
 	}
-	row, err := c.DB.GetDirInfoByMediaHash(hash)
+	row, err := s.db.GetDirInfoByMediaHash(hash)
 	if err != nil {
 		resp.Errorf(w, http.StatusBadRequest, "requested media not found: %v", err)
 		return
 	}
-	directory, ok := c.Directories[row.DirectoryAlias]
+	directory, ok := s.directories[row.DirectoryAlias]
 	if !ok {
 		resp.Errorf(w, 500, "media has invalid alias %q", row.DirectoryAlias)
 		return
@@ -221,14 +247,14 @@ func (c *Server) ServeMediaRaw(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, filepath.Join(directory, row.Filename))
 }
 
-func (c *Server) ServeMediaThumb(w http.ResponseWriter, r *http.Request) {
+func (s *Server) serveMediaThumb(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	hash := vars["hash"]
 	if hash == "" {
 		resp.Errorf(w, http.StatusBadRequest, "no media hash provided")
 		return
 	}
-	row, err := c.DB.GetThumbnailByMediaHash(hash)
+	row, err := s.db.GetThumbnailByMediaHash(hash)
 	if err != nil {
 		resp.Errorf(w, http.StatusBadRequest, "requested media not found: %v", err)
 		return
@@ -236,14 +262,14 @@ func (c *Server) ServeMediaThumb(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, hash, row.Timestamp, bytes.NewReader(row.Data))
 }
 
-func (c *Server) ServeMedia(w http.ResponseWriter, r *http.Request) {
+func (s *Server) serveMedia(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	hash := vars["hash"]
 	if hash == "" {
 		resp.Errorf(w, http.StatusBadRequest, "no media hash provided")
 		return
 	}
-	media, err := c.DB.GetMediaByHashWithRelations(hash)
+	media, err := s.db.GetMediaByHashWithRelations(hash)
 	if err != nil {
 		resp.Errorf(w, http.StatusBadRequest, "requested media not found: %v", err)
 		return
@@ -263,7 +289,7 @@ type ServeSearchPayload struct {
 	} `json:"sort"`
 }
 
-func (c *Server) ServeSearch(w http.ResponseWriter, r *http.Request) {
+func (s *Server) serveSearch(w http.ResponseWriter, r *http.Request) {
 	var payload ServeSearchPayload
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		resp.Errorf(w, 400, "decode payload: %v", err)
@@ -271,7 +297,7 @@ func (c *Server) ServeSearch(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	start := time.Now()
-	medias, err := c.DB.SearchMedias(db.SearchMediasOptions{
+	medias, err := s.db.SearchMedias(db.SearchMediasOptions{
 		Body:      payload.Body,
 		Offset:    payload.Offset,
 		Limit:     payload.Limit,
@@ -294,31 +320,31 @@ func (c *Server) ServeSearch(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (c *Server) ServeWebSocket(w http.ResponseWriter, r *http.Request) {
+func (s *Server) serveWebSocket(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	token := params.Get("token")
 
-	conn, err := c.SocketUpgrader.Upgrade(w, r, nil)
+	conn, err := s.socketUpgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Printf("error upgrading socket connection: %v", err)
 		return
 	}
 
 	if w := params.Get("want_settings"); w != "" {
-		if err := auth.TokenParse(c.HMACSecret, token); err != nil {
+		if err := auth.TokenParse(s.hmacSecret, token); err != nil {
 			return
 		}
-		c.SocketClientsScanner[conn] = struct{}{}
+		s.socketClientsScanner[conn] = struct{}{}
 	}
-	if w := params.Get("want_media_hash"); w != "" {
-		if _, ok := c.SocketClientsImporter[w]; !ok {
-			c.SocketClientsImporter[w] = map[*websocket.Conn]struct{}{}
+	if w := imagery.Hash(params.Get("want_media_hash")); w != "" {
+		if _, ok := s.socketClientsImporter[w]; !ok {
+			s.socketClientsImporter[w] = map[*websocket.Conn]struct{}{}
 		}
-		c.SocketClientsImporter[w][conn] = struct{}{}
+		s.socketClientsImporter[w][conn] = struct{}{}
 	}
 }
 
-func (c *Server) ServeAuthenticate(w http.ResponseWriter, r *http.Request) {
+func (s *Server) serveAuthenticate(w http.ResponseWriter, r *http.Request) {
 	var payload struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
@@ -327,14 +353,14 @@ func (c *Server) ServeAuthenticate(w http.ResponseWriter, r *http.Request) {
 		resp.Errorf(w, http.StatusBadRequest, "decode payload: %v", err)
 	}
 
-	hasUsername := (payload.Username == c.LoginUsername)
-	hasPassword := (payload.Password == c.LoginPassword)
+	hasUsername := (payload.Username == s.loginUsername)
+	hasPassword := (payload.Password == s.loginPassword)
 	if !(hasUsername && hasPassword) {
 		resp.Errorf(w, http.StatusUnauthorized, "unauthorised")
 		return
 	}
 
-	token, err := auth.TokenNew(c.HMACSecret)
+	token, err := auth.TokenNew(s.hmacSecret)
 	if err != nil {
 		resp.Errorf(w, 500, "generating token")
 		return
@@ -347,14 +373,34 @@ func (c *Server) ServeAuthenticate(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (c *Server) ServeImportStatus(w http.ResponseWriter, r *http.Request) {
-	resp.Write(w, struct {
-		scanner.Status
-		Running bool `json:"running"`
-	}{
-		Status:  c.Scanner.Status,
-		Running: c.Scanner.IsRunning(),
-	})
+func (s *Server) serveImportStatus(w http.ResponseWriter, r *http.Request) {
+	type respStatusError struct {
+		Time  time.Time `json:"time"`
+		Error string    `json:"error"`
+	}
+	type respStatus struct {
+		Running        bool               `json:"running"`
+		Errors         []*respStatusError `json:"errors"`
+		LastHash       string             `json:"last_hash"`
+		CountTotal     int                `json:"count_total"`
+		CountProcessed int                `json:"count_processed"`
+	}
+
+	status := s.importer.Status()
+	statusResp := &respStatus{
+		Running:        status.Running,
+		CountTotal:     status.CountTotal,
+		CountProcessed: status.CountProcessed,
+		LastHash:       string(status.LastHash),
+	}
+	for _, err := range status.Errors {
+		statusResp.Errors = append(statusResp.Errors, &respStatusError{
+			Time:  err.Time,
+			Error: err.Error.Error(),
+		})
+	}
+
+	resp.Write(w, statusResp)
 }
 
 // used for socket upgrader

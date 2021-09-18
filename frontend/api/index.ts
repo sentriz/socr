@@ -187,14 +187,14 @@ export interface Directory {
 }
 
 export interface ImportStatus {
-  running: boolean
   errors: {
     error: string
     time: string
   }[]
+  running: boolean
   last_hash: string
-  count_processed: number
   count_total: number
+  count_processed: number
 }
 
 export interface Upload {

@@ -11,7 +11,7 @@ import (
 	"go.senan.xyz/socr/backend/server/resp"
 )
 
-func (c *Server) WithCORS() func(http.Handler) http.Handler {
+func (s *Server) WithCORS() func(http.Handler) http.Handler {
 	return handlers.CORS(
 		handlers.AllowedOrigins([]string{"*"}),
 		handlers.AllowedMethods([]string{"GET", "OPTIONS"}),
@@ -20,10 +20,10 @@ func (c *Server) WithCORS() func(http.Handler) http.Handler {
 	)
 }
 
-func (c *Server) WithJWT() func(http.Handler) http.Handler {
+func (s *Server) WithJWT() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if checkJWT(c, r) || checkJWTParam(c, r) {
+			if checkJWT(s.hmacSecret, r) || checkJWTParam(s.hmacSecret, r) {
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -32,10 +32,10 @@ func (c *Server) WithJWT() func(http.Handler) http.Handler {
 	}
 }
 
-func (c *Server) WithAPIKey() func(http.Handler) http.Handler {
+func (s *Server) WithAPIKey() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if checkAPIKey(c, r) {
+			if checkAPIKey(s.apiKey, r) {
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -44,10 +44,10 @@ func (c *Server) WithAPIKey() func(http.Handler) http.Handler {
 	}
 }
 
-func (c *Server) WithJWTOrAPIKey() func(http.Handler) http.Handler {
+func (s *Server) WithJWTOrAPIKey() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if checkAPIKey(c, r) || checkJWT(c, r) || checkJWTParam(c, r) {
+			if checkAPIKey(s.apiKey, r) || checkJWT(s.hmacSecret, r) || checkJWTParam(s.hmacSecret, r) {
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -56,7 +56,7 @@ func (c *Server) WithJWTOrAPIKey() func(http.Handler) http.Handler {
 	}
 }
 
-func (c *Server) WithLogging() func(http.Handler) http.Handler {
+func (s *Server) WithLogging() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			log.Printf("req %q", r.URL)
@@ -65,19 +65,19 @@ func (c *Server) WithLogging() func(http.Handler) http.Handler {
 	}
 }
 
-func checkAPIKey(c *Server, r *http.Request) bool {
+func checkAPIKey(apiKey string, r *http.Request) bool {
 	header := r.Header.Get("x-api-key")
-	return c.APIKey != "" && header == c.APIKey
+	return apiKey != "" && header == apiKey
 }
 
-func checkJWT(c *Server, r *http.Request) bool {
+func checkJWT(hmacSecret string, r *http.Request) bool {
 	header := r.Header.Get("authorization")
 	header = strings.TrimPrefix(header, "bearer ")
 	header = strings.TrimPrefix(header, "Bearer ")
-	return auth.TokenParse(c.HMACSecret, header) == nil
+	return auth.TokenParse(hmacSecret, header) == nil
 }
 
-func checkJWTParam(c *Server, r *http.Request) bool {
+func checkJWTParam(hmacSecret string, r *http.Request) bool {
 	param := r.URL.Query().Get("token")
-	return auth.TokenParse(c.HMACSecret, param) == nil
+	return auth.TokenParse(hmacSecret, param) == nil
 }

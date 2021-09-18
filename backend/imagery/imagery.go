@@ -10,10 +10,13 @@ import (
 	"image/jpeg"
 	"image/png"
 	"io"
+	"net/http"
+	"strconv"
 
 	"github.com/bakape/thumbnailer"
 	"github.com/buckket/go-blurhash"
 	"github.com/cenkalti/dominantcolor"
+	"github.com/cespare/xxhash"
 	"github.com/nfnt/resize"
 	gosseract "github.com/otiai10/gosseract/v2"
 )
@@ -158,4 +161,41 @@ func VideoThumbnail(data []byte) (image.Image, error) {
 		return png.Decode(buff)
 	}
 	return jpeg.Decode(buff)
+}
+
+type Hash string
+
+func DecodeAndHash(raw []byte) (Type, MIME, string, image.Image, Hash, error) {
+	mime := http.DetectContentType(raw)
+	filetype, format := ReadMIME(mime)
+	if filetype == nil {
+		return "", "", "", nil, "", fmt.Errorf("unknown image or video mime %q", mime)
+	}
+
+	switch filetype.Type {
+	case TypeImage:
+		rawReader := bytes.NewReader(raw)
+		image, err := format.Decode(rawReader)
+		if err != nil {
+			return "", "", "", nil, "", fmt.Errorf("decoding image: %w", err)
+		}
+		// image is rencoded to ensure with get the same hash for file uploads, scans, etc
+		digest := xxhash.New()
+		if err := format.Encode(digest, image); err != nil {
+			return "", "", "", nil, "", fmt.Errorf("encoding image: %w", err)
+		}
+		sum := digest.Sum64()
+		hash := Hash(strconv.FormatUint(sum, 16))
+		return filetype.Type, filetype.MIME, filetype.Extension, image, hash, nil
+	case TypeVideo:
+		image, err := VideoThumbnail(raw)
+		if err != nil {
+			return "", "", "", nil, "", fmt.Errorf("decoding video thumb: %w", err)
+		}
+		sum := xxhash.Sum64(raw)
+		hash := Hash(strconv.FormatUint(sum, 16))
+		return filetype.Type, filetype.MIME, filetype.Extension, image, hash, nil
+	default:
+		return "", "", "", nil, "", fmt.Errorf("unknown filetype %q", mime)
+	}
 }

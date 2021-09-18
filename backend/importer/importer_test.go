@@ -1,10 +1,10 @@
-package scanner_test
+package importer_test
 
 import (
 	"testing"
 	"time"
 
-	"go.senan.xyz/socr/backend/scanner"
+	"go.senan.xyz/socr/backend/importer"
 )
 
 func TestGuessFileCreated(t *testing.T) {
@@ -22,7 +22,7 @@ func TestGuessFileCreated(t *testing.T) {
 
 	fallback := time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC)
 	for _, tcase := range tcases {
-		result := scanner.GuessFileCreated(tcase.filename, fallback)
+		result := importer.GuessFileCreated(tcase.filename, fallback)
 		if same := result.Equal(tcase.stamp); !same {
 			t.Errorf("filename %q parsed %q expected %q", tcase.filename, result, tcase.stamp)
 		}
