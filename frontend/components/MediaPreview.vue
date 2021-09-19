@@ -1,6 +1,6 @@
 <template>
-  <media-background v-if="media" :hash="media.hash" class="box">
-    <media-highlight rich :hash="media.hash" class="mx-auto" />
+  <media-background v-if="media" :hash="media.hash" class="box flex justify-center">
+    <media-highlight :hash="media.hash" />
   </media-background>
   <loading-spinner v-else class="bg-gray-100" text="processing image" />
 

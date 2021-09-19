@@ -1,9 +1,13 @@
 <template>
   <div class="w-fit relative">
-    <video v-if="rich && media?.type === MediaType.Video" :controls="true" @loadstart="loaded">
+    <div v-if="thumb && media?.type === MediaType.Video" class="top-2 right-2 bg-black/80 absolute p-2 rounded-md">
+      <video-camera-icon class="h-5 text-white" />
+    </div>
+    <video v-if="!thumb && media?.type === MediaType.Video" :controls="true" @loadstart="loaded">
       <source :src="url" :type="media.mime" />
     </video>
     <img v-else :src="url" @load="loaded" />
+
     <svg
       v-if="media && blocks.length"
       :viewBox="`0 0 ${media.dim_width} ${media.dim_height}`"
@@ -18,9 +22,6 @@
         :height="b.max_y - b.min_y"
       />
     </svg>
-    <div v-if="!rich && media?.type === MediaType.Video" class="top-2 right-2 bg-black/80 absolute p-2 rounded-md">
-      <video-camera-icon class="h-5 text-white" />
-    </div>
   </div>
 </template>
 
@@ -32,7 +33,7 @@ import useStore from '../composables/useStore'
 
 const props = defineProps<{
   hash?: string
-  rich?: boolean
+  thumb?: boolean
 }>()
 
 const emit = defineEmits<{ (e: 'loaded'): void }>()
@@ -44,8 +45,8 @@ const media = computed(() => store.getMediaByHash(props.hash || ''))
 const blocks = computed(() => store.getHighlightedBlocksByHash(props.hash || ''))
 const url = computed(
   () =>
-    props.rich
-      ? `${urlMedia}/${media.value?.hash}/raw` // full image or video
-      : `${urlMedia}/${media.value?.hash}/thumb`, // ~200px thumb
+    props.thumb
+      ? `${urlMedia}/${media.value?.hash}/thumb` // ~200px thumb
+      : `${urlMedia}/${media.value?.hash}/raw`, // full image or video
 )
 </script>

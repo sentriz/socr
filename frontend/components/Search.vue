@@ -13,10 +13,10 @@
           <span class="text-gray-500"> page {{ i + 1 }}</span>
           <hr class="m-0" />
         </div>
-        <div class="col-resp gap-x-4 space-y-4">
-          <media-background v-for="hash in page" :key="hash" :hash="hash" class="shadow-lg">
-            <router-link :to="{ name: 'search', params: { hash } }">
-              <media-highlight :hash="hash" class="mx-auto" />
+        <div class="col-resp col-gap-4 space-y-4">
+          <media-background v-for="hash in page" :key="hash" :hash="hash" class="shadow-lg max-h-[400px] overflow-y-hidden">
+            <router-link :to="{ name: 'search', params: { hash } }" class="block">
+              <media-highlight thumb :hash="hash" />
             </router-link>
           </media-background>
         </div>
