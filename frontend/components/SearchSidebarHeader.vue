@@ -5,7 +5,7 @@
       <x-icon class="hover:text-gray-600 h-full text-gray-800" />
     </router-link>
     <!-- right -->
-    <div v-if="media" class="md:flex-row md:items-center flex flex-col items-end justify-end gap-6">
+    <div v-if="media" class="md:flex-row md:items-center md:gap-6 flex flex-col items-end justify-end gap-3">
       <badge-group label="created">
         <badge class="text-pink-900 bg-pink-200" :title="media.timestamp">
           {{ timestampRelative }}

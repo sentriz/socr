@@ -2,7 +2,7 @@
   <div class="bg-gray-50 flex items-center min-h-screen">
     <div class="container p-6 mx-auto space-y-6">
       <!-- block image or loading -->
-      <media-background v-show="mediaHave" :hash="media?.hash" class="box p-3">
+      <media-background v-show="mediaHave" :hash="media?.hash" class="box">
         <media-highlight rich :hash="media?.hash" class="mx-auto" @loaded="mediaLoaded" />
       </media-background>
       <loading-spinner v-show="!mediaHave" class="bg-gray-100" text="processing image" />

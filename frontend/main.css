@@ -13,7 +13,7 @@
 
 @layer components {
   .padded { @apply py-1 px-4; }
-  .box    { @apply border-2 border-solid border-white shadow; }
+  .box    { @apply border border-solid border-white shadow; }
 
   .inp       { @apply appearance-none border border-gray-300 rounded py-1 px-4 text-gray-700; }
   .inp:focus { @apply outline-none ring; }
