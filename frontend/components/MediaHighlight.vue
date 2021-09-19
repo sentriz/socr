@@ -11,15 +11,16 @@
     <svg
       v-if="media && blocks.length"
       :viewBox="`0 0 ${media.dim_width} ${media.dim_height}`"
-      class="absolute inset-0 text-yellow-500 text-opacity-50 pointer-events-none fill-current"
+      class="absolute inset-0 text-yellow-300 text-opacity-50 pointer-events-none fill-current"
     >
       <rect
-        v-for="(b, i) in blocks"
-        :key="i"
+        v-for="b in blocks"
+        :key="b.id"
         :x="b.min_x"
         :y="b.min_y"
         :width="b.max_x - b.min_x"
         :height="b.max_y - b.min_y"
+        ry="8"
       />
     </svg>
   </div>
