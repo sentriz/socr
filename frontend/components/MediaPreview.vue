@@ -4,7 +4,7 @@
   </media-background>
   <loading-spinner v-else class="bg-gray-100" text="processing image" />
 
-  <div v-if="blocks.length" class="box padded font-mono text-sm bg-gray-200">
+  <div v-if="media?.type === MediaType.Image && blocks.length" class="box padded font-mono text-sm bg-gray-100">
     <p
       v-for="(block, i) in blocks"
       :key="i"
@@ -21,6 +21,7 @@
 import MediaBackground from './MediaBackground.vue'
 import MediaHighlight from './MediaHighlight.vue'
 import LoadingSpinner from './LoadingSpinner.vue'
+import { MediaType } from '../api'
 import { computed } from 'vue'
 import useStore from '../composables/useStore'
 

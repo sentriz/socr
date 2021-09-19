@@ -4,7 +4,7 @@
   </transition-fade>
   <transition-slide>
     <div v-if="media" ref="content" class="fixed inset-y-0 right-0 z-20 w-full max-w-lg">
-      <div class="bg-gray-50 h-full p-6 space-y-6 overflow-y-auto">
+      <div class="h-full p-6 space-y-6 overflow-y-auto bg-white">
         <search-sidebar-header :hash="media.hash" />
         <media-preview :hash="media.hash" />
       </div>

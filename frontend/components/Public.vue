@@ -1,6 +1,12 @@
 <template>
-  <div class="bg-gray-50 flex items-center min-h-screen">
+  <div class="flex items-center min-h-screen bg-white">
     <div class="container p-6 mx-auto space-y-6">
+      <div v-if="media" class="flex items-center justify-between">
+        <h1 class="text-gray-500">shared media</h1>
+        <badge-group label="uploaded" class="text-gray-700">
+          <badge class="text-pink-900 bg-pink-200" :title="media.timestamp">{{ timestamp }}</badge>
+        </badge-group>
+      </div>
       <media-preview :hash="hash" />
     </div>
   </div>
@@ -8,7 +14,9 @@
 
 <script setup lang="ts">
 import MediaPreview from './MediaPreview.vue'
-import { onMounted } from 'vue'
+import BadgeGroup from './BadgeGroup.vue'
+import Badge from './Badge.vue'
+import { computed, onMounted } from 'vue'
 import { newSocket } from '../api'
 import { useRoute } from 'vue-router'
 import useStore from '../composables/useStore'
@@ -20,6 +28,9 @@ const hash = (route.params.hash as string) || ''
 const requestMedia = async () => {
   await store.loadMedia(hash)
 }
+
+const media = computed(() => store.getMediaByHash(hash))
+const timestamp = computed(() => new Date(media.value?.timestamp).toLocaleString())
 
 onMounted(requestMedia)
 

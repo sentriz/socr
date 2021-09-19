@@ -6,14 +6,14 @@
   html { margin-left: calc(100vw - 100%); }
   body { @apply min-h-screen w-full font-sans antialiased text-gray-900; }
   hr   { @apply my-6; }
-  h1   { @apply my-3 text-gray-700 text-xl font-bold; }
-  h2   { @apply my-3 text-gray-700 text-lg font-bold; }
+  h1   { @apply text-gray-600 text-xl font-medium leading-none; }
+  h2   { @apply text-gray-600 text-lg font-medium leading-none; }
   a    { @apply leading-none; }
 }
 
 @layer components {
   .padded { @apply py-1 px-4; }
-  .box    { @apply border border-solid border-white shadow; }
+  .box    { @apply border border-solid border-gray-100 shadow-sm; }
 
   .inp       { @apply appearance-none border border-gray-300 rounded py-1 px-4 text-gray-700; }
   .inp:focus { @apply outline-none ring; }
