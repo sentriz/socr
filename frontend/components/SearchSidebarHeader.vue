@@ -15,14 +15,18 @@
         <badge v-for="(dir, i) in media.directories" :key="i" class="text-blue-900 bg-blue-200">{{ dir }}</badge>
       </badge-group>
       <badge-group>
-        <badge class="text-indigo-900 bg-indigo-200">
-          <external-link-icon class="h-full" />
-          <a :href="mediaRaw" target="_blank">raw</a>
-        </badge>
-        <badge class="text-green-900 bg-green-200">
-          <external-link-icon class="h-full" />
-          <router-link :to="{ name: 'public', params: { hash: media.hash } }">public</router-link>
-        </badge>
+        <a :href="mediaRaw" target="_blank">
+          <badge class="text-indigo-900 bg-indigo-200">
+            <external-link-icon class="h-full" />
+            <span>raw</span>
+          </badge>
+        </a>
+        <router-link :to="{ name: 'public', params: { hash: media.hash } }">
+          <badge class="text-green-900 bg-green-200">
+            <external-link-icon class="h-full" />
+            <span>public</span>
+          </badge>
+        </router-link>
       </badge-group>
     </div>
   </div>
