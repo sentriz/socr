@@ -219,6 +219,10 @@ func (db *DB) SearchMedias(options SearchMediasOptions) ([]*Media, error) {
 }
 
 func (db *DB) CreateBlocks(blocks []*Block) error {
+	if len(blocks) == 0 {
+		return nil
+	}
+
 	q := db.
 		Insert("blocks").
 		Columns("media_id", "index", "min_x", "min_y", "max_x", "max_y", "body")

@@ -263,6 +263,10 @@ func (i *Importer) insertBlocks(id db.MediaID, image image.Image) error {
 
 	blocks := make([]*db.Block, 0, len(rawBlocks))
 	for idx, rawBlock := range rawBlocks {
+		if strings.TrimSpace(rawBlock.Word) == "" {
+			continue
+		}
+
 		rect := imagery.ScaleDownRect(rawBlock.Box)
 		blocks = append(blocks, &db.Block{
 			MediaID: id,
@@ -274,6 +278,7 @@ func (i *Importer) insertBlocks(id db.MediaID, image image.Image) error {
 			Body:    rawBlock.Word,
 		})
 	}
+
 	if err := i.db.CreateBlocks(blocks); err != nil {
 		return fmt.Errorf("inserting blocks: %w", err)
 	}
