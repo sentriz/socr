@@ -161,6 +161,7 @@ export interface Media {
   blocks?: Block[]
   highlighted_blocks?: Block[]
   directories?: string[]
+  processed: boolean
 }
 
 export interface Similarity {

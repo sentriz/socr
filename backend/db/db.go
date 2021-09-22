@@ -218,6 +218,17 @@ func (db *DB) SearchMedias(options SearchMediasOptions) ([]*Media, error) {
 	return results, pgxscan.Select(context.Background(), db, &results, sql, args...)
 }
 
+func (db *DB) SetMediaProcessed(id MediaID) error {
+	q := db.
+		Update("medias").
+		Where(sq.Eq{"id": id}).
+		Set("processed", true)
+
+	sql, args, _ := q.ToSql()
+	_, err := db.Exec(context.Background(), sql, args...)
+	return err
+}
+
 func (db *DB) CreateBlocks(blocks []*Block) error {
 	if len(blocks) == 0 {
 		return nil

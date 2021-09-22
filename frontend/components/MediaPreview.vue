@@ -4,7 +4,7 @@
   </media-background>
   <loading-spinner v-else class="bg-gray-100" text="processing image" />
 
-  <div v-if="media?.type === MediaType.Image && blocks.length" class="box padded font-mono text-sm bg-gray-100">
+  <div v-if="!isVideo && blocks.length" class="box padded font-mono text-sm bg-gray-100">
     <p
       v-for="(block, i) in blocks"
       :key="i"
@@ -14,7 +14,7 @@
       {{ block.body }}
     </p>
   </div>
-  <loading-spinner v-else class="bg-gray-100" text="processing text" />
+  <loading-spinner v-if="!isVideo && !media?.processed" class="bg-gray-100" text="processing text" />
 </template>
 
 <script setup lang="ts">
@@ -37,4 +37,6 @@ const highlightedBlocksIndexes = computed(() => {
   const hashBlocks = store.getHighlightedBlocksByHash(props.hash || '')
   return new Set(hashBlocks.map((blocks) => blocks.index))
 })
+
+const isVideo = computed(() => media.value?.type === MediaType.Video)
 </script>

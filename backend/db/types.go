@@ -38,6 +38,7 @@ type Media struct {
 	Blocks            []*Block  `db:"blocks"             json:"blocks,omitempty"`
 	HighlightedBlocks []*Block  `db:"highlighted_blocks" json:"highlighted_blocks,omitempty"`
 	Directories       []string  `db:"directories"        json:"directories,omitempty"`
+	Processed         bool      `db:"processed"          json:"processed"`
 }
 
 type ThumbnailID int

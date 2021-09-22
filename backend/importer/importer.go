@@ -89,6 +89,9 @@ func (i *Importer) ImportMedia(
 	if err := i.insertBlocks(id, image); err != nil {
 		return fmt.Errorf("import blocks: %w", err)
 	}
+	if err := i.db.SetMediaProcessed(id); err != nil {
+		return fmt.Errorf("set media processed: %w", err)
+	}
 	for _, f := range i.notifyMediaFuncs {
 		f(hash)
 	}

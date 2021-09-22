@@ -1,9 +1,9 @@
 <template>
   <div class="w-fit relative">
-    <div v-if="thumb && media?.type === MediaType.Video" class="top-2 right-2 bg-black/80 absolute p-2 rounded-md">
+    <div v-if="thumb && isVideo" class="top-2 right-2 bg-black/80 absolute p-2 rounded-md">
       <video-camera-icon class="h-5 text-white" />
     </div>
-    <video v-if="!thumb && media?.type === MediaType.Video" :controls="true" @loadstart="loaded">
+    <video v-if="!thumb && isVideo && media" :controls="true" @loadstart="loaded">
       <source :src="url" :type="media.mime" />
     </video>
     <img v-else :src="url" @load="loaded" />
@@ -50,4 +50,6 @@ const url = computed(
       ? `${urlMedia}/${media.value?.hash}/thumb` // ~200px thumb
       : `${urlMedia}/${media.value?.hash}/raw`, // full image or video
 )
+
+const isVideo = computed(() => media.value?.type === MediaType.Video)
 </script>

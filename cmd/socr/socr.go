@@ -40,12 +40,12 @@ func main() {
 
 	dbc, err := db.New(confDBDSN)
 	if err != nil {
-		log.Fatalf("error creating database: %v", err)
+		log.Panicf("error creating database: %v", err)
 	}
 	defer dbc.Close()
 
 	if err := dbc.Migrate(); err != nil {
-		log.Printf("error running migrations: %v", err)
+		log.Panicf("error running migrations: %v", err)
 	}
 
 	const numImportWorkers = 1
