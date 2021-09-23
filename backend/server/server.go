@@ -287,6 +287,8 @@ type ServeSearchPayload struct {
 		Field string `json:"field"`
 		Order string `json:"order"`
 	} `json:"sort"`
+	DateFrom time.Time `json:"date_from"`
+	DateTo   time.Time `json:"date_to"`
 }
 
 func (s *Server) serveSearch(w http.ResponseWriter, r *http.Request) {
@@ -305,6 +307,8 @@ func (s *Server) serveSearch(w http.ResponseWriter, r *http.Request) {
 		SortOrder: payload.Sort.Order,
 		Directory: payload.Directory,
 		Media:     db.MediaType(payload.Media),
+		DateFrom:  payload.DateFrom,
+		DateTo:    payload.DateTo,
 	})
 	if err != nil {
 		resp.Errorf(w, 500, "searching medias: %v", err)

@@ -64,6 +64,8 @@ export interface PayloadSearch {
   sort: PayloadSort
   directory?: string
   media?: MediaType
+  date_from?: Date
+  date_to?: Date
 }
 
 export const reqSearch = (data: PayloadSearch) => {

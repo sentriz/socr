@@ -1,10 +1,18 @@
 <template>
   <div class="space-y-6">
-    <div class="md:flex-row flex flex-col gap-2">
-      <input v-model="reqQuery" class="inp w-full" type="text" placeholder="enter media text query" />
-      <search-filter label="sort by" :items="reqSortOptions" v-model:selected="reqSortOption" />
-      <search-filter label="media" :items="reqMediaOptions" v-model:selected="reqMediaOption" />
-      <search-filter label="directory" :items="reqDirOptions" v-model:selected="reqDirOption" />
+    <div class="md:grid-cols-2 lg:grid-cols-12 grid grid-cols-1 gap-2">
+      <input class="lg:col-span-9 inp" v-model="reqQuery" type="text" placeholder="enter media text query" />
+      <search-filter class="lg:col-span-3" label="sort by" :items="reqSortOptions" v-model:selected="reqSort" />
+      <search-filter class="lg:col-span-3" label="media" :items="reqMediaOptions" v-model:selected="reqMedia" />
+      <search-filter class="lg:col-span-3" label="directory" :items="reqDirOptions" v-model:selected="reqDir" />
+      <search-filter class="lg:col-span-3" label="year" :items="reqYearOptions" v-model:selected="reqYear" />
+      <search-filter
+        class="lg:col-span-3"
+        label="month"
+        :items="reqMonthOptions"
+        v-model:selected="reqMonth"
+        :disabled="!reqYear.year"
+      />
     </div>
     <div ref="scroller">
       <p v-if="!loading" class="text-right text-gray-500">fetched {{ respTook.toFixed(2) }}ms</p>
@@ -14,7 +22,7 @@
           <hr class="m-0" />
         </div>
         <div class="col-resp col-gap-4 space-y-4">
-          <media-background v-for="hash in page" :key="hash" :hash="hash" class="shadow-lg max-h-[400px] overflow-y-hidden">
+          <media-background v-for="hash in page" :key="hash" :hash="hash" class="shadow-lg max-h-[400px] overflow-y-auto">
             <router-link :to="{ name: 'search', params: { hash } }" class="block">
               <media-highlight thumb :hash="hash" />
             </router-link>
@@ -58,6 +66,8 @@ import {
   VideoCameraIcon,
   FolderAddIcon,
   FolderIcon,
+  CalendarIcon,
+  GlobeIcon,
 } from '@heroicons/vue/outline'
 
 const store = useStore()
@@ -78,19 +88,48 @@ const reqSortTimeAsc: Sort = { label: 'time asc', icon: ChevronUpIcon, field: 't
 const reqSortOptionsDefault = [reqSortTimeDesc, reqSortTimeAsc]
 const reqSortOptionsSimilarity = [reqSortSimilarity, reqSortTimeDesc, reqSortTimeAsc]
 const reqSortOptions = ref(reqSortOptionsDefault)
-const reqSortOption = ref(reqSortTimeDesc)
+const reqSort = ref(reqSortTimeDesc)
 
 type Dir = { label: string; icon: Component; directory?: string }
 const reqDirAll: Dir = { label: 'all', icon: DocumentDuplicateIcon }
 const reqDirOptions = ref([reqDirAll])
-const reqDirOption = ref(reqDirAll)
+const reqDir = ref(reqDirAll)
+
+onMounted(async () => {
+  const resp = await reqDirectories()
+  if (isError(resp)) return
+
+  for (const d of resp.result)
+    reqDirOptions.value.push({
+      label: d.directory_alias,
+      icon: d.is_uploads ? FolderAddIcon : FolderIcon,
+      directory: d.directory_alias,
+    })
+})
 
 type Media = { label: string; icon: Component; media?: MediaType }
 const reqMediaAny: Media = { label: 'any', icon: DocumentDuplicateIcon }
 const reqMediaImage: Media = { label: 'image', icon: CameraIcon, media: MediaType.Image }
 const reqMediaVideo: Media = { label: 'video', icon: VideoCameraIcon, media: MediaType.Video }
 const reqMediaOptions = ref([reqMediaAny, reqMediaImage, reqMediaVideo])
-const reqMediaOption = ref(reqMediaAny)
+const reqMedia = ref(reqMediaAny)
+
+const currentYear = new Date().getFullYear()
+type Year = { label: string; icon: Component; year?: number }
+const reqYearAny: Year = { label: `any`, icon: CalendarIcon }
+const reqYearOptions = ref([reqYearAny])
+const reqYear = ref(reqYearAny)
+
+for (let i = currentYear; i >= currentYear - 10; i--)
+  reqYearOptions.value.push({ label: `${i}`, icon: CalendarIcon, year: i })
+
+type Month = { label: string; icon: Component; month?: number }
+const reqMonthAny: Month = { label: `any`, icon: GlobeIcon }
+const reqMonthOptions = ref([reqMonthAny])
+const reqMonth = ref(reqMonthAny)
+
+for (const [month, label] of ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'].entries())
+  reqMonthOptions.value.push({ label, icon: CalendarIcon, month })
 
 const respTook = ref(0)
 const respHasMore = ref(true)
@@ -104,9 +143,13 @@ const fetchMedias = async () => {
     body: reqQuery.value,
     limit: reqPageSize,
     offset: reqPageSize * reqPageNum.value,
-    sort: { field: reqSortOption.value.field, order: reqSortOption.value.order },
-    directory: reqDirOption.value.directory,
-    media: reqMediaOption.value.media,
+    sort: { field: reqSort.value.field, order: reqSort.value.order },
+    directory: reqDir.value.directory,
+    media: reqMedia.value.media,
+  }
+  if (reqYear.value.year) {
+    req.date_from = new Date(reqYear.value.year, reqMonth.value.month ?? 0, 1)
+    req.date_to = new Date(reqYear.value.year, reqMonth.value.month ?? 11, 31)
   }
 
   console.log('loading page #%d', reqPageNum.value)
@@ -130,39 +173,26 @@ const resetParameters = () => {
   respHasMore.value = true
 }
 
-const resetDirs = () => {
+const resetSortOptions = () => {
   if (reqQuery.value && !reqSortOptions.value.includes(reqSortSimilarity)) {
     reqSortOptions.value = reqSortOptionsSimilarity
-    reqSortOption.value = reqSortSimilarity
+    reqSort.value = reqSortSimilarity
   }
   if (!reqQuery.value && reqSortOptions.value.includes(reqSortSimilarity)) {
     reqSortOptions.value = reqSortOptionsDefault
-    reqSortOption.value = reqSortTimeDesc
+    reqSort.value = reqSortTimeDesc
   }
 }
 
 const scroller = useInfiniteScroll(fetchMedias)
 
-watch([reqSortOption, reqDirOption, reqMediaOption, reqQueryDebounced], () => {
+watch([reqSort, reqDir, reqMedia, reqYear, reqMonth, reqQueryDebounced], () => {
   resetParameters()
-  resetDirs()
+  resetSortOptions()
   fetchMedias()
 })
 
 onMounted(async () => {
   await fetchMedias()
-})
-
-onMounted(async () => {
-  const resp = await reqDirectories()
-  if (isError(resp)) return
-
-  for (const dir of resp.result) {
-    reqDirOptions.value.push({
-      label: dir.directory_alias,
-      icon: dir.is_uploads ? FolderAddIcon : FolderIcon,
-      directory: dir.directory_alias,
-    })
-  }
 })
 </script>

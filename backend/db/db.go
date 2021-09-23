@@ -128,6 +128,8 @@ type SearchMediasOptions struct {
 	Offset    int
 	SortField string
 	SortOrder string
+	DateFrom  time.Time
+	DateTo    time.Time
 }
 
 func (db *DB) GetMediaByID(id int) (*Media, error) {
@@ -211,6 +213,12 @@ func (db *DB) SearchMedias(options SearchMediasOptions) ([]*Media, error) {
 	}
 	if options.Media != "" {
 		q = q.Where(sq.Eq{"medias.type": options.Media})
+	}
+	if !options.DateFrom.IsZero() {
+		q = q.Where(sq.GtOrEq{"medias.timestamp": options.DateFrom})
+	}
+	if !options.DateTo.IsZero() {
+		q = q.Where(sq.Lt{"medias.timestamp": options.DateTo})
 	}
 
 	sql, args, _ := q.ToSql()

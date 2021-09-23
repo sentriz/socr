@@ -1,8 +1,15 @@
 <template>
-  <div ref="elm" class="whitespace-nowrap flex bg-white border border-gray-300 divide-x divide-gray-300 rounded">
-    <div class="padded md:w-auto w-32 text-gray-600 bg-gray-200 rounded-l">{{ props.label }}</div>
-    <div class="relative" v-if="props.items.length">
+  <div
+    ref="elm"
+    class="whitespace-nowrap flex min-w-0 text-gray-700 bg-white border border-gray-300 divide-x divide-gray-300 rounded"
+    :class="{ 'pointer-events-none filter contrast-125 text-gray-500': disabled }"
+  >
+    <div class="padded w-[6.5rem] bg-gray-200 rounded-l flex-shrink-0 text-right lg:text-left">
+      {{ props.label }}
+    </div>
+    <div class="relative w-full" v-if="props.items.length">
       <search-filter-item :label="props.selected.label" :icon="props.selected.icon" @click="toggle" />
+
       <div v-if="isOpen" class="absolute z-10 py-2 ml-[-1px] mt-2 bg-white border border-gray-300 rounded">
         <search-filter-item
           v-for="(item, idx) in props.items"
@@ -34,6 +41,7 @@ const props = defineProps<{
   label: string
   items: Item[]
   selected: Item
+  disabled?: boolean
 }>()
 
 const isOpen = ref(false)
