@@ -69,6 +69,7 @@ import {
   CalendarIcon,
   GlobeIcon,
 } from '@heroicons/vue/outline'
+import router from '../router'
 
 const store = useStore()
 const route = useRoute()
@@ -195,4 +196,19 @@ watch([reqSort, reqDir, reqMedia, reqYear, reqMonth, reqQueryDebounced], () => {
 onMounted(async () => {
   await fetchMedias()
 })
+
+document.onkeydown = (e: KeyboardEvent) => {
+  let dir = 0
+  if (e.key === 'ArrowRight') dir = 1
+  else if (e.key === 'ArrowLeft') dir = -1
+  else return
+
+  if (!sidebarHash.value) return
+  if (!respPages.value?.length) return
+
+  const flat = respPages.value.flat()
+  const idx = flat.findIndex((e) => e === sidebarHash.value)
+  const hash = flat[(idx + dir) % flat.length]
+  router.replace({ name: 'search', params: { hash } })
+}
 </script>
