@@ -26,6 +26,9 @@
   .btn:disabled { @apply opacity-50 cursor-not-allowed; }
 
   .code { @apply font-mono bg-gray-200 text-gray-700 px-1 rounded; }
+
+  .overflow-y-thin { @apply overflow-y-auto scrollbar-thin scrollbar-thumb-blue-200 hover:scrollbar-thumb-blue-300; }
+  .overflow-x-thin { @apply overflow-x-auto scrollbar-thin scrollbar-thumb-blue-200 hover:scrollbar-thumb-blue-300; }
 }
 
 @layer utilities {

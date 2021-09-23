@@ -1,5 +1,5 @@
 <template>
-  <div class="container min-h-screen p-6 mx-auto">
+  <div class="container h-screen p-6 mx-auto">
     <ul class="flex overflow-x-auto">
       <div class="flex flex-1 space-x-6">
         <nav-item :to="{ name: 'search' }">
@@ -24,10 +24,14 @@
     </ul>
     <hr class="mt-3" />
     <router-view />
+    <teleport to="#overlays">
+      <toast-overlay />
+    </teleport>
   </div>
 </template>
 
 <script setup lang="ts">
 import NavItem from './NavItem.vue'
+import ToastOverlay from './ToastOverlay.vue'
 import { SearchIcon, DocumentSearchIcon, CogIcon, LogoutIcon } from '@heroicons/vue/outline'
 </script>

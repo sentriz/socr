@@ -16,10 +16,14 @@
       <p class="text-xs text-center text-gray-500"><b>s</b>creenshot <b>ocr</b> server &mdash; Senan Kelly 2020</p>
     </div>
   </div>
+  <teleport to="#overlays">
+    <toast-overlay />
+  </teleport>
 </template>
 
 <script setup lang="ts">
 import Logo from './Logo.vue'
+import ToastOverlay from './ToastOverlay.vue'
 
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'

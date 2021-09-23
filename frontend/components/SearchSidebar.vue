@@ -1,13 +1,11 @@
 <template>
   <transition-fade>
-    <div v-if="media" class="fixed inset-0 z-10 transition-opacity bg-gray-700 bg-opacity-75" />
+    <div v-if="media" class="absolute inset-0 transition-opacity bg-gray-700 bg-opacity-75 pointer-events-auto" />
   </transition-fade>
   <transition-slide>
-    <div v-if="media" ref="content" class="fixed inset-y-0 right-0 z-20 w-full max-w-lg">
-      <div class="h-full p-6 space-y-6 overflow-y-auto bg-white">
-        <search-sidebar-header :hash="media.hash" />
-        <media-preview :hash="media.hash" />
-      </div>
+    <div v-if="media" ref="content" class="overflow-y-thin absolute inset-y-0 right-0 w-full max-w-lg p-6 space-y-6 bg-white pointer-events-auto">
+      <search-sidebar-header :hash="media.hash" />
+      <media-preview :hash="media.hash" />
     </div>
   </transition-slide>
 </template>

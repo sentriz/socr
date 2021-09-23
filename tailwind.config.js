@@ -1,3 +1,5 @@
+const scrollbar = require('tailwind-scrollbar')
+
 module.exports = {
   mode: 'jit',
   purge: ['index.html', './frontend/**/*.vue'],
@@ -19,4 +21,5 @@ module.exports = {
       },
     },
   },
+  plugins: [scrollbar],
 }

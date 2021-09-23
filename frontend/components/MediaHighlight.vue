@@ -13,15 +13,7 @@
       :viewBox="`0 0 ${media.dim_width} ${media.dim_height}`"
       class="absolute inset-0 text-yellow-300 text-opacity-50 pointer-events-none fill-current"
     >
-      <rect
-        v-for="b in blocks"
-        :key="b.id"
-        :x="b.min_x"
-        :y="b.min_y"
-        :width="b.max_x - b.min_x"
-        :height="b.max_y - b.min_y"
-        ry="8"
-      />
+      <rect v-for="b in blocks" :key="b.id" :x="b.min_x" :y="b.min_y" :width="b.max_x - b.min_x" :height="b.max_y - b.min_y" ry="8" />
     </svg>
   </div>
 </template>

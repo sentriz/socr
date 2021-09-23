@@ -6,13 +6,7 @@
       <search-filter class="lg:col-span-3" label="media" :items="reqMediaOptions" v-model:selected="reqMedia" />
       <search-filter class="lg:col-span-3" label="directory" :items="reqDirOptions" v-model:selected="reqDir" />
       <search-filter class="lg:col-span-3" label="year" :items="reqYearOptions" v-model:selected="reqYear" />
-      <search-filter
-        class="lg:col-span-3"
-        label="month"
-        :items="reqMonthOptions"
-        v-model:selected="reqMonth"
-        :disabled="!reqYear.year"
-      />
+      <search-filter class="lg:col-span-3" label="month" :items="reqMonthOptions" v-model:selected="reqMonth" :disabled="!reqYear.year" />
     </div>
     <div ref="scroller">
       <p v-if="!loading" class="text-right text-gray-500">fetched {{ respTook.toFixed(2) }}ms</p>
@@ -22,7 +16,7 @@
           <hr class="m-0" />
         </div>
         <div class="col-resp col-gap-4 space-y-4">
-          <media-background v-for="hash in page" :key="hash" :hash="hash" class="shadow-lg max-h-[400px] overflow-y-auto">
+          <media-background v-for="hash in page" :key="hash" :hash="hash" class="shadow-lg max-h-[600px] overflow-y-thin">
             <router-link :to="{ name: 'search', params: { hash } }" class="block">
               <media-highlight thumb :hash="hash" />
             </router-link>
@@ -33,9 +27,9 @@
     <loading-spinner v-if="loading" />
     <search-no-results v-else-if="respPages.length === 0" />
   </div>
-  <search-sidebar :hash="sidebarHash" />
-  <uploader-clipboard />
-  <uploader-file />
+  <teleport to="#overlays"><search-sidebar :hash="sidebarHash" /></teleport>
+  <teleport to="#overlays"><uploader-clipboard /></teleport>
+  <teleport to="#overlays"><uploader-file /></teleport>
 </template>
 
 <script setup lang="ts">
@@ -121,16 +115,19 @@ const reqYearAny: Year = { label: `any`, icon: CalendarIcon }
 const reqYearOptions = ref([reqYearAny])
 const reqYear = ref(reqYearAny)
 
-for (let i = currentYear; i >= currentYear - 10; i--)
+for (let i = currentYear; i >= currentYear - 10; i--) {
   reqYearOptions.value.push({ label: `${i}`, icon: CalendarIcon, year: i })
+}
 
 type Month = { label: string; icon: Component; month?: number }
 const reqMonthAny: Month = { label: `any`, icon: GlobeIcon }
 const reqMonthOptions = ref([reqMonthAny])
 const reqMonth = ref(reqMonthAny)
 
-for (const [month, label] of ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'].entries())
+const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+for (const [month, label] of months.entries()) {
   reqMonthOptions.value.push({ label, icon: CalendarIcon, month })
+}
 
 const respTook = ref(0)
 const respHasMore = ref(true)
