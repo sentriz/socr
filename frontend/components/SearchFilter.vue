@@ -5,8 +5,9 @@
       <search-filter-item :label="props.selected.label" :icon="props.selected.icon" @click="toggle" />
       <div v-if="isOpen" class="absolute z-10 py-2 ml-[-1px] mt-2 bg-white border border-gray-300 rounded">
         <search-filter-item
-          class="hover:bg-gray-100"
           v-for="(item, idx) in props.items"
+          class="hover:bg-gray-100"
+          :class="{ 'font-bold': selected === item }"
           :label="item.label"
           :icon="item.icon"
           @click="choose(idx)"
