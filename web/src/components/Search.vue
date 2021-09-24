@@ -8,25 +8,24 @@
       <search-filter class="lg:col-span-3" label="year" :items="reqYearOptions" v-model:selected="reqYear" />
       <search-filter class="lg:col-span-3" label="month" :items="reqMonthOptions" v-model:selected="reqMonth" :disabled="!reqYear.year" />
     </div>
-    <div ref="scroller">
-      <p v-if="!loading" class="text-right text-gray-500">fetched {{ respTook.toFixed(2) }}ms</p>
-      <div v-for="(page, i) in respPages" :key="i" class="mt-2">
-        <div v-show="i !== 0" class="my-6">
-          <span class="text-gray-500"> page {{ i + 1 }}</span>
-          <hr class="m-0" />
-        </div>
-        <div class="col-resp col-gap-4 space-y-4">
-          <media-background v-for="hash in page" :key="hash" :hash="hash" class="shadow-lg max-h-[600px] overflow-y-thin">
-            <router-link :to="{ name: 'search', params: { hash } }" class="block">
-              <media-highlight thumb :hash="hash" />
-            </router-link>
-          </media-background>
-        </div>
+    <p v-if="!loading" class="text-right text-gray-500">fetched {{ respTook.toFixed(2) }}ms</p>
+    <div v-for="(page, i) in respPages" :key="i">
+      <div v-show="i !== 0" class="my-6">
+        <span class="text-gray-500"> page {{ i + 1 }}</span>
+        <hr class="m-0" />
+      </div>
+      <div class="col-resp col-gap-4 space-y-4">
+        <media-background v-for="hash in page" :key="hash" :hash="hash" class="shadow-lg max-h-[600px] overflow-y-auto flex justify-center">
+          <router-link :to="{ name: 'search', params: { hash } }" class="block">
+            <media-highlight thumb :hash="hash" />
+          </router-link>
+        </media-background>
       </div>
     </div>
     <loading-spinner v-if="loading" />
     <search-no-results v-else-if="respPages.length === 0" />
   </div>
+  <div ref="scroller" />
   <teleport to="#overlays"><search-sidebar :hash="sidebarHash" /></teleport>
   <teleport to="#overlays"><uploader-clipboard /></teleport>
   <teleport to="#overlays"><uploader-file /></teleport>
