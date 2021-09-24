@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.4.0](https://www.github.com/sentriz/socr/compare/v0.3.0...v0.4.0) (2021-09-24)
+
+
+### Features
+
+* filter by year/month and wrap search cols on different size displays ([c87d94e](https://www.github.com/sentriz/socr/commit/c87d94ee239da8a7e2a997d6aef07ec852fb4b18))
+* store media processed boolean ([36f985b](https://www.github.com/sentriz/socr/commit/36f985bc8288cd35b6dcae967825b2fbd2bb43cc))
+* **ui:** add arrow keys to switch between images ([74465ed](https://www.github.com/sentriz/socr/commit/74465ed2d7f0f340495f446bdd959c75145c53de))
+* **ui:** clean up thumbs and mobile layout ([a7c5f0a](https://www.github.com/sentriz/socr/commit/a7c5f0a971e3d99e6f0db219848bb2714aee0070))
+* **ui:** highlight selector search option ([dc18179](https://www.github.com/sentriz/socr/commit/dc18179bee3ee7818dd887b63804536ad52779eb))
+* **ui:** make importer its own page ([b6e3d06](https://www.github.com/sentriz/socr/commit/b6e3d06572086e02a50e5cc5461e07104e562640))
+* **ui:** round preview corners ([d3d575b](https://www.github.com/sentriz/socr/commit/d3d575b43d7d779a68bf8f5969272a6ab92d85e2))
+* **ui:** scale preview thumbs to height ([59727e2](https://www.github.com/sentriz/socr/commit/59727e2c4bdf033e47293537901cfd214c576485))
+* **ui:** update bg and public styles ([466a9df](https://www.github.com/sentriz/socr/commit/466a9df728aa4cfa7961cf9ebc3bcb35ad63adee))
+* **ui:** update overlay hierarchy and add overlay scrollbars ([0ab4ff9](https://www.github.com/sentriz/socr/commit/0ab4ff9aea0a43b3a9cef5fefdb20c017fb4ebb9))
+
+
+### Bug Fixes
+
+* don't import empty blocks ([163fd46](https://www.github.com/sentriz/socr/commit/163fd46d204fb14e98f8ac2e57e6c778e1547217))
+* **importer:** don't attempt to import a thumbnail for a media we have already found ([04529b4](https://www.github.com/sentriz/socr/commit/04529b4fe3419867c20e80e26b7f589693a3bf2c))
+* **ui:** add settings header spacing ([53e0c43](https://www.github.com/sentriz/socr/commit/53e0c43388e4dfda1a192b150fdd2859a9cbc4e3))
+* **ui:** don't show invalid upload date ([cca1280](https://www.github.com/sentriz/socr/commit/cca12803305cf9285dc98a5b356f2668f82ba207))
+* **ui:** make sidebar header links bigger ([e7eb11f](https://www.github.com/sentriz/socr/commit/e7eb11f4c225614f1b4eeba873f7bda2659b4b5a))
+
 ## [0.3.0](https://www.github.com/sentriz/socr/compare/v0.2.2...v0.3.0) (2021-08-01)
 
 
