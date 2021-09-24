@@ -1,5 +1,5 @@
 <template>
-  <div class="container h-screen p-6 mx-auto">
+  <div class="container min-h-screen p-6 mx-auto">
     <ul class="flex overflow-x-auto">
       <div class="flex flex-1 space-x-6">
         <nav-item :to="{ name: 'search' }">
