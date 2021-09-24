@@ -11,11 +11,11 @@ import (
 	"strings"
 
 	"go.senan.xyz/socr"
-	"go.senan.xyz/socr/backend/db"
-	"go.senan.xyz/socr/backend/directories"
-	"go.senan.xyz/socr/backend/imagery"
-	"go.senan.xyz/socr/backend/importer"
-	"go.senan.xyz/socr/backend/server"
+	"go.senan.xyz/socr/pkg/db"
+	"go.senan.xyz/socr/pkg/directories"
+	"go.senan.xyz/socr/pkg/imagery"
+	"go.senan.xyz/socr/pkg/importer"
+	"go.senan.xyz/socr/pkg/server"
 )
 
 var (

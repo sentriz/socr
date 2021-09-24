@@ -2,7 +2,7 @@ const scrollbar = require('tailwind-scrollbar')
 
 module.exports = {
   mode: 'jit',
-  purge: ['index.html', './frontend/**/*.vue'],
+  purge: ['index.html', './src/**/*.vue'],
   theme: {
     screens: {
       sm: '640px',

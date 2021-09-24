@@ -17,9 +17,9 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/jackc/pgx/v4"
 
-	"go.senan.xyz/socr/backend/db"
-	"go.senan.xyz/socr/backend/directories"
-	"go.senan.xyz/socr/backend/imagery"
+	"go.senan.xyz/socr/pkg/db"
+	"go.senan.xyz/socr/pkg/directories"
+	"go.senan.xyz/socr/pkg/imagery"
 )
 
 type NotifyMediaFunc func(imagery.Hash)

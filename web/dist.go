@@ -1,5 +1,5 @@
 //nolint:gochecknoglobals
-package socr
+package web
 
 import (
 	"embed"

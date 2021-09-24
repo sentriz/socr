@@ -4,7 +4,7 @@ README.md
 .gitignore
 .git
 
-frontend/dist
-frontend/node_modules
+web/dist
+web/node_modules
 
-backend/assets
+db_data

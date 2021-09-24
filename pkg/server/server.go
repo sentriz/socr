@@ -15,12 +15,13 @@ import (
 	"github.com/gorilla/websocket"
 
 	"go.senan.xyz/socr"
-	"go.senan.xyz/socr/backend/db"
-	"go.senan.xyz/socr/backend/directories"
-	"go.senan.xyz/socr/backend/imagery"
-	"go.senan.xyz/socr/backend/importer"
-	"go.senan.xyz/socr/backend/server/auth"
-	"go.senan.xyz/socr/backend/server/resp"
+	"go.senan.xyz/socr/pkg/db"
+	"go.senan.xyz/socr/pkg/directories"
+	"go.senan.xyz/socr/pkg/imagery"
+	"go.senan.xyz/socr/pkg/importer"
+	"go.senan.xyz/socr/pkg/server/auth"
+	"go.senan.xyz/socr/pkg/server/resp"
+	"go.senan.xyz/socr/web"
 )
 
 type Server struct {
@@ -91,7 +92,7 @@ func (s *Server) Router() *mux.Router {
 	rAPIKey.HandleFunc("/api/upload", s.serveUpload)
 
 	// frontend fallback route
-	r.NotFoundHandler = s.serveFrontend()
+	r.NotFoundHandler = s.serveWeb()
 
 	return r
 }
@@ -122,8 +123,8 @@ func (s *Server) SocketNotifyMedia() {
 	}
 }
 
-func (s *Server) serveFrontend() http.Handler {
-	fs := http.FS(socr.Dist)
+func (s *Server) serveWeb() http.Handler {
+	fs := http.FS(web.Dist)
 	srv := http.FileServer(fs)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if _, err := fs.Open(r.URL.Path); err != nil {
