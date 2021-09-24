@@ -3,7 +3,7 @@
     <div class="container p-6 mx-auto space-y-6">
       <div v-if="media" class="flex items-center justify-between">
         <h1 class="text-gray-500">shared media</h1>
-        <badge-group label="uploaded" class="text-gray-700" v-if="media && timestamp">
+        <badge-group label="uploaded" class="md:block hidden text-gray-700" v-if="media && timestamp">
           <badge class="text-pink-900 bg-pink-200" :title="media.timestamp">{{ timestamp }}</badge>
         </badge-group>
       </div>
