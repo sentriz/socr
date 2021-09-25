@@ -1,6 +1,6 @@
 import { reactive, readonly, InjectionKey } from 'vue'
-import { reqSearch, reqMedia, isError, Block } from '../api'
-import type { Reponse, Media, Search, PayloadSearch } from '../api'
+import { reqSearch, reqMedia, isError, Block } from '~/request'
+import type { Reponse, Media, Search, PayloadSearch } from '~/request'
 
 const mediasLoadState = async (state: State, resp: Media[]) => {
   for (const media of resp) {

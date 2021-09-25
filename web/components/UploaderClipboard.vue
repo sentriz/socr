@@ -5,9 +5,9 @@
 <script setup lang="ts">
 import LoadingModal from './LoadingModal.vue'
 
-import { isError, reqUpload } from '../api'
+import { isError, reqUpload } from '~/request'
 import { useRouter } from 'vue-router'
-import useLoading from '../composables/useLoading'
+import useLoading from '~/composables/useLoading'
 
 const router = useRouter()
 const { loading, load } = useLoading(reqUpload)

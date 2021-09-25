@@ -45,11 +45,11 @@ import { watch, computed, onMounted, ref } from 'vue'
 import type { Component } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDebounce } from '@vueuse/core'
-import { isError, SortOrder, reqDirectories, MediaType } from '../api'
-import type { PayloadSearch } from '../api'
-import useStore from '../composables/useStore'
-import useInfiniteScroll from '../composables/useInfiniteScroll'
-import useLoading from '../composables/useLoading'
+import { isError, SortOrder, reqDirectories, MediaType } from '~/request'
+import type { PayloadSearch } from '~/request'
+import useStore from '~/composables/useStore'
+import useInfiniteScroll from '~/composables/useInfiniteScroll'
+import useLoading from '~/composables/useLoading'
 import {
   SearchIcon,
   ChevronDownIcon,
@@ -62,7 +62,7 @@ import {
   CalendarIcon,
   GlobeIcon,
 } from '@heroicons/vue/outline'
-import router from '../router'
+import router from '~/router'
 
 const store = useStore()
 const route = useRoute()

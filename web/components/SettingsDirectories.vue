@@ -12,8 +12,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { isError, reqDirectories } from '../api'
-import type { Directory } from '../api'
+import { isError, reqDirectories } from '~/request'
+import type { Directory } from '~/request'
 
 // fetch import status and about on mount
 const directories = ref<Directory[]>([])

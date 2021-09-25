@@ -20,9 +20,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { urlMedia, MediaType } from '../api'
+import { urlMedia, MediaType } from '~/request'
 import { VideoCameraIcon } from '@heroicons/vue/outline'
-import useStore from '../composables/useStore'
+import useStore from '~/composables/useStore'
 
 const props = defineProps<{
   hash?: string

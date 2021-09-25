@@ -27,8 +27,8 @@ import ToastOverlay from './ToastOverlay.vue'
 
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { isError, reqAuthenticate, tokenSet } from '../api'
-import useStore from '../composables/useStore'
+import { isError, reqAuthenticate, tokenSet } from '~/request'
+import useStore from '~/composables/useStore'
 
 const route = useRoute()
 const router = useRouter()

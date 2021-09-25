@@ -16,9 +16,9 @@
 import MediaBackground from './MediaBackground.vue'
 import MediaHighlight from './MediaHighlight.vue'
 import LoadingSpinner from './LoadingSpinner.vue'
-import { MediaType } from '../api'
+import { MediaType } from '~/request'
 import { computed } from 'vue'
-import useStore from '../composables/useStore'
+import useStore from '~/composables/useStore'
 
 const props = defineProps<{
   hash: string

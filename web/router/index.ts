@@ -1,14 +1,14 @@
 import { createRouter, createWebHistory, NavigationGuard, RouteRecordRaw } from 'vue-router'
 
-import Search from '../components/Search.vue'
-import Settings from '../components/Settings.vue'
-import Importer from '../components/Importer.vue'
-import Login from '../components/Login.vue'
-import Home from '../components/Home.vue'
-import Public from '../components/Public.vue'
-import NotFound from '../components/NotFound.vue'
+import Search from '~/components/Search.vue'
+import Settings from '~/components/Settings.vue'
+import Importer from '~/components/Importer.vue'
+import Login from '~/components/Login.vue'
+import Home from '~/components/Home.vue'
+import Public from '~/components/Public.vue'
+import NotFound from '~/components/NotFound.vue'
 
-import { tokenHas, tokenSet } from '../api'
+import { tokenHas, tokenSet } from '~/request'
 
 const beforeCheckAuth: NavigationGuard = (to, _, next) => {
   if (tokenHas()) return next()

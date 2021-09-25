@@ -17,9 +17,9 @@ import MediaPreview from './MediaPreview.vue'
 import BadgeGroup from './BadgeGroup.vue'
 import Badge from './Badge.vue'
 import { computed, onMounted } from 'vue'
-import { newSocket } from '../api'
+import { newSocket } from '~/request'
 import { useRoute } from 'vue-router'
-import useStore from '../composables/useStore'
+import useStore from '~/composables/useStore'
 
 const store = useStore()
 const route = useRoute()

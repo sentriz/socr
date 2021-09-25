@@ -10,7 +10,7 @@
 import TransitionSlideY from './TransitionSlideY.vue'
 
 import Toast from './Toast.vue'
-import useStore from '../composables/useStore'
+import useStore from '~/composables/useStore'
 
 const store = useStore()
 </script>

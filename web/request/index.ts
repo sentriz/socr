@@ -1,4 +1,4 @@
-import router from '../router'
+import router from '~/router'
 
 export const urlMedia = '/api/media'
 export const urlSearch = '/api/search'
@@ -44,7 +44,11 @@ const req = async <P, R>(method: ReqMethod, url: string, data?: P): Reponse<R> =
     router.push({ name: 'login' })
   }
 
-  return await response.json()
+  try {
+    return await response.json()
+  } catch (e) {
+    return { error: 'invalid JSON returned from server' }
+  }
 }
 
 export enum SortOrder {

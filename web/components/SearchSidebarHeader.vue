@@ -37,8 +37,8 @@ import BadgeGroup from './BadgeGroup.vue'
 import Badge from './Badge.vue'
 
 import { computed } from 'vue'
-import { urlMedia } from '../api/'
-import useStore from '../composables/useStore'
+import { urlMedia } from '~/request/'
+import useStore from '~/composables/useStore'
 import { useTimeAgo } from '@vueuse/core'
 import { XIcon, ExternalLinkIcon } from '@heroicons/vue/outline'
 

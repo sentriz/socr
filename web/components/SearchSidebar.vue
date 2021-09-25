@@ -17,7 +17,7 @@ import SearchSidebarHeader from './SearchSidebarHeader.vue'
 import MediaPreview from './MediaPreview.vue'
 
 import { computed, ref, watch } from 'vue'
-import useStore from '../composables/useStore'
+import useStore from '~/composables/useStore'
 import { onClickOutside } from '@vueuse/core'
 import { useRouter } from 'vue-router'
 

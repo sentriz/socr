@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import useStore from '../composables/useStore'
+import useStore from '~/composables/useStore'
 
 const props = defineProps<{
   hash?: string

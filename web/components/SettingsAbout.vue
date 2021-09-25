@@ -9,8 +9,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { isError, reqAbout } from '../api'
-import type { About } from '../api'
+import { isError, reqAbout } from '~/request'
+import type { About } from '~/request'
 
 // fetch import status and about on mount
 const about = ref<About | undefined>()

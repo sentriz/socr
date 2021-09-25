@@ -68,9 +68,9 @@
 </template>
 
 <script setup lang="ts">
-import type { ImportStatus } from '../api'
+import type { ImportStatus } from '~/request'
 import { ref, onMounted, computed } from 'vue'
-import { newSocketAuth, urlMedia, reqStartImport, reqImportStatus, isError } from '../api'
+import { newSocketAuth, urlMedia, reqStartImport, reqImportStatus, isError } from '~/request'
 
 const status = ref<ImportStatus | undefined>()
 
