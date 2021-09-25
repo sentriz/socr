@@ -51,7 +51,7 @@ func New(
 		directoriesUploadsAlias: directoriesUploadsAlias,
 		thumbnailWidth:          thumbnailWidth,
 
-		status: Status{RWMutex: &sync.RWMutex{}},
+		status: Status{mu: &sync.RWMutex{}},
 		jobs:   make(chan *mediaFile),
 	}
 }
@@ -181,14 +181,14 @@ func (i *Importer) ScanDirectories() error {
 }
 
 func (i *Importer) Status() Status {
-	i.status.RLock()
-	defer i.status.RUnlock()
+	i.status.mu.RLock()
+	defer i.status.mu.RUnlock()
 	return i.status
 }
 
 func (i *Importer) IsRunning() bool {
-	i.status.RLock()
-	defer i.status.RUnlock()
+	i.status.mu.RLock()
+	defer i.status.mu.RUnlock()
 	return i.status.Running
 }
 
@@ -203,8 +203,8 @@ func (i *Importer) StartWorker() {
 }
 
 func (i *Importer) updateStatus(f func(*Status)) {
-	i.status.Lock()
-	defer i.status.Unlock()
+	i.status.mu.Lock()
+	defer i.status.mu.Unlock()
 	f(&i.status)
 
 	if time.Since(i.status.lastUpdate) > time.Second {
@@ -404,7 +404,7 @@ type StatusError struct {
 }
 
 type Status struct {
-	*sync.RWMutex
+	mu             *sync.RWMutex
 	lastUpdate     time.Time
 	Running        bool
 	CountTotal     int
