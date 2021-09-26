@@ -98,7 +98,7 @@ func (s *Server) Router() *mux.Router {
 }
 
 func (s *Server) SocketNotifyScannerUpdate() {
-	for range s.socketScannerUpdates {
+	for range throttleChan(s.socketScannerUpdates, 500*time.Millisecond, 2*time.Second) {
 		for client := range s.socketClientsScanner {
 			if err := client.WriteMessage(websocket.TextMessage, []byte(nil)); err != nil {
 				log.Printf("error writing to socket client: %v", err)
@@ -414,4 +414,28 @@ func (s *Server) serveImportStatus(w http.ResponseWriter, r *http.Request) {
 // if there is a problem with this please let me know
 func CheckOrigin(r *http.Request) bool {
 	return true
+}
+
+func throttleChan(c <-chan struct{}, min time.Duration, max time.Duration) chan struct{} {
+	ticker := time.NewTicker(max)
+	lastUpdate := time.Time{}
+	out := make(chan struct{})
+	update := func() {
+		if time.Since(lastUpdate) < min {
+			return
+		}
+		out <- struct{}{}
+		lastUpdate = time.Now()
+	}
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				update()
+			case <-c:
+				update()
+			}
+		}
+	}()
+	return out
 }

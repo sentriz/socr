@@ -143,7 +143,6 @@ func (i *Importer) ScanDirectories() error {
 		s.Errors = Errors{}
 	})
 	defer i.updateStatus(func(s *Status) {
-		s.lastUpdate = time.Time{}
 		s.Running = false
 	})
 
@@ -206,12 +205,8 @@ func (i *Importer) updateStatus(f func(*Status)) {
 	i.status.mu.Lock()
 	defer i.status.mu.Unlock()
 	f(&i.status)
-
-	if time.Since(i.status.lastUpdate) > time.Second {
-		i.status.lastUpdate = time.Now()
-		for _, f := range i.notifyProgressFuncs {
-			f()
-		}
+	for _, f := range i.notifyProgressFuncs {
+		f()
 	}
 }
 
@@ -405,7 +400,6 @@ type StatusError struct {
 
 type Status struct {
 	mu             *sync.RWMutex
-	lastUpdate     time.Time
 	Running        bool
 	CountTotal     int
 	CountProcessed int
