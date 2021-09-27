@@ -17,7 +17,7 @@ export default defineConfig({
     port: listenPort,
     strictPort: true,
     proxy: {
-      '/api': backendURL,
+      '/api': { target: backendURL, changeOrigin: true, ws: true },
     },
     hmr: {
       host: externalHost,
