@@ -1,6 +1,6 @@
 <template>
-  <div class="container min-h-screen p-6 mx-auto">
-    <ul class="flex overflow-x-auto">
+  <div class="min-w-min container min-h-screen p-6 mx-auto">
+    <ul class="flex">
       <div class="flex flex-1 space-x-6">
         <nav-item :to="{ name: 'search' }">
           <template v-slot:icon><search-icon class="h-5" /></template>

@@ -5,7 +5,7 @@
   <loading-spinner v-else class="bg-gray-100" text="processing image" />
 
   <div v-if="!isVideo && blocks.length" class="box padded font-mono text-sm bg-gray-100">
-    <p v-for="(block, i) in blocks" :key="i" class="rounded-lg" :class="{ 'bg-yellow-200/90': highlightedBlocksIndexes.has(i) }">
+    <p v-for="(block, i) in blocks" :key="i" class="overflow-x-hidden rounded-lg" :class="{ 'bg-yellow-200/90': highlightedBlocksIndexes.has(i) }">
       {{ block.body }}
     </p>
   </div>
