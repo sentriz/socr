@@ -50,7 +50,7 @@
       </tr>
     </table>
     <!-- preview window -->
-    <div class="min-h-40 flex items-center justify-center text-gray-500 bg-gray-100 bg-center bg-no-repeat bg-contain" :style="{ backgroundImage: `url(${url})` }">
+    <div class="min-h-40 flex items-center justify-center text-gray-500 bg-gray-100 bg-center bg-no-repeat bg-contain" :style="previewStyle">
       <span v-if="!url">no preview available</span>
     </div>
     <!-- errors -->
@@ -69,7 +69,7 @@
 
 <script setup lang="ts">
 import type { ImportStatus } from '~/request'
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, StyleValue } from 'vue'
 import { newSocketAuth, urlMedia, reqStartImport, reqImportStatus, isError } from '~/request'
 
 const status = ref<ImportStatus | undefined>()
@@ -90,6 +90,11 @@ const progress = computed(() => {
   if (!status.value?.count_total) return `0%`
   const perc = (100 * status.value.count_processed) / status.value.count_total
   return `${Math.round(perc)}%`
+})
+
+const previewStyle = computed<StyleValue>(() => {
+  if (!url.value) return {}
+  return { backgroundImage: `url(${url || ''})` }
 })
 
 // fetch import status on mount
