@@ -3,8 +3,6 @@
 @tailwind utilities;
 
 @layer base {
-  html { margin-left: calc(100vw - 100%); }
-  body { @apply min-h-screen w-full font-sans antialiased text-gray-900; }
   hr   { @apply my-6; }
   h1   { @apply text-gray-600 text-xl font-medium leading-none; }
   h2   { @apply text-gray-600 text-lg font-medium leading-none; }
