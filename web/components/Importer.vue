@@ -94,7 +94,7 @@ const progress = computed(() => {
 
 const previewStyle = computed<StyleValue>(() => {
   if (!url.value) return {}
-  return { backgroundImage: `url(${url || ''})` }
+  return { backgroundImage: `url(${url.value || ''})` }
 })
 
 // fetch import status on mount
