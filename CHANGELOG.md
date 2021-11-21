@@ -1,5 +1,12 @@
 # Changelog
 
+### [0.4.2](https://www.github.com/sentriz/socr/compare/v0.4.1...v0.4.2) (2021-11-21)
+
+
+### Bug Fixes
+
+* add on delete cascades ([b78f37b](https://www.github.com/sentriz/socr/commit/b78f37bb4be062eacfaa1c9e04762ebbc25bbe5e))
+
 ### [0.4.1](https://www.github.com/sentriz/socr/compare/v0.3.0...v0.4.1) (2021-11-21)
 
 
