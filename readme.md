@@ -1,6 +1,6 @@
-![](.github/socr.png)
+![](.github/socr.png?v=2)
 
-## socr
+## running
 
 please see example [docker-compose](./docker-compose.yml) and run
 
