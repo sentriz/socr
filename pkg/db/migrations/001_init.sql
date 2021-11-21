@@ -27,7 +27,7 @@ create table medias (
 create unique index idx_medias_hash on medias (hash);
 
 create table dir_infos (
-    media_id int references medias (id),
+    media_id int references medias (id) on delete cascade,
     filename text not null,
     directory_alias text not null,
     primary key (media_id, filename, directory_alias)
@@ -35,7 +35,7 @@ create table dir_infos (
 
 create table blocks (
     id serial primary key,
-    media_id integer not null references medias (id),
+    media_id integer not null references medias (id) on delete cascade,
     index int not null,
     min_x int not null,
     min_y int not null,

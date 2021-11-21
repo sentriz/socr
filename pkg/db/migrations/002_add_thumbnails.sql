@@ -1,6 +1,6 @@
 create table thumbnails (
     id serial primary key,
-    media_id integer not null references medias (id),
+    media_id integer not null references medias (id) on delete cascade,
     mime text not null,
     dim_width int not null,
     dim_height int not null,
