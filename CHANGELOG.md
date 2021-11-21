@@ -1,5 +1,37 @@
 # Changelog
 
+### [0.4.1](https://www.github.com/sentriz/socr/compare/v0.3.0...v0.4.1) (2021-11-21)
+
+
+### Features
+
+* filter by year/month and wrap search cols on different size displays ([c87d94e](https://www.github.com/sentriz/socr/commit/c87d94ee239da8a7e2a997d6aef07ec852fb4b18))
+* store media processed boolean ([36f985b](https://www.github.com/sentriz/socr/commit/36f985bc8288cd35b6dcae967825b2fbd2bb43cc))
+* **ui:** add arrow keys to switch between images ([74465ed](https://www.github.com/sentriz/socr/commit/74465ed2d7f0f340495f446bdd959c75145c53de))
+* **ui:** clean up thumbs and mobile layout ([a7c5f0a](https://www.github.com/sentriz/socr/commit/a7c5f0a971e3d99e6f0db219848bb2714aee0070))
+* **ui:** container min width ([93233f9](https://www.github.com/sentriz/socr/commit/93233f9aa503d91a268f05b70e79c76976e60027))
+* **ui:** highlight selector search option ([dc18179](https://www.github.com/sentriz/socr/commit/dc18179bee3ee7818dd887b63804536ad52779eb))
+* **ui:** make importer its own page ([b6e3d06](https://www.github.com/sentriz/socr/commit/b6e3d06572086e02a50e5cc5461e07104e562640))
+* **ui:** round preview corners ([d3d575b](https://www.github.com/sentriz/socr/commit/d3d575b43d7d779a68bf8f5969272a6ab92d85e2))
+* **ui:** scale preview thumbs to height ([59727e2](https://www.github.com/sentriz/socr/commit/59727e2c4bdf033e47293537901cfd214c576485))
+* **ui:** update bg and public styles ([466a9df](https://www.github.com/sentriz/socr/commit/466a9df728aa4cfa7961cf9ebc3bcb35ad63adee))
+* **ui:** update overlay hierarchy and add overlay scrollbars ([0ab4ff9](https://www.github.com/sentriz/socr/commit/0ab4ff9aea0a43b3a9cef5fefdb20c017fb4ebb9))
+
+
+### Bug Fixes
+
+* don't import empty blocks ([163fd46](https://www.github.com/sentriz/socr/commit/163fd46d204fb14e98f8ac2e57e6c778e1547217))
+* **importer:** don't attempt to import a thumbnail for a media we have already found ([04529b4](https://www.github.com/sentriz/socr/commit/04529b4fe3419867c20e80e26b7f589693a3bf2c))
+* **ui:** add settings header spacing ([53e0c43](https://www.github.com/sentriz/socr/commit/53e0c43388e4dfda1a192b150fdd2859a9cbc4e3))
+* **ui:** don't show invalid upload date ([cca1280](https://www.github.com/sentriz/socr/commit/cca12803305cf9285dc98a5b356f2668f82ba207))
+* **ui:** downgrade scrollbar ([3ea3d64](https://www.github.com/sentriz/socr/commit/3ea3d643b3d806bc250cf3677c9acd5c1baaa773))
+* **ui:** hide public title on mobile ([546cf28](https://www.github.com/sentriz/socr/commit/546cf288743ccdf3004f63bf6304855c2671428a))
+* **ui:** make sidebar header links bigger ([e7eb11f](https://www.github.com/sentriz/socr/commit/e7eb11f4c225614f1b4eeba873f7bda2659b4b5a))
+* **ui:** overlay positions on mobile ([024028c](https://www.github.com/sentriz/socr/commit/024028cd9b37f03f5999ec0e5cced6847c559844))
+* **ui:** proxy socket connection in dev mode ([a6a898f](https://www.github.com/sentriz/socr/commit/a6a898f1a5e2d5f294791c32a591bc27335a935b))
+* **ui:** use intersection observer for scrolling images ([195d1ee](https://www.github.com/sentriz/socr/commit/195d1eeb702fad34d41104437ce5147417f5536b))
+* use url.value in importer preview ([5d78f06](https://www.github.com/sentriz/socr/commit/5d78f0682c3043f614c8a5a9cf6edf81c203b7f0))
+
 ### [0.4.1](https://www.github.com/sentriz/socr/compare/v0.3.0...v0.4.1) (2021-11-14)
 
 
