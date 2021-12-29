@@ -2,7 +2,7 @@
   <div
     ref="elm"
     class="whitespace-nowrap flex min-w-0 text-gray-700 bg-white border border-gray-300 divide-x divide-gray-300 rounded"
-    :class="{ 'pointer-events-none filter contrast-125 text-gray-500': disabled }"
+    :class="{ 'pointer-events-none contrast-125 text-gray-500': disabled }"
   >
     <div class="padded w-[6.5rem] bg-gray-200 rounded-l flex-shrink-0 text-right lg:text-left">
       {{ props.label }}

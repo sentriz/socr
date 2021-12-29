@@ -1,8 +1,8 @@
 const scrollbar = require('tailwind-scrollbar')
+const colors = require('tailwindcss/colors')
 
 module.exports = {
-  mode: 'jit',
-  purge: ['index.html', './components/**/*.vue'],
+  content: ['index.html', './components/**/*.vue'],
   theme: {
     screens: {
       sm: '640px',
@@ -18,6 +18,12 @@ module.exports = {
         32: '8rem',
         36: '9rem',
         40: '10rem',
+      },
+      colors: {
+        green: colors.emerald,
+        yellow: colors.amber,
+        purple: colors.violet,
+        gray: colors.neutral,
       },
     },
   },
