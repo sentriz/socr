@@ -1,28 +1,28 @@
 <template>
   <div class="flex items-center leading-normal">
     <!-- left -->
-    <router-link :to="{ name: 'search' }" class="flex-grow h-6 text-xl">
-      <x-icon class="hover:text-gray-600 h-full text-gray-800" />
+    <router-link :to="{ name: 'search' }" class="h-6 flex-grow text-xl">
+      <x-icon class="h-full text-gray-800 hover:text-gray-600" />
     </router-link>
     <!-- right -->
-    <div v-if="media" class="md:flex-row md:items-center md:gap-6 flex flex-col items-end justify-end gap-3">
+    <div v-if="media" class="flex flex-col items-end justify-end gap-3 md:flex-row md:items-center md:gap-6">
       <badge-group label="created">
-        <badge class="text-pink-900 bg-pink-200" :title="media.timestamp">
+        <badge class="bg-pink-200 text-pink-900" :title="media.timestamp">
           {{ timestampRelative }}
         </badge>
       </badge-group>
       <badge-group v-if="media.directories?.length" label="directories">
-        <badge v-for="(dir, i) in media.directories" :key="i" class="text-blue-900 bg-blue-200">{{ dir }}</badge>
+        <badge v-for="(dir, i) in media.directories" :key="i" class="bg-blue-200 text-blue-900">{{ dir }}</badge>
       </badge-group>
       <badge-group>
         <a :href="mediaRaw" target="_blank">
-          <badge class="text-indigo-900 bg-indigo-200">
+          <badge class="bg-indigo-200 text-indigo-900">
             <external-link-icon class="h-full" />
             <span>raw</span>
           </badge>
         </a>
         <router-link :to="{ name: 'public', params: { hash: media.hash } }">
-          <badge class="text-green-900 bg-green-200">
+          <badge class="bg-green-200 text-green-900">
             <external-link-icon class="h-full" />
             <span>public</span>
           </badge>

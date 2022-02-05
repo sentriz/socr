@@ -1,5 +1,5 @@
 <template>
-  <div class="p-3 text-gray-700 bg-gray-100 rounded-lg">
+  <div class="rounded-lg bg-gray-100 p-3 text-gray-700">
     after you have set socr up with your various source directories <br />
     (for example
     <span class="code">desktop</span>, <span class="code">phone</span>, <span class="code">phone recordings</span>, <span class="code">uploads</span>) <br /><br />
@@ -14,9 +14,9 @@
     as the watcher, by design, will only import new media that is sees, it can sometimes be handy to trigger a manual scan an import. so, if this is a fresh socr installation,
     click "start import" below to iterate all your socr directories and import old media 👍
   </div>
-  <div class="md:grid-cols-3 grid grid-cols-1 gap-3 mt-6">
+  <div class="mt-6 grid grid-cols-1 gap-3 md:grid-cols-3">
     <!-- status table -->
-    <table class="col-span-full md:col-span-2 bg-white">
+    <table class="col-span-full bg-white md:col-span-2">
       <colgroup>
         <col class="w-3/12" />
         <col class="w-9/12" />
@@ -50,14 +50,14 @@
       </tr>
     </table>
     <!-- preview window -->
-    <div class="min-h-40 flex items-center justify-center text-gray-500 bg-gray-100 bg-center bg-no-repeat bg-contain" :style="previewStyle">
+    <div class="flex min-h-40 items-center justify-center bg-gray-100 bg-contain bg-center bg-no-repeat text-gray-500" :style="previewStyle">
       <span v-if="!url">no preview available</span>
     </div>
     <!-- errors -->
-    <div class="col-span-full padded bg-red-100 border border-red-200">
+    <div class="padded col-span-full border border-red-200 bg-red-100">
       <span v-if="!status?.errors?.length" class="text-red-300">no errors yet</span>
       <ol v-if="status?.errors" v-for="error in status.errors">
-        <li class="text-red-900 truncate">
+        <li class="truncate text-red-900">
           {{ new Date(error.time).toLocaleTimeString() }}
           <span class="mx-3 text-red-400">|</span>
           {{ error.error }}

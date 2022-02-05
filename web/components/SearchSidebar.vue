@@ -1,9 +1,9 @@
 <template>
   <transition-fade>
-    <div v-if="media" class="absolute inset-0 transition-opacity bg-gray-700 bg-opacity-75 pointer-events-auto" />
+    <div v-if="media" class="pointer-events-auto absolute inset-0 bg-gray-700 bg-opacity-75 transition-opacity" />
   </transition-fade>
   <transition-slide>
-    <div v-if="media" ref="content" class="overflow-y-thin absolute inset-y-0 right-0 w-full max-w-lg p-6 space-y-6 bg-white pointer-events-auto">
+    <div v-if="media" ref="content" class="overflow-y-thin pointer-events-auto absolute inset-y-0 right-0 w-full max-w-lg space-y-6 bg-white p-6">
       <search-sidebar-header :hash="media.hash" />
       <media-preview :hash="media.hash" />
     </div>

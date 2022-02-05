@@ -1,6 +1,6 @@
 <template>
   <transition-slide-y>
-    <div v-if="store.state.toast" class="bottom-6 absolute inset-x-0 flex justify-center transition">
+    <div v-if="store.state.toast" class="absolute inset-x-0 bottom-6 flex justify-center transition">
       <toast :toast="store.state.toast" />
     </div>
   </transition-slide-y>

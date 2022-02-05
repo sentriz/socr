@@ -1,7 +1,7 @@
 <template>
   <input class="hidden" ref="elm" type="file" accept="image/*, video/*" @change="select" />
-  <div class="hover:opacity-100 padded absolute bottom-0 right-0 bg-gray-200 rounded-tl opacity-75 pointer-events-auto">
-    <div class="hover:text-gray-900 hover:cursor-pointer flex items-center gap-2 text-gray-600" @click="click">
+  <div class="padded pointer-events-auto absolute bottom-0 right-0 rounded-tl bg-gray-200 opacity-75 hover:opacity-100">
+    <div class="flex items-center gap-2 text-gray-600 hover:cursor-pointer hover:text-gray-900" @click="click">
       <upload-icon class="h-5" />
       <span>upload or paste file</span>
     </div>

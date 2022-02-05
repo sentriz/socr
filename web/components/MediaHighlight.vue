@@ -1,6 +1,6 @@
 <template>
-  <div class="w-fit relative">
-    <div v-if="thumb && isVideo" class="top-2 right-2 bg-black/80 absolute p-2 rounded-md">
+  <div class="relative w-fit">
+    <div v-if="thumb && isVideo" class="absolute top-2 right-2 rounded-md bg-black/80 p-2">
       <video-camera-icon class="h-5 text-white" />
     </div>
     <video v-if="!thumb && isVideo && media" :controls="true" @loadstart="loaded">
@@ -11,7 +11,7 @@
     <svg
       v-if="media && blocks.length"
       :viewBox="`0 0 ${media.dim_width} ${media.dim_height}`"
-      class="absolute inset-0 text-yellow-300 text-opacity-50 pointer-events-none fill-current"
+      class="pointer-events-none absolute inset-0 fill-current text-yellow-300 text-opacity-50"
     >
       <rect v-for="b in blocks" :key="b.id" :x="b.min_x" :y="b.min_y" :width="b.max_x - b.min_x" :height="b.max_y - b.min_y" ry="8" />
     </svg>

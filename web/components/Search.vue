@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6">
-    <div class="md:grid-cols-2 lg:grid-cols-12 grid grid-cols-1 gap-2">
-      <input class="lg:col-span-9 inp" v-model="reqQuery" type="text" placeholder="enter media text query" />
+    <div class="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-12">
+      <input class="inp lg:col-span-9" v-model="reqQuery" type="text" placeholder="enter media text query" />
       <search-filter class="lg:col-span-3" label="sort by" :items="reqSortOptions" v-model:selected="reqSort" />
       <search-filter class="lg:col-span-3" label="media" :items="reqMediaOptions" v-model:selected="reqMedia" />
       <search-filter class="lg:col-span-3" label="directory" :items="reqDirOptions" v-model:selected="reqDir" />
@@ -15,7 +15,7 @@
         <hr class="m-0" />
       </div>
       <div class="col-resp col-gap-4 space-y-4">
-        <media-background v-for="hash in page" :key="hash" :hash="hash" class="shadow-lg max-h-[600px] overflow-y-auto flex justify-center">
+        <media-background v-for="hash in page" :key="hash" :hash="hash" class="flex max-h-[600px] justify-center overflow-y-auto shadow-lg">
           <router-link :to="{ name: 'search', params: { hash } }" class="block">
             <media-highlight thumb :hash="hash" />
           </router-link>

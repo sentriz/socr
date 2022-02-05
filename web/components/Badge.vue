@@ -1,5 +1,5 @@
 <template>
-  <span class="inline-flex items-center gap-0.5 py-1 px-2 h-6 space-x-1 text-md text-white rounded">
+  <span class="text-md inline-flex h-6 items-center gap-0.5 space-x-1 rounded py-1 px-2 text-white">
     <slot />
   </span>
 </template>

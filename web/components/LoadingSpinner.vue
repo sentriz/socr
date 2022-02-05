@@ -1,6 +1,6 @@
 <template>
-  <div class="flex items-center justify-center gap-2 p-3 text-gray-600 bg-gray-200 rounded">
-    <refresh-icon class="animate-spin h-5" />
+  <div class="flex items-center justify-center gap-2 rounded bg-gray-200 p-3 text-gray-600">
+    <refresh-icon class="h-5 animate-spin" />
     <span>{{ props.text || 'loading' }}</span>
   </div>
 </template>

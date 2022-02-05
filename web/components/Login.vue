@@ -1,8 +1,8 @@
 <template>
-  <div class="flex items-center justify-center min-h-screen bg-gray-200">
-    <div class="w-full max-w-xs m-8 space-y-4">
-      <div class="p-8 space-y-6 bg-white rounded shadow-md">
-        <logo class="w-9/12 mx-auto" />
+  <div class="flex min-h-screen items-center justify-center bg-gray-200">
+    <div class="m-8 w-full max-w-xs space-y-4">
+      <div class="space-y-6 rounded bg-white p-8 shadow-md">
+        <logo class="mx-auto w-9/12" />
         <div>
           <label class="inp-label" for="username">username</label>
           <input class="inp w-full shadow" hash="username" type="text" placeholder="mark_e_smith" v-model="username" />
@@ -13,7 +13,7 @@
         </div>
         <button class="btn w-full" type="button" @click="login">sign in</button>
       </div>
-      <p class="text-xs text-center text-gray-500"><b>s</b>creenshot <b>ocr</b> server &mdash; Senan Kelly 2020</p>
+      <p class="text-center text-xs text-gray-500"><b>s</b>creenshot <b>ocr</b> server &mdash; Senan Kelly 2020</p>
     </div>
   </div>
   <teleport to="#overlays">

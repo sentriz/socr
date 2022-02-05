@@ -1,10 +1,10 @@
 <template>
-  <div class="flex items-center min-h-screen bg-white">
-    <div class="container p-6 mx-auto space-y-6">
+  <div class="flex min-h-screen items-center bg-white">
+    <div class="container mx-auto space-y-6 p-6">
       <div v-if="media" class="flex items-center justify-between">
         <h1 class="text-gray-500">shared media</h1>
-        <badge-group label="uploaded" class="md:inline-flex hidden text-gray-700" v-if="media && timestamp">
-          <badge class="text-pink-900 bg-pink-200" :title="media.timestamp">{{ timestamp }}</badge>
+        <badge-group label="uploaded" class="hidden text-gray-700 md:inline-flex" v-if="media && timestamp">
+          <badge class="bg-pink-200 text-pink-900" :title="media.timestamp">{{ timestamp }}</badge>
         </badge-group>
       </div>
       <media-preview :hash="hash" />

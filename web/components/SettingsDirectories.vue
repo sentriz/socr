@@ -1,5 +1,5 @@
 <template>
-  <table class="w-full rounded table-auto">
+  <table class="w-full table-auto rounded">
     <tr v-for="(directory, i) in directories" :class="{ 'bg-gray-100': i % 2 }">
       <td class="padded border">{{ directory.directory_alias }}</td>
       <td class="padded border">{{ directory.count }}</td>

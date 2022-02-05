@@ -1,5 +1,5 @@
 <template>
-  <div class="min-w-min container min-h-screen p-6 mx-auto">
+  <div class="container mx-auto min-h-screen min-w-min p-6">
     <ul class="flex">
       <div class="flex flex-1 space-x-6">
         <nav-item :to="{ name: 'search' }">
@@ -15,7 +15,7 @@
           <template v-slot:name>settings</template>
         </nav-item>
       </div>
-      <div class="sm:block hidden">
+      <div class="hidden sm:block">
         <nav-item :to="{ name: 'logout' }">
           <template v-slot:icon><logout-icon class="h-5" /></template>
           <template v-slot:name>logout</template>
