@@ -16,7 +16,7 @@ const mediasLoadState = async (state: State, resp: Media[]) => {
   }
 }
 
-export interface State {
+export type State = {
   medias: Map<string, Media>
   blocks: Map<string, Block[]>
   highlighted_blocks: Map<string, Block[]>

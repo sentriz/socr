@@ -31,7 +31,7 @@ import { onClickOutside } from '@vueuse/core'
 import { ref } from 'vue'
 import type { Component } from 'vue'
 
-interface Item {
+type Item = {
   label: string
   icon: Component
 }

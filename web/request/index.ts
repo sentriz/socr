@@ -16,11 +16,11 @@ export const tokenSet = (token: string) => localStorage.setItem(tokenKey, token)
 export const tokenGet = () => localStorage.getItem(tokenKey) || undefined
 export const tokenHas = () => !!localStorage.getItem(tokenKey)
 
-export interface Error {
+export type Error = {
   error: string
 }
 
-export interface Success<T> {
+export type Success<T> = {
   result: T
 }
 
@@ -56,12 +56,12 @@ export enum SortOrder {
   Desc = 'desc',
 }
 
-export interface PayloadSort {
+export type PayloadSort = {
   field: string
   order: SortOrder
 }
 
-export interface PayloadSearch {
+export type PayloadSearch = {
   body: string
   limit: number
   offset: number
@@ -76,7 +76,7 @@ export const reqSearch = (data: PayloadSearch) => {
   return req<PayloadSearch, Search>('post', urlSearch, data)
 }
 
-export interface PayloadAuthenticate {
+export type PayloadAuthenticate = {
   username: string
   password: string
 }
@@ -121,7 +121,7 @@ const socketGuesses: { [key: string]: string } = {
 const socketProtocol = socketGuesses[window.location.protocol]
 const socketHost = window.location.host
 
-interface SocketParams {
+type SocketParams = {
   want_settings?: 0 | 1
   want_media_hash?: string
   token?: string
@@ -137,7 +137,7 @@ export const newSocket = (params: SocketParams) => {
 type ID<U> = number & { __kind: U }
 
 export type BlockID = ID<'Block ID'>
-export interface Block {
+export type Block = {
   id: BlockID
   media_id: MediaID
   index: number
@@ -154,7 +154,7 @@ export enum MediaType {
 }
 
 export type MediaID = ID<'Media ID'>
-export interface Media {
+export type Media = {
   id: MediaID
   type: MediaType
   mime: string
@@ -170,30 +170,30 @@ export interface Media {
   processed: boolean
 }
 
-export interface Similarity {
+export type Similarity = {
   similarity: number
 }
 
-export interface Search {
+export type Search = {
   medias?: (Media & Similarity)[]
   took: number
 }
 
-export interface Authenticate {
+export type Authenticate = {
   token: string
 }
 
-export interface StartImport {}
+export type StartImport = {}
 
 export type About = { [key: string]: number | string }
 
-export interface Directory {
+export type Directory = {
   directory_alias: string
   count: number
   is_uploads?: boolean
 }
 
-export interface ImportStatus {
+export type ImportStatus = {
   errors: {
     error: string
     time: string
@@ -204,6 +204,6 @@ export interface ImportStatus {
   count_processed: number
 }
 
-export interface Upload {
+export type Upload = {
   id: MediaID
 }
