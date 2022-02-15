@@ -21,7 +21,8 @@ import (
 	gosseract "github.com/otiai10/gosseract/v2"
 )
 
-const VideoThumbWidth = 1080
+const VideoThumbMaxWidth = 1080
+const VideoThumbMaxHeight = 1920
 
 type Type string
 
@@ -151,7 +152,7 @@ func DominantColour(img image.Image) (color.Color, string) {
 
 func VideoThumbnail(data []byte) (image.Image, error) {
 	_, thumb, err := thumbnailer.ProcessBuffer(data, thumbnailer.Options{
-		ThumbDims: thumbnailer.Dims{Width: VideoThumbWidth},
+		ThumbDims: thumbnailer.Dims{Width: VideoThumbMaxWidth, Height: VideoThumbMaxHeight},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("process buffer: %w", err)
