@@ -1,5 +1,12 @@
 # Changelog
 
+### [0.4.3](https://www.github.com/sentriz/socr/compare/v0.4.2...v0.4.3) (2022-02-15)
+
+
+### Bug Fixes
+
+* set video thumb max height ([96f60a1](https://www.github.com/sentriz/socr/commit/96f60a1001943f8293755497638ac883fcc329f8))
+
 ### [0.4.2](https://www.github.com/sentriz/socr/compare/v0.4.1...v0.4.2) (2021-11-21)
 
 
