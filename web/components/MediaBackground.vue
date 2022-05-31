@@ -5,19 +5,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, CSSProperties } from 'vue'
 import useStore from '~/composables/useStore'
 
 const props = defineProps<{
   hash?: string
 }>()
 
-const ALPHA = '88'
 const store = useStore()
-
 const media = computed(() => store.getMediaByHash(props.hash || ''))
-const dominantStyle = computed(() => {
-  const backgroundColor = `${media.value?.dominant_colour}${ALPHA}`
-  return { backgroundColor }
+
+const dominantStyle = computed((): CSSProperties => {
+  const ALPHA = 0.25
+  return {
+    backgroundColor: `${media.value?.dominant_colour}${hex(ALPHA)}`,
+  }
 })
+
+const hex = (v: number /* 0-1 */): string => (v * 256).toString(16)
 </script>
