@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"go.senan.xyz/socr"
 	"go.senan.xyz/socr/pkg/db"
@@ -66,8 +67,12 @@ func main() {
 
 	router := servr.Router()
 	server := http.Server{
-		Addr:    confListenAddr,
-		Handler: router,
+		Addr:              confListenAddr,
+		Handler:           router,
+		ReadTimeout:       10 * time.Second,
+		ReadHeaderTimeout: 5 * time.Second,
+		IdleTimeout:       60 * time.Second,
+		MaxHeaderBytes:    1024 * 64,
 	}
 
 	log.Printf("starting socr v%s", socr.Version)
