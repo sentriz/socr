@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.0](https://www.github.com/sentriz/socr/compare/v0.4.2...v0.5.0) (2022-09-17)
+
+
+### Features
+
+* **ui:** update media preview border style ([be7405b](https://www.github.com/sentriz/socr/commit/be7405ba125d67a3f4f99944fca3fd0a364b04cf))
+
+
+### Bug Fixes
+
+* set video thumb max height ([96f60a1](https://www.github.com/sentriz/socr/commit/96f60a1001943f8293755497638ac883fcc329f8))
+
 ### [0.4.2](https://www.github.com/sentriz/socr/compare/v0.4.1...v0.4.2) (2021-11-21)
 
 
