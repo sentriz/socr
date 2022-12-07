@@ -56,6 +56,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: '',
+        name: 'home-default',
         redirect: { name: 'search' },
       },
     ],
