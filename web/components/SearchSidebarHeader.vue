@@ -6,13 +6,11 @@
     </router-link>
     <!-- right -->
     <div v-if="media" class="flex flex-col items-end justify-end gap-3 md:flex-row md:items-center md:gap-6">
-      <badge-group label="created">
-        <badge class="bg-pink-200 text-pink-900" :title="media.timestamp">
-          {{ timestampRelative }}
-        </badge>
-      </badge-group>
       <badge-group v-if="media.directories?.length" label="directories">
         <badge v-for="(dir, i) in media.directories" :key="i" class="bg-blue-200 text-blue-900">{{ dir }}</badge>
+      </badge-group>
+      <badge-group label="created">
+        <badge class="bg-pink-200 text-pink-900" :title="media.timestamp"> {{ timestampRelative }} </badge>
       </badge-group>
       <badge-group>
         <a :href="mediaRaw" target="_blank">
