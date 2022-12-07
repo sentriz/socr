@@ -40,3 +40,21 @@
   .max-w-lg { max-width: theme('screens.lg'); }
   .max-w-xl { max-width: theme('screens.xl'); }
 }
+
+@font-face {
+  font-family: 'Inconsolata';
+  font-style: normal;
+  font-weight: 500;
+  src: local(''),
+       url('/inconsolata-v31-latin-500.woff2') format('woff2'),
+       url('/inconsolata-v31-latin-500.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Inconsolata';
+  font-style: normal;
+  font-weight: 600;
+  src: local(''),
+       url('/inconsolata-v31-latin-600.woff2') format('woff2'),
+       url('/inconsolata-v31-latin-600.woff') format('woff');
+}

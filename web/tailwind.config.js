@@ -4,6 +4,11 @@ const colors = require('tailwindcss/colors')
 module.exports = {
   content: ['index.html', './components/**/*.vue'],
   theme: {
+    fontFamily: {
+      sans: ['Inconsolata', 'sans-serif'],
+      serif: ['serif'],
+      mono: ['monospace'],
+    },
     screens: {
       sm: '640px',
       md: '768px',
