@@ -8,23 +8,23 @@
     "check-formatting": "prettier --check $(git ls-files | grep -E '.(ts|vue|js|json)$')"
   },
   "dependencies": {
-    "@heroicons/vue": "^1.0.4",
-    "@vueuse/core": "^6.5.3",
-    "vue": "^3.1.4",
-    "vue-router": "^4.0.10"
+    "@heroicons/vue": "^1.0.6",
+    "@vueuse/core": "^9.6.0",
+    "vue": "^3.2.45",
+    "vue-router": "^4.1.6"
   },
   "devDependencies": {
-    "@types/node": "^16.10.1",
-    "@vitejs/plugin-vue": "^1.9.2",
-    "@vue/compiler-sfc": "^3.2.19",
-    "autoprefixer": "^10.4.1",
-    "postcss": "^8.4.5",
-    "prettier": "^2.5.1",
-    "prettier-plugin-tailwindcss": "^0.1.5",
-    "tailwind-scrollbar": "^1.3.0",
-    "tailwindcss": "^3.0.8",
-    "typescript": "^4.4.3",
-    "vite": "^2.5.10",
-    "vue-tsc": "^0.3.0"
+    "@types/node": "^18.11.11",
+    "@vitejs/plugin-vue": "^3.2.0",
+    "@vue/compiler-sfc": "^3.2.45",
+    "autoprefixer": "^10.4.13",
+    "postcss": "^8.4.19",
+    "prettier": "^2.8.1",
+    "prettier-plugin-tailwindcss": "^0.2.0",
+    "tailwind-scrollbar": "^2.0.1",
+    "tailwindcss": "^3.2.4",
+    "typescript": "^4.9.3",
+    "vite": "^3.2.5",
+    "vue-tsc": "^1.0.11"
   }
 }
