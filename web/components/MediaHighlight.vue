@@ -3,7 +3,7 @@
     <div v-if="thumb && isVideo" class="absolute top-2 right-2 rounded-md bg-black/80 p-2">
       <video-camera-icon class="h-5 text-white" />
     </div>
-    <video v-if="!thumb && isVideo && media" :controls="true" @loadstart="loaded">
+    <video :key="url" v-if="!thumb && isVideo && media" :controls="true" @loadstart="loaded">
       <source :src="url" :type="media.mime" />
     </video>
     <img v-else :src="url" @load="loaded" />
