@@ -75,7 +75,7 @@ func main() {
 		MaxHeaderBytes:    1024 * 64,
 	}
 
-	log.Printf("starting socr v%s", socr.Version)
+	log.Printf("starting socr %s", socr.Version)
 	log.Printf("listening on %q", confListenAddr)
 	log.Printf("starting server: %v", server.ListenAndServe())
 }
