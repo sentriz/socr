@@ -9,9 +9,9 @@ import (
 	"image/gif"
 	"image/jpeg"
 	"image/png"
-	"io"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/bakape/thumbnailer"
 	"github.com/buckket/go-blurhash"
@@ -21,67 +21,24 @@ import (
 	gosseract "github.com/otiai10/gosseract/v2"
 )
 
+type MediaType string
+
+const (
+	TypeImage MediaType = "image"
+	TypeVideo MediaType = "video"
+)
+
+type Media interface {
+	Type() MediaType
+	MIME() string
+	Hash() string
+	Extension() string
+	Thumbnail(w, h uint) image.Image
+	Image() image.Image
+}
+
 const VideoThumbMaxWidth = 1080
 const VideoThumbMaxHeight = 1920
-
-type Type string
-
-const (
-	TypeImage Type = "image"
-	TypeVideo Type = "video"
-)
-
-type MIME string
-
-const (
-	MIMEGIF  MIME = "image/gif"
-	MIMEPNG  MIME = "image/png"
-	MIMEJPEG MIME = "image/jpeg"
-
-	MIMEWebM MIME = "video/webm"
-	MIMEMP4  MIME = "video/mp4"
-	MIMEMPEG MIME = "video/mpeg"
-)
-
-type Filetype struct {
-	Type      Type
-	MIME      MIME
-	Extension string
-}
-
-func (f *Filetype) IsImage() bool { return f.Type == TypeImage }
-func (f *Filetype) IsVideo() bool { return f.Type == TypeVideo }
-
-type EncodeFunc func(io.Writer, image.Image) error
-type DecodeFunc func(io.Reader) (image.Image, error)
-
-type Format struct {
-	Decode DecodeFunc
-	Encode EncodeFunc
-}
-
-func EncodeGIF(in io.Writer, i image.Image) error  { return gif.Encode(in, i, nil) }
-func EncodePNG(in io.Writer, i image.Image) error  { return png.Encode(in, i) }
-func EncodeJPEG(in io.Writer, i image.Image) error { return jpeg.Encode(in, i, nil) }
-
-func ReadMIME(in string) (*Filetype, *Format) {
-	switch MIME(in) {
-	case MIMEGIF:
-		return &Filetype{TypeImage, MIMEGIF, "gif"}, &Format{gif.Decode, EncodeGIF}
-	case MIMEPNG:
-		return &Filetype{TypeImage, MIMEPNG, "png"}, &Format{png.Decode, EncodePNG}
-	case MIMEJPEG:
-		return &Filetype{TypeImage, MIMEJPEG, "jpg"}, &Format{jpeg.Decode, EncodeJPEG}
-	case MIMEWebM:
-		return &Filetype{TypeVideo, MIMEWebM, "webm"}, nil
-	case MIMEMP4:
-		return &Filetype{TypeVideo, MIMEMP4, "mp4"}, nil
-	case MIMEMPEG:
-		return &Filetype{TypeVideo, MIMEMPEG, "mpeg"}, nil
-	default:
-		return nil, nil
-	}
-}
 
 func ExtractText(img []byte) ([]gosseract.BoundingBox, error) {
 	client := gosseract.NewClient()
@@ -164,39 +121,82 @@ func VideoThumbnail(data []byte) (image.Image, error) {
 	return jpeg.Decode(buff)
 }
 
-type Hash string
-
-func DecodeAndHash(raw []byte) (Type, MIME, string, image.Image, Hash, error) {
-	mime := http.DetectContentType(raw)
-	filetype, format := ReadMIME(mime)
-	if filetype == nil {
-		return "", "", "", nil, "", fmt.Errorf("unknown image or video mime %q", mime)
-	}
-
-	switch filetype.Type {
-	case TypeImage:
-		rawReader := bytes.NewReader(raw)
-		image, err := format.Decode(rawReader)
-		if err != nil {
-			return "", "", "", nil, "", fmt.Errorf("decoding image: %w", err)
-		}
-		// image is rencoded to ensure with get the same hash for file uploads, scans, etc
-		digest := xxhash.New()
-		if err := format.Encode(digest, image); err != nil {
-			return "", "", "", nil, "", fmt.Errorf("encoding image: %w", err)
-		}
-		sum := digest.Sum64()
-		hash := Hash(strconv.FormatUint(sum, 16))
-		return filetype.Type, filetype.MIME, filetype.Extension, image, hash, nil
-	case TypeVideo:
-		image, err := VideoThumbnail(raw)
-		if err != nil {
-			return "", "", "", nil, "", fmt.Errorf("decoding video thumb: %w", err)
-		}
-		sum := xxhash.Sum64(raw)
-		hash := Hash(strconv.FormatUint(sum, 16))
-		return filetype.Type, filetype.MIME, filetype.Extension, image, hash, nil
+func NewMedia(raw []byte) (Media, error) {
+	switch mime := http.DetectContentType(raw); mime {
+	case "image/gif", "image/png", "image/jpeg":
+		return newMediaImage(raw, mime)
+	case "video/webm", "video/mp4", "video/mpeg":
+		return newMediaVideo(raw, mime)
 	default:
-		return "", "", "", nil, "", fmt.Errorf("unknown filetype %q", mime)
+		return nil, fmt.Errorf("unknown image or video mime %q", mime)
 	}
 }
+
+type mediaImage struct {
+	image image.Image
+	mime  string
+	hash  string
+}
+
+func newMediaImage(raw []byte, mime string) (*mediaImage, error) {
+	image, err := decodeImage(raw, mime)
+	if err != nil {
+		return nil, fmt.Errorf("decode: %w", err)
+	}
+	return &mediaImage{image, mime, hashBytes(raw)}, err
+}
+
+func (m *mediaImage) Type() MediaType                 { return TypeImage }
+func (m *mediaImage) MIME() string                    { return m.mime }
+func (m *mediaImage) Hash() string                    { return m.hash }
+func (m *mediaImage) Extension() string               { return mimeExtension(m.mime) }
+func (m *mediaImage) Image() image.Image              { return m.image }
+func (m *mediaImage) Thumbnail(w, h uint) image.Image { return Resize(m.image, w, h) }
+
+type mediaVideo struct {
+	image image.Image
+	mime  string
+	hash  string
+}
+
+func newMediaVideo(raw []byte, mime string) (*mediaVideo, error) {
+	image, err := VideoThumbnail(raw)
+	if err != nil {
+		return nil, fmt.Errorf("get thumbnail: %w", err)
+	}
+	return &mediaVideo{image, mime, hashBytes(raw)}, err
+}
+
+func (m *mediaVideo) Type() MediaType                 { return TypeVideo }
+func (m *mediaVideo) MIME() string                    { return m.mime }
+func (m *mediaVideo) Hash() string                    { return m.hash }
+func (m *mediaVideo) Extension() string               { return mimeExtension(m.mime) }
+func (m *mediaVideo) Image() image.Image              { return m.image }
+func (m *mediaVideo) Thumbnail(w, h uint) image.Image { return Resize(m.image, w, h) }
+
+func hashBytes(bytes []byte) string {
+	sum := xxhash.Sum64(bytes)
+	hash := strconv.FormatUint(sum, 16)
+	return hash
+}
+
+func mimeExtension(mime string) string {
+	_, name, _ := strings.Cut(mime, "/")
+	return name
+}
+
+func decodeImage(raw []byte, mime string) (image.Image, error) {
+	switch mime {
+	case "image/gif":
+		return gif.Decode(bytes.NewReader(raw))
+	case "image/png":
+		return png.Decode(bytes.NewReader(raw))
+	case "image/jpeg":
+		return jpeg.Decode(bytes.NewReader(raw))
+	default:
+		return nil, fmt.Errorf("unknown mime: %q", mime)
+	}
+}
+
+var _ Media = (*mediaImage)(nil)
+var _ Media = (*mediaVideo)(nil)

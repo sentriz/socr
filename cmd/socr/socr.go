@@ -2,6 +2,7 @@
 package main
 
 import (
+	"image/png"
 	"log"
 	"net/http"
 	"os"
@@ -14,7 +15,6 @@ import (
 	"go.senan.xyz/socr"
 	"go.senan.xyz/socr/pkg/db"
 	"go.senan.xyz/socr/pkg/directories"
-	"go.senan.xyz/socr/pkg/imagery"
 	"go.senan.xyz/socr/pkg/importer"
 	"go.senan.xyz/socr/pkg/server"
 )
@@ -50,7 +50,7 @@ func main() {
 	}
 
 	const numImportWorkers = 1
-	importr := importer.New(dbc, imagery.EncodePNG, imagery.MIMEPNG, confDirs, confUploadsAlias, uint(confThumbnailWidth))
+	importr := importer.New(dbc, png.Encode, "image/png", confDirs, confUploadsAlias, uint(confThumbnailWidth))
 	for i := 0; i < numImportWorkers; i++ {
 		log.Printf("starting import worker %d", i+1)
 		go importr.StartWorker()

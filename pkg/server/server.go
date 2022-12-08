@@ -31,12 +31,12 @@ type Server struct {
 	socketUpgrader          websocket.Upgrader
 	importer                *importer.Importer
 	socketClientsScanner    map[*websocket.Conn]struct{}
-	socketClientsImporter   map[imagery.Hash]map[*websocket.Conn]struct{}
+	socketClientsImporter   map[string]map[*websocket.Conn]struct{}
 	hmacSecret              string
 	loginUsername           string
 	loginPassword           string
 	apiKey                  string
-	socketMedias            chan imagery.Hash
+	socketMedias            chan string
 	socketScannerUpdates    chan struct{}
 }
 
@@ -48,15 +48,15 @@ func New(db *db.DB, importr *importer.Importer, directories directories.Director
 		socketUpgrader:          websocket.Upgrader{CheckOrigin: CheckOrigin},
 		importer:                importr,
 		socketClientsScanner:    map[*websocket.Conn]struct{}{},
-		socketClientsImporter:   map[imagery.Hash]map[*websocket.Conn]struct{}{},
+		socketClientsImporter:   map[string]map[*websocket.Conn]struct{}{},
 		hmacSecret:              hmacSecret,
 		loginUsername:           loginUsername,
 		loginPassword:           loginPassword,
 		apiKey:                  apkKey,
-		socketMedias:            make(chan imagery.Hash),
+		socketMedias:            make(chan string),
 		socketScannerUpdates:    make(chan struct{}),
 	}
-	importr.AddNotifyMediaFunc(func(hash imagery.Hash) {
+	importr.AddNotifyMediaFunc(func(hash string) {
 		servr.socketMedias <- hash
 	})
 	importr.AddNotifyProgressFunc(func() {
@@ -154,7 +154,7 @@ func (s *Server) serveUpload(w http.ResponseWriter, r *http.Request) {
 		resp.Errorf(w, http.StatusInternalServerError, "read form file: %v", err)
 		return
 	}
-	fileType, mime, extension, image, hash, err := imagery.DecodeAndHash(raw)
+	media, err := imagery.NewMedia(raw)
 	if err != nil {
 		resp.Errorf(w, http.StatusInternalServerError, "decoding media: %v", err)
 		return
@@ -162,7 +162,7 @@ func (s *Server) serveUpload(w http.ResponseWriter, r *http.Request) {
 
 	timestamp := time.Now().Format(time.RFC3339)
 	uploadsDir := s.directories[s.directoriesUploadsAlias]
-	fileName := fmt.Sprintf("%s.%s", timestamp, extension)
+	fileName := fmt.Sprintf("%s.%s", timestamp, media.Extension())
 	filePath := filepath.Join(uploadsDir, fileName)
 	if err := os.WriteFile(filePath, raw, 0600); err != nil {
 		resp.Errorf(w, 500, "write upload to disk: %v", err)
@@ -171,8 +171,8 @@ func (s *Server) serveUpload(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		timestamp := time.Now()
-		if err := s.importer.ImportMedia(fileType, mime, extension, image, hash, s.directoriesUploadsAlias, fileName, timestamp); err != nil {
-			log.Printf("error processing media %s: %v", hash, err)
+		if err := s.importer.ImportMedia(media, s.directoriesUploadsAlias, fileName, timestamp); err != nil {
+			log.Printf("error processing media %s: %v", media.Hash(), err)
 			return
 		}
 	}()
@@ -180,7 +180,7 @@ func (s *Server) serveUpload(w http.ResponseWriter, r *http.Request) {
 	resp.Write(w, struct {
 		ID string `json:"id"`
 	}{
-		ID: string(hash),
+		ID: media.Hash(),
 	})
 }
 
@@ -341,7 +341,7 @@ func (s *Server) serveWebSocket(w http.ResponseWriter, r *http.Request) {
 		}
 		s.socketClientsScanner[conn] = struct{}{}
 	}
-	if w := imagery.Hash(params.Get("want_media_hash")); w != "" {
+	if w := params.Get("want_media_hash"); w != "" {
 		if _, ok := s.socketClientsImporter[w]; !ok {
 			s.socketClientsImporter[w] = map[*websocket.Conn]struct{}{}
 		}
@@ -396,7 +396,7 @@ func (s *Server) serveImportStatus(w http.ResponseWriter, r *http.Request) {
 		Running:        status.Running,
 		CountTotal:     status.CountTotal,
 		CountProcessed: status.CountProcessed,
-		LastHash:       string(status.LastHash),
+		LastHash:       status.LastHash,
 	}
 	for _, err := range status.Errors {
 		statusResp.Errors = append(statusResp.Errors, &respStatusError{

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"image"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -22,13 +23,15 @@ import (
 	"go.senan.xyz/socr/pkg/imagery"
 )
 
-type NotifyMediaFunc func(imagery.Hash)
+type EncodeFunc func(io.Writer, image.Image) error
+
+type NotifyMediaFunc func(hash string)
 type NotifyProgressFunc func()
 
 type Importer struct {
 	db                      *db.DB
-	defaultEncoder          imagery.EncodeFunc
-	defaultMIME             imagery.MIME
+	defaultEncoder          EncodeFunc
+	defaultMIME             string
 	directories             directories.Directories
 	directoriesUploadsAlias string
 	thumbnailWidth          uint
@@ -40,7 +43,7 @@ type Importer struct {
 }
 
 func New(
-	db *db.DB, defaultEncoder imagery.EncodeFunc, defaultMIME imagery.MIME,
+	db *db.DB, defaultEncoder EncodeFunc, defaultMIME string,
 	directories directories.Directories, directoriesUploadsAlias string, thumbnailWidth uint,
 ) *Importer {
 	return &Importer{
@@ -64,11 +67,8 @@ func (i *Importer) AddNotifyProgressFunc(f NotifyProgressFunc) {
 	i.notifyProgressFuncs = append(i.notifyProgressFuncs, f)
 }
 
-func (i *Importer) ImportMedia(
-	fileType imagery.Type, mime imagery.MIME, extension string, image image.Image, hash imagery.Hash,
-	dirAlias string, fileName string, timestamp time.Time,
-) error {
-	id, isOld, err := i.insertMedia(fileType, mime, image, hash, timestamp)
+func (i *Importer) ImportMedia(media imagery.Media, dirAlias string, fileName string, timestamp time.Time) error {
+	id, isOld, err := i.insertMedia(media, timestamp)
 	if err != nil {
 		return fmt.Errorf("import media with props: %w", err)
 	}
@@ -76,30 +76,30 @@ func (i *Importer) ImportMedia(
 		return fmt.Errorf("import dir info: %w", err)
 	}
 	for _, f := range i.notifyMediaFuncs {
-		f(hash)
+		f(media.Hash())
 	}
 
 	if isOld {
 		return nil
 	}
 
-	if err := i.insertThumbnail(id, image); err != nil {
+	if err := i.insertThumbnail(id, media.Image()); err != nil {
 		return fmt.Errorf("import thumbnail: %w", err)
 	}
-	if err := i.insertBlocks(id, image); err != nil {
+	if err := i.insertBlocks(id, media.Image()); err != nil {
 		return fmt.Errorf("import blocks: %w", err)
 	}
 	if err := i.db.SetMediaProcessed(id); err != nil {
 		return fmt.Errorf("set media processed: %w", err)
 	}
 	for _, f := range i.notifyMediaFuncs {
-		f(hash)
+		f(media.Hash())
 	}
 
 	return nil
 }
 
-func (i *Importer) ImportMediaFromFile(dirAlias, dir, fileName string, modTime time.Time) (imagery.Hash, error) {
+func (i *Importer) ImportMediaFromFile(dirAlias, dir, fileName string, modTime time.Time) (string, error) {
 	_, err := i.db.GetDirInfo(dirAlias, fileName)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return "", fmt.Errorf("getting dir info: %w", err)
@@ -116,18 +116,18 @@ func (i *Importer) ImportMediaFromFile(dirAlias, dir, fileName string, modTime t
 		return "", fmt.Errorf("open file: %w", err)
 	}
 
-	fileType, mime, extension, image, hash, err := imagery.DecodeAndHash(raw)
+	media, err := imagery.NewMedia(raw)
 	if err != nil {
 		return "", fmt.Errorf("decode and hash media: %w", err)
 	}
 
 	timestamp := GuessFileCreated(fileName, modTime)
 
-	if err := i.ImportMedia(fileType, mime, extension, image, hash, dirAlias, fileName, timestamp); err != nil {
+	if err := i.ImportMedia(media, dirAlias, fileName, timestamp); err != nil {
 		return "", fmt.Errorf("importing media: %w", err)
 	}
 
-	return hash, nil
+	return media.Hash(), nil
 }
 
 func (i *Importer) ScanDirectories() error {
@@ -210,11 +210,8 @@ func (i *Importer) updateStatus(f func(*Status)) {
 	}
 }
 
-func (i *Importer) insertMedia(
-	fileType imagery.Type, mime imagery.MIME, image image.Image, hash imagery.Hash,
-	timestamp time.Time,
-) (db.MediaID, bool, error) {
-	old, err := i.db.GetMediaByHash(string(hash))
+func (i *Importer) insertMedia(media imagery.Media, timestamp time.Time) (db.MediaID, bool, error) {
+	old, err := i.db.GetMediaByHash(media.Hash())
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return 0, false, fmt.Errorf("getting media by hash: %w", err)
 	}
@@ -222,18 +219,18 @@ func (i *Importer) insertMedia(
 		return old.ID, true, nil
 	}
 
-	_, propDominantColour := imagery.DominantColour(image)
+	_, propDominantColour := imagery.DominantColour(media.Image())
 
-	propBlurhash, err := imagery.CalculateBlurhash(image)
+	propBlurhash, err := imagery.CalculateBlurhash(media.Image())
 	if err != nil {
 		return 0, false, fmt.Errorf("calculate blurhash: %w", err)
 	}
 
-	propDimensions := image.Bounds().Size()
+	propDimensions := media.Image().Bounds().Size()
 	new, err := i.db.CreateMedia(&db.Media{
-		Hash:           string(hash),
-		Type:           db.MediaType(fileType),
-		MIME:           string(mime),
+		Hash:           media.Hash(),
+		Type:           db.MediaType(media.Type()),
+		MIME:           media.MIME(),
 		Timestamp:      timestamp,
 		DimWidth:       propDimensions.X,
 		DimHeight:      propDimensions.Y,
@@ -294,7 +291,7 @@ func (i *Importer) insertThumbnail(id db.MediaID, image image.Image) error {
 
 	thumbnail := &db.Thumbnail{
 		MediaID:   id,
-		MIME:      string(i.defaultMIME),
+		MIME:      i.defaultMIME,
 		DimWidth:  dimensions.X,
 		DimHeight: dimensions.Y,
 		Timestamp: time.Now(),
@@ -403,7 +400,7 @@ type Status struct {
 	Running        bool
 	CountTotal     int
 	CountProcessed int
-	LastHash       imagery.Hash
+	LastHash       string
 	Errors         Errors
 }
 
