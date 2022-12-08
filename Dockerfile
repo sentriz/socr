@@ -5,7 +5,7 @@ RUN npm install
 RUN PRODUCTION=true npm run-script build
 
 
-FROM golang:1.17-buster AS builder-backend
+FROM golang:1.19-buster AS builder-backend
 RUN apt-get update -qq
 RUN apt-get install -y -qq build-essential libtesseract-dev libleptonica-dev libavcodec-dev libavutil-dev libavformat-dev libswscale-dev libgraphicsmagick1-dev
 

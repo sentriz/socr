@@ -1,7 +1,6 @@
 ![](.github/socr.png?v=2)
 
-https://user-images.githubusercontent.com/6832539/142775925-fc89200c-0bf4-42cc-8099-18fb999288cd.mp4
-
+<https://user-images.githubusercontent.com/6832539/142775925-fc89200c-0bf4-42cc-8099-18fb999288cd.mp4>
 
 ## running
 
@@ -21,16 +20,16 @@ $ docker-compose logs --tail 20 -f main
 
 requires
 
-  - node
-  - npm
-  - go (1.17+)
-  - libtesseract-dev
-  - libleptonica-dev
-  - libavcodec-dev
-  - libavutil-dev
-  - libavformat-dev
-  - libswscale-dev
-  - libgraphicsmagick1-dev
+- node
+- npm
+- go (1.19+)
+- libtesseract-dev
+- libleptonica-dev
+- libavcodec-dev
+- libavutil-dev
+- libavformat-dev
+- libswscale-dev
+- libgraphicsmagick1-dev
 
 ``` shell
 $ go generate ./web/
