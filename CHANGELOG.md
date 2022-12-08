@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.6.0](https://www.github.com/sentriz/socr/compare/v0.5.0...v0.6.0) (2022-12-08)
+
+
+### Features
+
+* **ui:** add new font ([e5b601c](https://www.github.com/sentriz/socr/commit/e5b601c4159365d62fe6547b3e37e6bc829bbbcd))
+* **ui:** render directories before date in search sidebar ([fac3cff](https://www.github.com/sentriz/socr/commit/fac3cff5a58a9afd9c2e1e9a2b528d3d3e58583f))
+* **ui:** update public page styling ([1e15eaf](https://www.github.com/sentriz/socr/commit/1e15eaf952270f71777f631a47735394d52fe76d))
+
+
+### Bug Fixes
+
+* **server:** don't double print version ([6e11818](https://www.github.com/sentriz/socr/commit/6e1181867a52a3f85ff0201bf26652ef0a513316))
+* **ui:** fix arrow keys not changing video items ([af7d43b](https://www.github.com/sentriz/socr/commit/af7d43b16795f8ec8e64e7a60558556f44843b00))
+* **ui:** fix ts build ([51a56f8](https://www.github.com/sentriz/socr/commit/51a56f8ed445e406d7224538e15af063199ac581))
+* **ui:** suppress router warning ([5c7cc4e](https://www.github.com/sentriz/socr/commit/5c7cc4ed111c32a0d08333792b731b4814b119e9))
+
 ## [0.5.0](https://www.github.com/sentriz/socr/compare/v0.4.2...v0.5.0) (2022-09-17)
 
 
