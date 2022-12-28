@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://www.github.com/sentriz/socr/compare/v0.6.0...v0.7.0) (2022-12-28)
+
+
+### Features
+
+* **ci:** only run nightly when code has changed ([1c2be7c](https://www.github.com/sentriz/socr/commit/1c2be7cc944c52fe0d7c1592f385ed0cb3947546))
+
 ## [0.6.0](https://www.github.com/sentriz/socr/compare/v0.5.0...v0.6.0) (2022-12-08)
 
 
