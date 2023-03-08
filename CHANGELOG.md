@@ -1,5 +1,12 @@
 # Changelog
 
+### [0.7.1](https://www.github.com/sentriz/socr/compare/v0.7.0...v0.7.1) (2023-03-08)
+
+
+### Bug Fixes
+
+* **ui:** only get images from the clipboard ([7f53f43](https://www.github.com/sentriz/socr/commit/7f53f431584b41aa735797d94389551147b34367))
+
 ## [0.7.0](https://www.github.com/sentriz/socr/compare/v0.6.0...v0.7.0) (2022-12-28)
 
 
