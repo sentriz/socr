@@ -1,7 +1,7 @@
 <template>
   <div class="flex items-center leading-normal">
     <!-- left -->
-    <router-link :to="{ name: 'search' }" class="h-6 flex-grow text-xl">
+    <router-link :to="{ name: routes.SEARCH }" class="h-6 flex-grow text-xl">
       <x-icon class="h-full text-gray-800 hover:text-gray-600" />
     </router-link>
     <!-- right -->
@@ -19,7 +19,7 @@
             <span>raw</span>
           </badge>
         </a>
-        <router-link :to="{ name: 'public', params: { hash: media.hash } }">
+        <router-link :to="{ name: routes.PUBLIC, params: { hash: media.hash } }">
           <badge class="bg-green-200 text-green-900">
             <external-link-icon class="h-full" />
             <span>public</span>
@@ -39,6 +39,7 @@ import { urlMedia } from '~/request/'
 import useStore from '~/composables/useStore'
 import { useTimeAgo } from '@vueuse/core'
 import { XIcon, ExternalLinkIcon } from '@heroicons/vue/outline'
+import { routes } from '~/router'
 
 const props = defineProps<{
   hash: string

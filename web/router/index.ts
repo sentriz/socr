@@ -10,74 +10,85 @@ import NotFound from '~/components/NotFound.vue'
 
 import { tokenHas, tokenSet } from '~/request'
 
+export const routes = {
+  LOGIN: Symbol(),
+  LOGOUT: Symbol(),
+  HOME: Symbol(),
+  SEARCH: Symbol(),
+  IMPORTER: Symbol(),
+  SETTINGS: Symbol(),
+  PUBLIC: Symbol(),
+  NOT_FOUND: Symbol(),
+} as const
+
 const beforeCheckAuth: NavigationGuard = (to, _, next) => {
   if (tokenHas()) return next()
-  next({ name: 'login', query: { redirect: to.fullPath } })
+  next({ name: routes.LOGIN, query: { redirect: to.fullPath } })
 }
 
 const beforeLogout: NavigationGuard = (_, __, next) => {
   tokenSet('')
-  next({ name: 'login' })
+  next({ name: routes.LOGIN })
 }
 
-const routes: RouteRecordRaw[] = [
+const records: RouteRecordRaw[] = [
   {
     path: '/login',
-    name: 'login',
+    name: routes.LOGIN,
     component: Login,
   },
   {
     path: '/logout',
-    name: 'logout',
+    name: routes.LOGOUT,
     beforeEnter: beforeLogout,
     redirect: '',
   },
   {
     path: '/',
-    name: 'home',
+    name: routes.HOME,
     component: Home,
     redirect: 'search',
     beforeEnter: beforeCheckAuth,
     children: [
       {
         path: 'search/:hash?',
-        name: 'search',
+        name: routes.SEARCH,
         component: Search,
       },
       {
         path: 'importer',
-        name: 'importer',
+        name: routes.IMPORTER,
         component: Importer,
       },
       {
         path: 'settings',
-        name: 'settings',
+        name: routes.SETTINGS,
         component: Settings,
       },
       {
         path: '',
-        name: 'home-default',
-        redirect: { name: 'search' },
+        name: Symbol(),
+        redirect: { name: routes.SEARCH },
       },
     ],
   },
   {
     path: '/i/:hash',
-    name: 'public',
+    name: routes.PUBLIC,
     component: Public,
   },
   {
     path: '/not-found',
-    name: 'not-found',
+    name: routes.NOT_FOUND,
     component: NotFound,
   },
   {
     path: '/:catchAll(.*)',
-    redirect: { name: 'not-found' },
+    redirect: { name: routes.NOT_FOUND },
   },
 ]
 
 export default createRouter({
   history: createWebHistory(),
-  routes,
+  routes: records,
 })

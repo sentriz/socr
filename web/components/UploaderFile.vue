@@ -17,6 +17,7 @@ import { useRouter } from 'vue-router'
 import { isError, reqUpload } from '~/request'
 import useLoading from '~/composables/useLoading'
 import { UploadIcon } from '@heroicons/vue/outline'
+import { routes } from '~/router'
 
 const router = useRouter()
 const { loading, load } = useLoading(reqUpload)
@@ -34,6 +35,6 @@ const select = async () => {
   const resp = await load(formData)
   if (isError(resp)) return
 
-  router.push({ name: 'public', params: { hash: resp.result.id } })
+  router.push({ name: routes.PUBLIC, params: { hash: resp.result.id } })
 }
 </script>

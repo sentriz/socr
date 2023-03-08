@@ -20,6 +20,7 @@ import { computed, ref, watch } from 'vue'
 import useStore from '~/composables/useStore'
 import { onClickOutside } from '@vueuse/core'
 import { useRouter } from 'vue-router'
+import { routes } from '~/router'
 
 const props = defineProps<{
   hash?: string
@@ -39,5 +40,5 @@ watch(
 const media = computed(() => store.getMediaByHash(props.hash || ''))
 
 const content = ref<HTMLElement>()
-onClickOutside(content, () => router.push({ name: 'search' }))
+onClickOutside(content, () => router.push({ name: routes.SEARCH }))
 </script>

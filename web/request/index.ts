@@ -1,4 +1,4 @@
-import router from '~/router'
+import router, { routes } from '~/router'
 
 export const urlMedia = '/api/media'
 export const urlSearch = '/api/search'
@@ -41,7 +41,7 @@ const req = async <P, R>(method: ReqMethod, url: string, data?: P): Reponse<R> =
 
   const response = await fetch(url, { method, body, headers })
   if (response?.status === 401) {
-    router.push({ name: 'login' })
+    router.push({ name: routes.LOGIN })
   }
 
   try {

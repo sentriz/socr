@@ -8,6 +8,7 @@ import LoadingModal from './LoadingModal.vue'
 import { isError, reqUpload } from '~/request'
 import { useRouter } from 'vue-router'
 import useLoading from '~/composables/useLoading'
+import { routes } from '~/router'
 
 const router = useRouter()
 const { loading, load } = useLoading(reqUpload)
@@ -29,6 +30,6 @@ document.onpaste = async (event: ClipboardEvent) => {
   const resp = await load(formData)
   if (isError(resp)) return
 
-  router.push({ name: 'public', params: { hash: resp.result.id } })
+  router.push({ name: routes.PUBLIC, params: { hash: resp.result.id } })
 }
 </script>

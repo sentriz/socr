@@ -16,7 +16,7 @@
       </div>
       <div class="col-resp col-gap-4 space-y-4">
         <media-background v-for="hash in page" :key="hash" :hash="hash" class="flex max-h-[600px] justify-center overflow-y-auto shadow-lg">
-          <router-link :to="{ name: 'search', params: { hash } }" class="block">
+          <router-link :to="{ name: routes.SEARCH, params: { hash } }" class="block">
             <media-highlight thumb :hash="hash" />
           </router-link>
         </media-background>
@@ -62,7 +62,7 @@ import {
   CalendarIcon,
   GlobeIcon,
 } from '@heroicons/vue/outline'
-import router from '~/router'
+import router, { routes } from '~/router'
 
 const store = useStore()
 const route = useRoute()
@@ -205,6 +205,6 @@ document.onkeydown = (e: KeyboardEvent) => {
   const flat = respPages.value.flat()
   const idx = flat.findIndex((e) => e === sidebarHash.value)
   const hash = flat[(idx + dir) % flat.length]
-  router.replace({ name: 'search', params: { hash } })
+  router.replace({ name: routes.SEARCH, params: { hash } })
 }
 </script>
