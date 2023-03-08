@@ -14,9 +14,13 @@ const { loading, load } = useLoading(reqUpload)
 
 // TODO: not attach handler to the whole document, just the main page
 document.onpaste = async (event: ClipboardEvent) => {
-  const items = event.clipboardData?.items
+  const items = Array.from(event.clipboardData?.items ?? [])
   if (!items) return
-  const blob = items[0]?.getAsFile()
+
+  const transferItem = items.find((it) => it.type.startsWith('image/'))
+  if (!transferItem) return
+
+  const blob = transferItem.getAsFile()
   if (!blob) return
 
   const formData = new FormData()
