@@ -10,6 +10,9 @@ RUN apt-get update -qq
 RUN apt-get install -y -qq build-essential libtesseract-dev libleptonica-dev libavcodec-dev libavutil-dev libavformat-dev libswscale-dev libgraphicsmagick1-dev
 
 WORKDIR /src
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
 COPY . .
 COPY --from=builder-frontend /src/dist web/dist/
 RUN GOOS=linux go build -o socr cmd/socr/socr.go
