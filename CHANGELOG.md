@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://www.github.com/sentriz/socr/compare/v0.7.1...v0.8.0) (2023-03-30)
+
+
+### Features
+
+* add opengraph image tags to media page ([13a4409](https://www.github.com/sentriz/socr/commit/13a4409e34a8b3e3a9dc284164fdde87de955672))
+
 ### [0.7.1](https://www.github.com/sentriz/socr/compare/v0.7.0...v0.7.1) (2023-03-08)
 
 
