@@ -7,8 +7,10 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -91,9 +93,25 @@ func (s *Server) Router() *mux.Router {
 	rAPIKey.Use(s.WithJWTOrAPIKey())
 	rAPIKey.HandleFunc("/api/upload", s.serveUpload)
 
-	// frontend fallback route
-	r.NotFoundHandler = s.serveWeb()
-
+	// frontend routes
+	dist := http.FileServer(http.FS(web.Dist))
+	r.PathPrefix("/assets/").Handler(dist)
+	r.Handle("/{f}.woff", dist)
+	r.Handle("/{f}.woff2", dist)
+	r.Handle("/favicon.ico", dist)
+	r.Handle("/i/{hash}", openGraphReplacer("index.html", string(web.Index), func(r *http.Request) openGraphContent {
+		media, _ := s.db.GetMediaByHash(mux.Vars(r)["hash"])
+		if media == nil {
+			return openGraphContent{}
+		}
+		return openGraphContent{
+			link:   joinPath(forwardedBaseURL(r), fmt.Sprintf("/api/media/%s/raw", media.Hash)),
+			width:  media.DimWidth,
+			height: media.DimHeight,
+		}
+	}))
+	r.Handle("/", dist)
+	r.NotFoundHandler = http.RedirectHandler("/", http.StatusSeeOther)
 	return r
 }
 
@@ -121,17 +139,6 @@ func (s *Server) SocketNotifyMedia() {
 			}
 		}
 	}
-}
-
-func (s *Server) serveWeb() http.Handler {
-	fs := http.FS(web.Dist)
-	srv := http.FileServer(fs)
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if _, err := fs.Open(r.URL.Path); err != nil {
-			r.URL.Path = "/"
-		}
-		srv.ServeHTTP(w, r)
-	})
 }
 
 func (s *Server) servePing(w http.ResponseWriter, r *http.Request) {
@@ -438,4 +445,44 @@ func throttleChan(c <-chan struct{}, min time.Duration, max time.Duration) chan 
 		}
 	}()
 	return out
+}
+
+func forwardedBaseURL(req *http.Request) string {
+	var url url.URL
+	url.Scheme = first(req.URL.Scheme, req.Header.Get("X-Forwarded-Proto"))
+	url.Host = first(req.URL.Host, fmt.Sprintf("%s:%s", req.Header.Get("X-Forwarded-Host"), first(req.Header.Get("X-Forwarded-Port"), req.URL.Port(), "443")))
+	return url.String()
+}
+
+func first[T comparable](items ...T) T {
+	var z T
+	for _, item := range items {
+		if item != z {
+			return item
+		}
+	}
+	return z
+}
+
+func joinPath(base string, elem ...string) string {
+	p, _ := url.JoinPath(base, elem...)
+	return p
+}
+
+type openGraphContent struct {
+	link          string
+	width, height int
+}
+
+func openGraphReplacer(name string, content string, getMeta func(*http.Request) openGraphContent) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		meta := getMeta(r)
+		replacer := strings.NewReplacer(
+			"[[og:image]]", meta.link,
+			"[[og:image:width]]", fmt.Sprint(meta.width),
+			"[[og:image:height]]", fmt.Sprint(meta.height),
+		)
+		replaced := replacer.Replace(content)
+		http.ServeContent(w, r, name, time.Time{}, strings.NewReader(replaced))
+	})
 }
