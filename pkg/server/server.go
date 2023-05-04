@@ -449,7 +449,7 @@ func throttleChan(c <-chan struct{}, min time.Duration, max time.Duration) chan 
 
 func forwardedBaseURL(req *http.Request) string {
 	var url url.URL
-	url.Scheme = first(req.URL.Scheme, req.Header.Get("X-Forwarded-Proto"))
+	url.Scheme = first(req.Header.Get("X-Forwarded-Proto"), req.URL.Scheme)
 	url.Host = first(req.URL.Host, fmt.Sprintf("%s:%s", req.Header.Get("X-Forwarded-Host"), first(req.Header.Get("X-Forwarded-Port"), req.URL.Port(), "443")))
 	return url.String()
 }
