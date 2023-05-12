@@ -1,6 +1,6 @@
 <template>
   <div class="relative w-fit">
-    <div v-if="thumb && isVideo" class="absolute top-2 right-2 rounded-md bg-black/80 p-2">
+    <div v-if="thumb && isVideo" class="absolute right-2 top-2 rounded-md bg-black/80 p-2">
       <video-camera-icon class="h-5 text-white" />
     </div>
     <video :key="url" v-if="!thumb && isVideo && media" :controls="true" @loadstart="loaded">
