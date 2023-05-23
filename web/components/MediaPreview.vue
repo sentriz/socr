@@ -1,6 +1,6 @@
 <template>
-  <media-background v-if="media" :hash="media.hash" class="box flex justify-center xl:p-2">
-    <media-highlight :hash="media.hash" />
+  <media-background ref="imgParent" v-if="media" :hash="media.hash" class="flex justify-center" :class="{ 'p-2': childNarrow }">
+    <media-highlight ref="imgChild" :hash="media.hash" />
   </media-background>
   <loading-spinner v-else class="bg-gray-100" text="processing image" />
 
@@ -16,8 +16,9 @@ import MediaBackground from './MediaBackground.vue'
 import MediaHighlight from './MediaHighlight.vue'
 import LoadingSpinner from './LoadingSpinner.vue'
 import { MediaType } from '~/request'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import useStore from '~/composables/useStore'
+import { useElementSize } from '@vueuse/core'
 
 const props = defineProps<{
   hash: string
@@ -33,4 +34,11 @@ const highlightedBlocksIndexes = computed(() => {
 })
 
 const isVideo = computed(() => media.value?.type === MediaType.Video)
+
+const imgParent = ref()
+const imgParentW = useElementSize(imgParent)
+const imgChild = ref()
+const imgChildW = useElementSize(imgChild)
+
+const childNarrow = computed(() => imgChildW.width.value < imgParentW.width.value)
 </script>

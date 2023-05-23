@@ -1,6 +1,6 @@
 <template>
   <div class="flex min-h-screen items-center bg-white">
-    <div class="container mx-auto space-y-6 p-6">
+    <div class="container mx-auto space-y-4 p-5">
       <div v-if="media" class="flex items-center justify-between">
         <h1 class="text-gray-700">shared media</h1>
         <badge-group label="created on" class="hidden text-gray-500 md:inline-flex" v-if="media && timestamp">

@@ -1,5 +1,5 @@
 <template>
-  <div class="flex items-center justify-center gap-2 rounded bg-gray-200 p-3 text-gray-600">
+  <div class="flex items-center justify-center gap-2 bg-gray-100 p-3 text-gray-600">
     <refresh-icon class="h-5 animate-spin" />
     <span>{{ props.text || 'loading' }}</span>
   </div>
