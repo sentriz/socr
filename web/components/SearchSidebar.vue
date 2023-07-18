@@ -6,6 +6,7 @@
     <div v-if="media" ref="content" class="overflow-y-thin pointer-events-auto absolute inset-y-0 right-0 w-full max-w-lg space-y-6 bg-white p-6">
       <search-sidebar-header :hash="media.hash" />
       <media-preview :hash="media.hash" />
+      <media-lines v-if="!isVideo" :hash="media.hash" />
     </div>
   </transition-slide>
 </template>
@@ -14,7 +15,9 @@
 import TransitionFade from './TransitionFade.vue'
 import TransitionSlide from './TransitionSlideX.vue'
 import SearchSidebarHeader from './SearchSidebarHeader.vue'
+import MediaLines from './MediaLines.vue'
 import MediaPreview from './MediaPreview.vue'
+import { MediaType } from '~/request'
 
 import { computed, ref, watch } from 'vue'
 import useStore from '~/composables/useStore'
@@ -38,6 +41,7 @@ watch(
 )
 
 const media = computed(() => store.getMediaByHash(props.hash || ''))
+const isVideo = computed(() => media.value?.type === MediaType.Video)
 
 const content = ref<HTMLElement>()
 onClickOutside(content, () => router.push({ name: routes.SEARCH }))

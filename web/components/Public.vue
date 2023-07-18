@@ -1,21 +1,26 @@
 <template>
-  <div class="flex min-h-screen items-center bg-white">
-    <div class="container mx-auto space-y-4 p-5">
-      <div v-if="media" class="flex items-center justify-between">
+  <div class="flex min-h-screen flex-col justify-center bg-white">
+    <div class="container mx-auto p-5">
+      <div class="flex items-center justify-between">
         <h1 class="text-gray-700">shared media</h1>
         <badge-group label="created on" class="hidden text-gray-500 md:inline-flex" v-if="media && timestamp">
           <badge class="bg-pink-200 text-pink-900" :title="media.timestamp">{{ timestamp }}</badge>
         </badge-group>
       </div>
-      <media-preview :hash="hash" />
+    </div>
+    <media-preview :hash="hash" class="py-2 shadow-inner" />
+    <div v-if="!isVideo" class="container mx-auto p-5">
+      <media-lines :hash="hash" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import MediaPreview from './MediaPreview.vue'
+import MediaLines from './MediaLines.vue'
 import BadgeGroup from './BadgeGroup.vue'
 import Badge from './Badge.vue'
+import { MediaType } from '~/request'
 import { computed, onMounted } from 'vue'
 import { newSocket } from '~/request'
 import { useRoute } from 'vue-router'
@@ -39,6 +44,8 @@ const timestamp = computed(() => {
 const pad = (n: number): string => String(n).padStart(2, '0')
 
 onMounted(requestMedia)
+
+const isVideo = computed(() => media.value?.type === MediaType.Video)
 
 const socket = newSocket({ want_media_hash: hash })
 socket.onmessage = requestMedia
