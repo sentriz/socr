@@ -6,14 +6,12 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"image/gif"
-	"image/jpeg"
-	"image/png"
 	"net/http"
+	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 
-	"github.com/bakape/thumbnailer"
 	"github.com/buckket/go-blurhash"
 	"github.com/cenkalti/dominantcolor"
 	"github.com/cespare/xxhash"
@@ -36,9 +34,6 @@ type Media interface {
 	Thumbnail(w, h uint) image.Image
 	Image() image.Image
 }
-
-const VideoThumbMaxWidth = 1080
-const VideoThumbMaxHeight = 1920
 
 func ExtractText(img []byte) ([]gosseract.BoundingBox, error) {
 	client := gosseract.NewClient()
@@ -108,17 +103,31 @@ func DominantColour(img image.Image) (color.Color, string) {
 }
 
 func VideoThumbnail(data []byte) (image.Image, error) {
-	_, thumb, err := thumbnailer.ProcessBuffer(data, thumbnailer.Options{
-		ThumbDims: thumbnailer.Dims{Width: VideoThumbMaxWidth, Height: VideoThumbMaxHeight},
-	})
+	tmp, err := os.CreateTemp("", "")
 	if err != nil {
-		return nil, fmt.Errorf("process buffer: %w", err)
+		return nil, fmt.Errorf("create temp: %w", err)
 	}
-	buff := bytes.NewBuffer(thumb.Data)
-	if thumb.IsPNG {
-		return png.Decode(buff)
+	if _, err := tmp.Write(data); err != nil {
+		return nil, fmt.Errorf("write video to tmp: %w", err)
 	}
-	return jpeg.Decode(buff)
+	tmp.Close()
+	defer os.Remove(tmp.Name())
+
+	cmd := exec.Command("ffmpeg", "-i", tmp.Name(), "-vframes", "1", "-f", "image2pipe", "-") //nolint:gosec
+
+	var buff bytes.Buffer
+	cmd.Stdout = &buff
+
+	if err := cmd.Run(); err != nil {
+		return nil, fmt.Errorf("run ffmpeg: %w", err)
+	}
+
+	img, _, err := image.Decode(&buff)
+	if err != nil {
+		return nil, fmt.Errorf("decode thumbnail: %w", err)
+	}
+
+	return img, nil
 }
 
 func NewMedia(raw []byte) (Media, error) {
@@ -139,7 +148,7 @@ type mediaImage struct {
 }
 
 func newMediaImage(raw []byte, mime string) (*mediaImage, error) {
-	image, err := decodeImage(raw, mime)
+	image, _, err := image.Decode(bytes.NewReader(raw))
 	if err != nil {
 		return nil, fmt.Errorf("decode: %w", err)
 	}
@@ -183,19 +192,6 @@ func hashBytes(bytes []byte) string {
 func mimeExtension(mime string) string {
 	_, name, _ := strings.Cut(mime, "/")
 	return name
-}
-
-func decodeImage(raw []byte, mime string) (image.Image, error) {
-	switch mime {
-	case "image/gif":
-		return gif.Decode(bytes.NewReader(raw))
-	case "image/png":
-		return png.Decode(bytes.NewReader(raw))
-	case "image/jpeg":
-		return jpeg.Decode(bytes.NewReader(raw))
-	default:
-		return nil, fmt.Errorf("unknown mime: %q", mime)
-	}
 }
 
 var _ Media = (*mediaImage)(nil)

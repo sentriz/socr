@@ -2,7 +2,6 @@
 package main
 
 import (
-	"image/png"
 	"log"
 	"net/http"
 	"os"
@@ -17,6 +16,10 @@ import (
 	"go.senan.xyz/socr/pkg/directories"
 	"go.senan.xyz/socr/pkg/importer"
 	"go.senan.xyz/socr/pkg/server"
+
+	_ "image/gif"
+	_ "image/jpeg"
+	"image/png"
 )
 
 var (

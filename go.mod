@@ -5,7 +5,6 @@ go 1.19
 require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
-	github.com/bakape/thumbnailer v1.0.0
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/cenkalti/dominantcolor v1.0.0
 	github.com/cespare/xxhash v1.1.0
@@ -17,7 +16,7 @@ require (
 	github.com/gorilla/websocket v1.5.0
 	github.com/jackc/pgx/v4 v4.18.1
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
-	github.com/otiai10/gosseract/v2 v2.4.0
+	github.com/otiai10/gosseract/v2 v2.4.1-0.20230623133433-7bc6b8d616e9
 )
 
 require (

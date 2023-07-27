@@ -1,14 +1,12 @@
-FROM node:19-buster-slim AS builder-frontend
+FROM alpine:3.18 AS builder-frontend
+RUN apk add --no-cache nodejs npm
 WORKDIR /src
 COPY ./web .
 RUN npm install
 RUN PRODUCTION=true npm run-script build
 
-
-FROM golang:1.19-buster AS builder-backend
-RUN apt-get update -qq
-RUN apt-get install -y -qq build-essential libtesseract-dev libleptonica-dev libavcodec-dev libavutil-dev libavformat-dev libswscale-dev libgraphicsmagick1-dev
-
+FROM alpine:3.18 AS builder-backend
+RUN apk add --no-cache build-base go tesseract-ocr tesseract-ocr-dev leptonica-dev
 WORKDIR /src
 COPY go.mod .
 COPY go.sum .
@@ -17,15 +15,9 @@ COPY . .
 COPY --from=builder-frontend /src/dist web/dist/
 RUN GOOS=linux go build -o socr cmd/socr/socr.go
 
-
-FROM debian:buster-slim
+FROM alpine:3.18
 LABEL org.opencontainers.image.source https://github.com/sentriz/socr
-RUN apt-get update -qq
-ENV TESSDATA_PREFIX=/usr/share/tesseract-ocr/4.00/tessdata/
-
-# TODO: static build in previous build step to avoid this
-RUN apt-get install -y -qq tesseract-ocr-eng build-essential libtesseract-dev libleptonica-dev libavcodec-dev libavutil-dev libavformat-dev libswscale-dev libgraphicsmagick1-dev
-
+RUN apk add --no-cache ffmpeg tesseract-ocr-data-eng
 COPY --from=builder-backend /src/socr /
 ENV SOCR_LISTEN_ADDR :80
 ENV SOCR_DB_DSN postgres://socr:socr@db:5432?sslmode=disable
