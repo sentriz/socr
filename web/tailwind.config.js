@@ -16,9 +16,6 @@ module.exports = {
       xl: '1280px',
     },
     extend: {
-      width: {
-        fit: 'fit-content',
-      },
       minHeight: {
         32: '8rem',
         36: '9rem',

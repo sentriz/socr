@@ -15,9 +15,9 @@
         <hr class="m-0" />
       </div>
       <div class="col-resp col-gap-4 space-y-4">
-        <media-background v-for="hash in page" :key="hash" :hash="hash" class="flex max-h-[600px] justify-center overflow-y-auto shadow-lg">
+        <media-background v-for="hash in page" :key="hash" :hash="hash" class="max-h-[400px] overflow-hidden shadow-lg">
           <router-link :to="{ name: routes.SEARCH, params: { hash } }" class="block">
-            <media-highlight thumb :hash="hash" />
+            <media-highlight thumb :hash="hash" class="w-full" />
           </router-link>
         </media-background>
       </div>

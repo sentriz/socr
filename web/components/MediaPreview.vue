@@ -1,6 +1,6 @@
 <template>
-  <media-background ref="imgParent" v-if="media" :hash="media.hash" class="flex justify-center">
-    <media-highlight ref="imgChild" :hash="media.hash" class="shadow-sm" />
+  <media-background v-if="media" :hash="media.hash" class="flex justify-center shadow-inner">
+    <media-highlight :hash="media.hash" class="shadow-sm" v-bind="$attrs" />
   </media-background>
   <loading-spinner v-else class="bg-gray-100" text="processing image" />
 </template>
@@ -11,6 +11,10 @@ import MediaHighlight from './MediaHighlight.vue'
 import LoadingSpinner from './LoadingSpinner.vue'
 import { computed } from 'vue'
 import useStore from '~/composables/useStore'
+
+defineOptions({
+  inheritAttrs: false,
+})
 
 const props = defineProps<{
   hash: string

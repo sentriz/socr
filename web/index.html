@@ -10,8 +10,8 @@
     <meta property="og:image:height" content="[[og:image:height]]" />
     <meta property="og:image:width" content="[[og:image:width]]" />
   </head>
-  <body class="overflow-y-hidden font-sans antialiased text-gray-900">
+  <body class="overflow-y-hidden font-sans text-gray-900 antialiased">
     <div id="main" class="overflow-y-thin fixed inset-0"></div>
-    <div id="overlays" class="fixed inset-0 h-screen pointer-events-none"></div>
+    <div id="overlays" class="pointer-events-none fixed inset-0 bottom-[calc(env(safe-area-inset-bottom))]"></div>
   </body>
 </html>
