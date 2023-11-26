@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"go.senan.xyz/socr/pkg/importer"
+	"go.senan.xyz/socr/importer"
 )
 
 func TestGuessFileCreated(t *testing.T) {

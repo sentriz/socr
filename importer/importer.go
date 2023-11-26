@@ -18,9 +18,9 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/jackc/pgx/v4"
 
-	"go.senan.xyz/socr/pkg/db"
-	"go.senan.xyz/socr/pkg/directories"
-	"go.senan.xyz/socr/pkg/imagery"
+	"go.senan.xyz/socr/db"
+	"go.senan.xyz/socr/directories"
+	"go.senan.xyz/socr/imagery"
 )
 
 type EncodeFunc func(io.Writer, image.Image) error

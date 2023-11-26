@@ -12,10 +12,10 @@ import (
 	"time"
 
 	"go.senan.xyz/socr"
-	"go.senan.xyz/socr/pkg/db"
-	"go.senan.xyz/socr/pkg/directories"
-	"go.senan.xyz/socr/pkg/importer"
-	"go.senan.xyz/socr/pkg/server"
+	"go.senan.xyz/socr/db"
+	"go.senan.xyz/socr/directories"
+	"go.senan.xyz/socr/importer"
+	"go.senan.xyz/socr/server"
 
 	_ "image/gif"
 	_ "image/jpeg"

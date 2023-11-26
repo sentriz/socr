@@ -17,12 +17,12 @@ import (
 	"github.com/gorilla/websocket"
 
 	"go.senan.xyz/socr"
-	"go.senan.xyz/socr/pkg/db"
-	"go.senan.xyz/socr/pkg/directories"
-	"go.senan.xyz/socr/pkg/imagery"
-	"go.senan.xyz/socr/pkg/importer"
-	"go.senan.xyz/socr/pkg/server/auth"
-	"go.senan.xyz/socr/pkg/server/resp"
+	"go.senan.xyz/socr/db"
+	"go.senan.xyz/socr/directories"
+	"go.senan.xyz/socr/imagery"
+	"go.senan.xyz/socr/importer"
+	"go.senan.xyz/socr/server/auth"
+	"go.senan.xyz/socr/server/resp"
 	"go.senan.xyz/socr/web"
 )
 
