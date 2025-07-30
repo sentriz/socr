@@ -1,73 +1,81 @@
-run:
-  skip-dirs-use-default: true
-
+version: "2"
 linters:
-  disable-all: true
+  default: none
   enable:
+    - asciicheck
     - bodyclose
-    - deadcode
-    - depguard
+    - cyclop
     - dogsled
+    - dupl
+    - durationcheck
     - errcheck
+    - errorlint
+    - exhaustive
+    - forbidigo
+    - forcetypeassert
     - gochecknoglobals
     - gochecknoinits
+    - gocognit
     - goconst
     - gocritic
     - gocyclo
+    - goheader
+    - gomodguard
     - goprintffuncname
     - gosec
-    - gosimple
     - govet
+    - importas
     - ineffassign
+    - makezero
     - misspell
     - nakedret
-    - rowserrcheck
-    - staticcheck
-    - structcheck
-    - stylecheck
-    - typecheck
-    - unconvert
-    - varcheck
-    - asciicheck
-    - cyclop
-    - dupl
-    - durationcheck
-    - errorlint
-    - exhaustive
-    - exportloopref
-    - forbidigo
-    - forcetypeassert
-    - gocognit
-    - gofmt
-    - goheader
-    - goimports
-    - gomodguard
-    - ifshort
-    - importas
-    - makezero
     - nestif
     - nilerr
     - noctx
     - prealloc
-    - revive
+    - rowserrcheck
     - sqlclosecheck
+    - staticcheck
     - testpackage
     - thelper
     - tparallel
+    - unconvert
     - unparam
     - unused
     - wastedassign
     - whitespace
-
-# TODO: fix these
-issues:
-  exclude-rules:
-    - text: 'should have comment'
-      linters:
-        - revive
-    - text: 'comment on exported'
-      linters:
-        - revive
-    - text: 'at least one file in a package should have a package comment'
-      linters:
-        - stylecheck
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - revive
+        text: should have comment
+      - linters:
+          - revive
+        text: comment on exported
+      - linters:
+          - staticcheck
+        text: at least one file in a package should have a package comment
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+  settings:
+    gosec:
+      excludes:
+        - G115
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

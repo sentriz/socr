@@ -26,7 +26,7 @@ func TokenParse(secret, tokenStr string) error {
 		return fmt.Errorf("parsing token: %w", err)
 	}
 
-	if _, ok := token.Claims.(jwt.MapClaims); !(ok && token.Valid) {
+	if _, ok := token.Claims.(jwt.MapClaims); !ok || !token.Valid {
 		return fmt.Errorf("unauthorised")
 	}
 

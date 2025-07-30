@@ -367,7 +367,7 @@ func (s *Server) serveAuthenticate(w http.ResponseWriter, r *http.Request) {
 
 	hasUsername := (payload.Username == s.loginUsername)
 	hasPassword := (payload.Password == s.loginPassword)
-	if !(hasUsername && hasPassword) {
+	if !hasUsername || !hasPassword {
 		resp.Errorf(w, http.StatusUnauthorized, "unauthorised")
 		return
 	}

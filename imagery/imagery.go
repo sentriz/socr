@@ -113,7 +113,7 @@ func VideoThumbnail(data []byte) (image.Image, error) {
 	tmp.Close()
 	defer os.Remove(tmp.Name())
 
-	cmd := exec.Command("ffmpeg", "-i", tmp.Name(), "-vframes", "1", "-f", "image2pipe", "-") //nolint:gosec
+	cmd := exec.Command("ffmpeg", "-i", tmp.Name(), "-vframes", "1", "-f", "image2pipe", "-") //nolint:gosec,noctx
 
 	var buff bytes.Buffer
 	cmd.Stdout = &buff
