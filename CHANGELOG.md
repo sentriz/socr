@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.9.0](https://www.github.com/sentriz/socr/compare/v0.8.0...v0.9.0) (2025-07-30)
+
+
+### Features
+
+* **ui:** fix some mobile layouts ([519af4b](https://www.github.com/sentriz/socr/commit/519af4bc6761c4fb9cb60f7139d873ab79ef57d9))
+* **ui:** full width breakout on public page ([a5b938b](https://www.github.com/sentriz/socr/commit/a5b938bda157e7fd1542ec5cf129dc07eed76b46))
+* **ui:** hide text behind select ([444276e](https://www.github.com/sentriz/socr/commit/444276edb9122cde729d1c0207f612d0d5e33013))
+* **ui:** show public page padding when the image is smaller than container ([bf80ceb](https://www.github.com/sentriz/socr/commit/bf80cebedf9fddbde4d8b4988eca5bef8f4687fb))
+
 ## [0.8.0](https://www.github.com/sentriz/socr/compare/v0.7.1...v0.8.0) (2023-03-30)
 
 
