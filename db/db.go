@@ -40,7 +40,7 @@ func New(dsn string) (*DB, error) {
 func waitConnect(ctx context.Context, dsn string, interval time.Duration, times int) (*pgxpool.Pool, error) {
 	var pool *pgxpool.Pool
 	var err error
-	for i := 0; i < times; i++ {
+	for range times {
 		if pool, err = pgxpool.Connect(ctx, dsn); err == nil {
 			return pool, nil
 		}
