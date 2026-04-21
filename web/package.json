@@ -8,23 +8,23 @@
     "check-formatting": "prettier --check $(git ls-files | grep -E '.(ts|vue|js|json)$')"
   },
   "dependencies": {
-    "@heroicons/vue": "^1.0.6",
-    "@vueuse/core": "^10.1.2",
+    "@heroicons/vue": "^2.2.0",
+    "@vueuse/core": "^14.2.1",
     "vue": "^3.3.2",
-    "vue-router": "^4.2.0"
+    "vue-router": "^5.0.4"
   },
   "devDependencies": {
-    "@types/node": "^20.1.3",
-    "@vitejs/plugin-vue": "^4.2.3",
+    "@types/node": "^25.6.0",
+    "@vitejs/plugin-vue": "^6.0.6",
     "@vue/compiler-sfc": "^3.3.2",
-    "autoprefixer": "^10.4.14",
+    "autoprefixer": "^10.5.0",
     "postcss": "^8.4.23",
-    "prettier": "^2.8.8",
-    "prettier-plugin-tailwindcss": "^0.2.8",
-    "tailwind-scrollbar": "^3.0.1",
-    "tailwindcss": "^3.3.2",
-    "typescript": "^5.0.4",
-    "vite": "^4.3.5",
-    "vue-tsc": "^1.6.4"
+    "prettier": "^3.8.3",
+    "prettier-plugin-tailwindcss": "^0.7.2",
+    "tailwind-scrollbar": "^4.0.2",
+    "tailwindcss": "^4.2.4",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.9",
+    "vue-tsc": "^3.2.7"
   }
 }
