@@ -8,7 +8,7 @@ require (
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/cenkalti/dominantcolor v1.0.3
 	github.com/cespare/xxhash v1.1.0
-	github.com/fsnotify/fsnotify v1.9.0
+	github.com/fsnotify/fsnotify v1.10.1
 	github.com/georgysavva/scany v1.2.3
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/gorilla/handlers v1.5.2
