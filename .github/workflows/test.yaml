@@ -10,9 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
       - name: Setup Node
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v6
         with:
           node-version: 19
       - name: Install dependencies
@@ -29,9 +29,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
       - name: Setup Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
       - name: Install dependencies
@@ -39,7 +39,7 @@ jobs:
           sudo apt update -qq
           sudo apt install -y -qq build-essential libtesseract-dev libleptonica-dev
       - name: Lint
-        uses: golangci/golangci-lint-action@v8
+        uses: golangci/golangci-lint-action@v9
         with:
           install-mode: goinstall
           version: v2.3.0
