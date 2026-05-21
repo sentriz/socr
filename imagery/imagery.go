@@ -3,9 +3,12 @@ package imagery
 
 import (
 	"bytes"
+	"encoding/csv"
+	"errors"
 	"fmt"
 	"image"
 	"image/color"
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
@@ -16,7 +19,6 @@ import (
 	"github.com/cenkalti/dominantcolor"
 	"github.com/cespare/xxhash"
 	"github.com/nfnt/resize"
-	gosseract "github.com/otiai10/gosseract/v2"
 )
 
 type MediaType string
@@ -35,23 +37,95 @@ type Media interface {
 	Image() image.Image
 }
 
-func ExtractText(img []byte) ([]gosseract.BoundingBox, error) {
-	client := gosseract.NewClient()
-	defer client.Close()
-	if err := client.SetImageFromBytes(img); err != nil {
-		return nil, fmt.Errorf("set image bytes: %w", err)
+type BoundingBox struct {
+	Box  image.Rectangle
+	Word string
+}
+
+func ExtractText(img []byte) ([]BoundingBox, error) {
+	cmd := exec.Command("tesseract", "stdin", "stdout", "--psm", "1", "tsv") //nolint:gosec,noctx
+	cmd.Stdin = bytes.NewReader(img)
+
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		return nil, fmt.Errorf("run tesseract: %w: %s", err, strings.TrimSpace(stderr.String()))
 	}
 
-	if err := client.SetPageSegMode(gosseract.PSM_AUTO_OSD); err != nil {
-		return nil, fmt.Errorf("set page setmentation mode: %w", err)
+	return parseTesseractTSV(&stdout)
+}
+
+func parseTesseractTSV(r io.Reader) ([]BoundingBox, error) {
+	cr := csv.NewReader(r)
+	cr.Comma = '\t'
+	cr.LazyQuotes = true
+	cr.FieldsPerRecord = -1
+
+	if _, err := cr.Read(); err != nil { // header
+		if errors.Is(err, io.EOF) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("read tsv header: %w", err)
 	}
 
-	boxes, err := client.GetBoundingBoxes(gosseract.RIL_TEXTLINE)
-	if err != nil {
-		return nil, fmt.Errorf("get bounding boxes: %w", err)
+	type lineKey struct{ block, par, line int }
+	type lineData struct {
+		box   image.Rectangle
+		words []string
+	}
+	lines := map[lineKey]*lineData{}
+	var order []lineKey
+
+	for {
+		rec, err := cr.Read()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("read tsv row: %w", err)
+		}
+		if len(rec) < 12 {
+			continue
+		}
+		level, _ := strconv.Atoi(rec[0])
+		block, _ := strconv.Atoi(rec[2])
+		par, _ := strconv.Atoi(rec[3])
+		line, _ := strconv.Atoi(rec[4])
+		left, _ := strconv.Atoi(rec[6])
+		top, _ := strconv.Atoi(rec[7])
+		width, _ := strconv.Atoi(rec[8])
+		height, _ := strconv.Atoi(rec[9])
+		text := rec[11]
+
+		key := lineKey{block, par, line}
+		ld, ok := lines[key]
+		if !ok {
+			ld = &lineData{}
+			lines[key] = ld
+			order = append(order, key)
+		}
+		switch level {
+		case 4: // line
+			ld.box = image.Rect(left, top, left+width, top+height)
+		case 5: // word
+			if strings.TrimSpace(text) != "" {
+				ld.words = append(ld.words, text)
+			}
+		}
 	}
 
-	return boxes, nil
+	out := make([]BoundingBox, 0, len(order))
+	for _, k := range order {
+		ld := lines[k]
+		word := strings.Join(ld.words, " ")
+		if strings.TrimSpace(word) == "" {
+			continue
+		}
+		out = append(out, BoundingBox{Box: ld.box, Word: word})
+	}
+	return out, nil
 }
 
 const (

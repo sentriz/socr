@@ -23,9 +23,11 @@ requires
 - node
 - npm
 - go (1.19+)
-- ffmpeg
-- libtesseract-dev
-- libleptonica-dev
+
+at runtime socr shells out to `ffmpeg` and `tesseract`, so both need to be on `PATH`
+(e.g. `apt install ffmpeg tesseract-ocr tesseract-ocr-eng` on debian/ubuntu,
+`apk add ffmpeg tesseract-ocr tesseract-ocr-data-eng` on alpine,
+`pacman -S ffmpeg tesseract tesseract-data-eng` on arch)
 
 ```shell
 $ go generate ./web/

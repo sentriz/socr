@@ -2,6 +2,4 @@ FROM golang:1.25
 WORKDIR /src
 
 RUN apt-get update -qq
-RUN apt-get install -y -qq ffmpeg build-essential libtesseract-dev libleptonica-dev
-ENV TESSDATA_PREFIX=/usr/share/tesseract-ocr/4.00/tessdata/
-RUN apt-get install -y -qq tesseract-ocr-eng
+RUN apt-get install -y -qq ffmpeg tesseract-ocr tesseract-ocr-eng
