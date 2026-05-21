@@ -100,6 +100,8 @@ linters:
         - (*net/http.ResponseController).Flush
         - (*bufio.Writer).Flush
         - (*flag.FlagSet).Parse # have flag.ExitOnError
+        - go.senan.xyz/flagconf.ParseConfig # have flag.ExitOnError
+        - go.senan.xyz/flagconf.ParseEnv # have flag.ExitOnError
   exclusions:
     rules:
       - path: '(.+)_test\.go'

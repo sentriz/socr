@@ -112,6 +112,73 @@ func (i *Importer) AddNotifyProgressFunc(f NotifyProgressFunc) {
 	i.notifyProgressFuncs = append(i.notifyProgressFuncs, f)
 }
 
+func (i *Importer) Status() Status {
+	i.statusMu.RLock()
+	defer i.statusMu.RUnlock()
+	return i.status
+}
+
+func (i *Importer) StartWorker(ctx context.Context) error {
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case j, ok := <-i.jobs:
+			if !ok {
+				return nil
+			}
+			hash, err := i.importMediaFromFile(ctx, j.dirAlias, j.dir, j.fileName, j.modTime)
+			i.updateStatus(ctx, func(s *Status) {
+				s.LastHash = hash
+				s.AddError(err)
+			})
+		}
+	}
+}
+
+func (i *Importer) WatchUpdates(ctx context.Context) error {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return fmt.Errorf("create watcher: %w", err)
+	}
+	defer func() { _ = watcher.Close() }()
+
+	for alias, dir := range i.directories {
+		if alias == i.directoriesUploadsAlias {
+			continue
+		}
+		if err = watcher.Add(dir); err != nil {
+			return fmt.Errorf("add watcher for %q: %w", alias, err)
+		}
+		log.Printf("starting watcher for %q", dir)
+	}
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case event, ok := <-watcher.Events:
+			if !ok {
+				return nil
+			}
+			if event.Op&fsnotify.Create != fsnotify.Create {
+				continue
+			}
+			if strings.HasSuffix(event.Name, ".tmp") {
+				continue
+			}
+			dir := filepath.Dir(event.Name)
+			dirAlias, ok := i.directories.AliasByPath(dir)
+			if !ok {
+				continue
+			}
+			fileName := filepath.Base(event.Name)
+			if err := i.EnqueueFile(ctx, dirAlias, dir, fileName, time.Now()); err != nil {
+				log.Printf("error enqueueing watcher event %v: %v", event, err)
+			}
+		}
+	}
+}
+
 func (i *Importer) importMediaFromFile(ctx context.Context, dirAlias, dir, fileName string, modTime time.Time) (string, error) {
 	_, err := i.db.GetDirInfo(ctx, dirAlias, fileName)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
@@ -214,73 +281,6 @@ func (i *Importer) scanDirectories(ctx context.Context) error {
 		})
 	}
 	return nil
-}
-
-func (i *Importer) Status() Status {
-	i.statusMu.RLock()
-	defer i.statusMu.RUnlock()
-	return i.status
-}
-
-func (i *Importer) StartWorker(ctx context.Context) error {
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case j, ok := <-i.jobs:
-			if !ok {
-				return nil
-			}
-			hash, err := i.importMediaFromFile(ctx, j.dirAlias, j.dir, j.fileName, j.modTime)
-			i.updateStatus(ctx, func(s *Status) {
-				s.LastHash = hash
-				s.AddError(err)
-			})
-		}
-	}
-}
-
-func (i *Importer) WatchUpdates(ctx context.Context) error {
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		return fmt.Errorf("create watcher: %w", err)
-	}
-	defer watcher.Close()
-
-	for alias, dir := range i.directories {
-		if alias == i.directoriesUploadsAlias {
-			continue
-		}
-		if err = watcher.Add(dir); err != nil {
-			return fmt.Errorf("add watcher for %q: %w", alias, err)
-		}
-		log.Printf("starting watcher for %q", dir)
-	}
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case event, ok := <-watcher.Events:
-			if !ok {
-				return nil
-			}
-			if event.Op&fsnotify.Create != fsnotify.Create {
-				continue
-			}
-			if strings.HasSuffix(event.Name, ".tmp") {
-				continue
-			}
-			dir := filepath.Dir(event.Name)
-			dirAlias, ok := i.directories.AliasByPath(dir)
-			if !ok {
-				continue
-			}
-			fileName := filepath.Base(event.Name)
-			if err := i.EnqueueFile(ctx, dirAlias, dir, fileName, time.Now()); err != nil {
-				log.Printf("error enqueueing watcher event %v: %v", event, err)
-			}
-		}
-	}
 }
 
 func (i *Importer) updateStatus(ctx context.Context, f func(*Status)) {

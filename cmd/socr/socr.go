@@ -141,7 +141,7 @@ func main() {
 		}
 		errgrp.Go(func() error {
 			<-ctx.Done()
-			shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			shutdownCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
 			defer cancel()
 			return httpServer.Shutdown(shutdownCtx)
 		})
@@ -179,7 +179,7 @@ func (d dirsFlag) Set(v string) error {
 	alias = strings.ToLower(strings.TrimSpace(alias))
 	path = filepath.Clean(strings.TrimSpace(path))
 	if alias == "" || path == "" {
-		return fmt.Errorf("alias and path must be non-empty")
+		return errors.New("alias and path must be non-empty")
 	}
 	d[alias] = path
 	return nil
