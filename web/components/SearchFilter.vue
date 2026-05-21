@@ -1,19 +1,19 @@
 <template>
   <div
     ref="elm"
-    class="flex min-w-0 divide-x divide-gray-300 whitespace-nowrap rounded border border-gray-300 bg-white text-gray-700"
-    :class="{ 'pointer-events-none text-gray-500 contrast-125': disabled }"
+    class="flex min-w-0 divide-x divide-neutral-300 whitespace-nowrap rounded border border-neutral-300 bg-white text-neutral-700"
+    :class="{ 'pointer-events-none text-neutral-500 contrast-125': disabled }"
   >
-    <div class="padded w-[6.5rem] flex-shrink-0 rounded-l bg-gray-200 text-right lg:text-left">
+    <div class="padded w-[6.5rem] flex-shrink-0 rounded-l bg-neutral-200 text-right lg:text-left">
       {{ props.label }}
     </div>
     <div class="relative w-full" v-if="props.items.length">
       <search-filter-item :label="props.selected.label" :icon="props.selected.icon" @click="toggle" />
 
-      <div v-if="isOpen" class="absolute z-10 ml-[-1px] mt-2 rounded border border-gray-300 bg-white py-2">
+      <div v-if="isOpen" class="absolute z-10 ml-[-1px] mt-2 rounded border border-neutral-300 bg-white py-2">
         <search-filter-item
           v-for="(item, idx) in props.items"
-          class="hover:bg-gray-100"
+          class="hover:bg-neutral-100"
           :class="{ 'font-bold': selected === item }"
           :label="item.label"
           :icon="item.icon"

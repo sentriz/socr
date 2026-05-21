@@ -1,7 +1,7 @@
 <template>
-  <details v-if="blocks.length" class="box padded bg-gray-100 font-mono text-sm">
-    <summary class="select-none py-1 text-sm text-gray-600 hover:cursor-pointer">view text</summary>
-    <p v-for="(block, i) in blocks" :key="i" class="overflow-x-hidden rounded-lg" :class="{ 'bg-yellow-200/90': highlightedBlocksIndexes.has(i) }">{{ block.body }}</p>
+  <details v-if="blocks.length" class="box padded bg-neutral-100 font-mono text-sm">
+    <summary class="select-none py-1 text-sm text-neutral-600 hover:cursor-pointer">view text</summary>
+    <p v-for="(block, i) in blocks" :key="i" class="overflow-x-hidden rounded-lg" :class="{ 'bg-amber-200/90': highlightedBlocksIndexes.has(i) }">{{ block.body }}</p>
   </details>
   <loading-spinner v-else-if="!media?.processed" text="processing text" />
 </template>

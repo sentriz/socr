@@ -2,7 +2,7 @@
   <media-background v-if="media" :hash="media.hash" class="flex justify-center shadow-inner">
     <media-highlight :hash="media.hash" class="shadow-sm" v-bind="$attrs" />
   </media-background>
-  <loading-spinner v-else class="bg-gray-100" text="processing image" />
+  <loading-spinner v-else class="bg-neutral-100" text="processing image" />
 </template>
 
 <script setup lang="ts">

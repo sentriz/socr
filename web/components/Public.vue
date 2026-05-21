@@ -2,8 +2,8 @@
   <div class="flex min-h-screen flex-col justify-center bg-white">
     <div class="container mx-auto p-5">
       <div class="flex items-center justify-between">
-        <h1 class="text-gray-700">shared media</h1>
-        <badge-group label="created on" class="hidden text-gray-500 md:inline-flex" v-if="media && timestamp">
+        <h1 class="text-neutral-700">shared media</h1>
+        <badge-group label="created on" class="hidden text-neutral-500 md:inline-flex" v-if="media && timestamp">
           <badge class="bg-pink-200 text-pink-900" :title="media.timestamp">{{ timestamp }}</badge>
         </badge-group>
       </div>

@@ -1,5 +1,5 @@
 <template>
-  <div class="flex min-h-screen items-center justify-center bg-gray-200">
+  <div class="flex min-h-screen items-center justify-center bg-neutral-200">
     <div class="m-8 w-full max-w-xs space-y-4">
       <div class="space-y-6 rounded bg-white p-8 shadow-md">
         <logo class="mx-auto w-9/12" />
@@ -13,7 +13,7 @@
         </div>
         <button class="btn w-full" type="button" @click="login">sign in</button>
       </div>
-      <p class="text-center text-xs text-gray-500"><b>s</b>creenshot <b>ocr</b> server &mdash; Senan Kelly 2020</p>
+      <p class="text-center text-xs text-neutral-500"><b>s</b>creenshot <b>ocr</b> server &mdash; Senan Kelly 2020</p>
     </div>
   </div>
   <teleport to="#overlays">

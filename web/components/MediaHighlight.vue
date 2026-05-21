@@ -11,7 +11,7 @@
     <svg
       v-if="media && blocks.length"
       :viewBox="`0 0 ${media.dim_width} ${media.dim_height}`"
-      class="pointer-events-none absolute inset-0 fill-current text-yellow-300 text-opacity-50"
+      class="pointer-events-none absolute inset-0 fill-current text-amber-300 text-opacity-50"
     >
       <rect v-for="b in blocks" :key="b.id" :x="b.min_x" :y="b.min_y" :width="b.max_x - b.min_x" :height="b.max_y - b.min_y" ry="4" />
     </svg>
@@ -21,7 +21,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { urlMedia, MediaType } from '~/request'
-import { VideoCameraIcon } from '@heroicons/vue/outline'
+import { VideoCameraIcon } from '@heroicons/vue/24/outline'
 import useStore from '~/composables/useStore'
 
 defineOptions({

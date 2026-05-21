@@ -1,5 +1,5 @@
 <template>
-  <div class="rounded-lg bg-gray-100 p-3 text-gray-700">
+  <div class="rounded-lg bg-neutral-100 p-3 text-neutral-700">
     after you have set socr up with your various source directories <br />
     (for example
     <span class="code">desktop</span>, <span class="code">phone</span>, <span class="code">phone recordings</span>, <span class="code">uploads</span>) <br /><br />
@@ -8,7 +8,7 @@
       <li>&mdash; manual upload from UI, where media is added straight to the <span class="code">uploads</span> dir</li>
       <li>&mdash; watching source directories for new media</li>
       <li>&mdash; manually scanning your selected source directories</li>
-      <li class="text-gray-400">&mdash; periodic scans of the folders, coming soon</li>
+      <li class="text-neutral-400">&mdash; periodic scans of the folders, coming soon</li>
     </ul>
     <br />
     as the watcher, by design, will only import new media that is sees, it can sometimes be handy to trigger a manual scan an import. so, if this is a fresh socr installation,
@@ -33,7 +33,7 @@
           </div>
         </td>
       </tr>
-      <tr class="bg-gray-100">
+      <tr class="bg-neutral-100">
         <td class="padded border">progress</td>
         <td class="relative border">
           <div class="absolute inset-0 z-10 bg-blue-300" :style="{ width: progress }" />
@@ -44,13 +44,13 @@
         <td class="padded border">processed</td>
         <td class="padded border">{{ status?.count_processed || 0 }}</td>
       </tr>
-      <tr class="bg-gray-100">
+      <tr class="bg-neutral-100">
         <td class="padded border">total</td>
         <td class="padded border">{{ status?.count_total || 0 }}</td>
       </tr>
     </table>
     <!-- preview window -->
-    <div class="flex min-h-40 items-center justify-center bg-gray-100 bg-contain bg-center bg-no-repeat text-gray-500" :style="previewStyle">
+    <div class="flex min-h-40 items-center justify-center bg-neutral-100 bg-contain bg-center bg-no-repeat text-neutral-500" :style="previewStyle">
       <span v-if="!url">no preview available</span>
     </div>
     <!-- errors -->

@@ -3,11 +3,11 @@
     <ul class="flex">
       <div class="flex flex-1 space-x-6">
         <nav-item :to="{ name: routes.SEARCH }">
-          <template v-slot:icon><search-icon class="h-5" /></template>
+          <template v-slot:icon><magnifying-glass-icon class="h-5" /></template>
           <template v-slot:name>search</template>
         </nav-item>
         <nav-item :to="{ name: routes.IMPORTER }">
-          <template v-slot:icon><document-search-icon class="h-5" /></template>
+          <template v-slot:icon><document-magnifying-glass-icon class="h-5" /></template>
           <template v-slot:name>importer</template>
         </nav-item>
         <nav-item :to="{ name: routes.SETTINGS }">
@@ -17,7 +17,7 @@
       </div>
       <div class="hidden sm:block">
         <nav-item :to="{ name: routes.LOGOUT }">
-          <template v-slot:icon><logout-icon class="h-5" /></template>
+          <template v-slot:icon><arrow-left-on-rectangle-icon class="h-5" /></template>
           <template v-slot:name>logout</template>
         </nav-item>
       </div>
@@ -33,6 +33,6 @@
 <script setup lang="ts">
 import NavItem from './NavItem.vue'
 import ToastOverlay from './ToastOverlay.vue'
-import { SearchIcon, DocumentSearchIcon, CogIcon, LogoutIcon } from '@heroicons/vue/outline'
+import { MagnifyingGlassIcon, DocumentMagnifyingGlassIcon, CogIcon, ArrowLeftOnRectangleIcon } from '@heroicons/vue/24/outline'
 import { routes } from '~/router'
 </script>

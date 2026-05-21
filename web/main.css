@@ -1,44 +1,40 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@plugin 'tailwind-scrollbar';
+
+@source './index.html';
+@source './components/**/*.vue';
+
+@theme {
+  --font-sans: 'Inconsolata', sans-serif;
+}
 
 @layer base {
+  *, ::after, ::before { border-color: var(--color-neutral-200); }
+
   hr   { @apply my-6; }
-  h1   { @apply text-gray-600 text-xl font-medium leading-none; }
-  h2   { @apply text-gray-600 text-lg font-medium leading-none; }
+  h1   { @apply text-neutral-600 text-xl font-medium leading-none; }
+  h2   { @apply text-neutral-600 text-lg font-medium leading-none; }
   a    { @apply leading-none; }
 }
 
 @layer components {
   .padded { @apply py-1 px-4; }
-  .box    { @apply border border-solid border-gray-100 shadow-sm; }
+  .box    { @apply border border-solid border-neutral-100 shadow-sm; }
 
-  .inp       { @apply appearance-none border border-gray-300 rounded py-1 px-4 text-gray-700; }
+  .inp       { @apply appearance-none border border-neutral-300 rounded py-1 px-4 text-neutral-700; }
   .inp:focus { @apply outline-none ring; }
   .inp-error { @apply border-red-500; }
-  .inp-label { @apply block text-gray-700 text-sm font-bold mb-2; }
+  .inp-label { @apply block text-neutral-700 text-sm font-bold mb-2; }
 
   .btn          { @apply block bg-blue-500 text-white py-1 px-4 rounded; }
   .btn:focus    { @apply outline-none ring; }
   .btn:hover    { @apply bg-blue-600; }
   .btn:disabled { @apply opacity-50 cursor-not-allowed; }
 
-  .code { @apply font-mono bg-gray-200 text-gray-700 px-1 rounded; }
+  .code { @apply font-mono bg-neutral-200 text-neutral-700 px-1 rounded; }
 
   .overflow-y-thin { @apply overflow-y-auto scrollbar-thin scrollbar-thumb-blue-200 hover:scrollbar-thumb-blue-300; }
   .overflow-x-thin { @apply overflow-x-auto scrollbar-thin scrollbar-thumb-blue-200 hover:scrollbar-thumb-blue-300; }
-}
-
-@layer utilities {
-  @screen sm { .col-resp { column-count: 1; } }
-  @screen md { .col-resp { column-count: 2; } }
-  @screen lg { .col-resp { column-count: 3; } }
-  @screen xl { .col-resp { column-count: 4; } }
-
-  .max-w-sm { max-width: theme('screens.sm'); }
-  .max-w-md { max-width: theme('screens.md'); }
-  .max-w-lg { max-width: theme('screens.lg'); }
-  .max-w-xl { max-width: theme('screens.xl'); }
 }
 
 @font-face {

@@ -8,13 +8,13 @@
       <search-filter class="lg:col-span-3" label="year" :items="reqYearOptions" v-model:selected="reqYear" />
       <search-filter class="lg:col-span-3" label="month" :items="reqMonthOptions" v-model:selected="reqMonth" :disabled="!reqYear.year" />
     </div>
-    <p v-if="!loading" class="text-right text-gray-500">fetched {{ respTook.toFixed(2) }}ms</p>
+    <p v-if="!loading" class="text-right text-neutral-500">fetched {{ respTook.toFixed(2) }}ms</p>
     <div v-for="(page, i) in respPages" :key="i">
       <div v-show="i !== 0" class="my-6">
-        <span class="text-gray-500"> page {{ i + 1 }}</span>
+        <span class="text-neutral-500"> page {{ i + 1 }}</span>
         <hr class="m-0" />
       </div>
-      <div class="col-resp col-gap-4 space-y-4">
+      <div class="col-gap-4 space-y-4 sm:columns-1 md:columns-2 lg:columns-3 xl:columns-4">
         <media-background v-for="hash in page" :key="hash" :hash="hash" class="max-h-[400px] overflow-hidden shadow-lg">
           <router-link :to="{ name: routes.SEARCH, params: { hash } }" class="block">
             <media-highlight thumb :hash="hash" class="w-full" />
@@ -51,17 +51,17 @@ import useStore from '~/composables/useStore'
 import useInfiniteScroll from '~/composables/useInfiniteScroll'
 import useLoading from '~/composables/useLoading'
 import {
-  SearchIcon,
+  MagnifyingGlassIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   DocumentDuplicateIcon,
   CameraIcon,
   VideoCameraIcon,
-  FolderAddIcon,
+  FolderPlusIcon,
   FolderIcon,
   CalendarIcon,
-  GlobeIcon,
-} from '@heroicons/vue/outline'
+  GlobeAltIcon,
+} from '@heroicons/vue/24/outline'
 import router, { routes } from '~/router'
 
 const store = useStore()
@@ -76,7 +76,7 @@ const reqQueryDebounced = useDebounce(reqQuery, 500)
 const reqPageSize = 25
 
 type Sort = { label: string; icon: Component; field: string; order: SortOrder }
-const reqSortSimilarity: Sort = { label: 'similarity', icon: SearchIcon, field: 'similarity', order: SortOrder.Desc }
+const reqSortSimilarity: Sort = { label: 'similarity', icon: MagnifyingGlassIcon, field: 'similarity', order: SortOrder.Desc }
 const reqSortTimeDesc: Sort = { label: 'time desc', icon: ChevronDownIcon, field: 'timestamp', order: SortOrder.Desc }
 const reqSortTimeAsc: Sort = { label: 'time asc', icon: ChevronUpIcon, field: 'timestamp', order: SortOrder.Asc }
 const reqSortOptionsDefault = [reqSortTimeDesc, reqSortTimeAsc]
@@ -96,7 +96,7 @@ onMounted(async () => {
   for (const d of resp.result)
     reqDirOptions.value.push({
       label: d.directory_alias,
-      icon: d.is_uploads ? FolderAddIcon : FolderIcon,
+      icon: d.is_uploads ? FolderPlusIcon : FolderIcon,
       directory: d.directory_alias,
     })
 })
@@ -119,7 +119,7 @@ for (let i = currentYear; i >= currentYear - 10; i--) {
 }
 
 type Month = { label: string; icon: Component; month?: number }
-const reqMonthAny: Month = { label: `any`, icon: GlobeIcon }
+const reqMonthAny: Month = { label: `any`, icon: GlobeAltIcon }
 const reqMonthOptions = ref([reqMonthAny])
 const reqMonth = ref(reqMonthAny)
 
@@ -181,7 +181,7 @@ const resetSortOptions = () => {
   }
 }
 
-const scroller = useInfiniteScroll(fetchMedias)
+useInfiniteScroll(fetchMedias)
 
 watch([reqSort, reqDir, reqMedia, reqYear, reqMonth, reqQueryDebounced], () => {
   resetParameters()
