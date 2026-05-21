@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -120,7 +121,7 @@ func (s *Server) SocketNotifyScannerUpdate() {
 		for client := range s.socketClientsScanner {
 			if err := client.WriteMessage(websocket.TextMessage, []byte(nil)); err != nil {
 				log.Printf("error writing to socket client: %v", err)
-				client.Close()
+				_ = client.Close()
 				delete(s.socketClientsScanner, client)
 				continue
 			}
@@ -133,7 +134,7 @@ func (s *Server) SocketNotifyMedia() {
 		for client := range s.socketClientsImporter[hash] {
 			if err := client.WriteMessage(websocket.TextMessage, []byte(nil)); err != nil {
 				log.Printf("error writing to socket client: %v", err)
-				client.Close()
+				_ = client.Close()
 				delete(s.socketClientsImporter[hash], client)
 				continue
 			}
@@ -252,7 +253,7 @@ func (s *Server) serveMediaRaw(w http.ResponseWriter, r *http.Request) {
 		resp.Errorf(w, 500, "media has invalid alias %q", row.DirectoryAlias)
 		return
 	}
-	http.ServeFile(w, r, filepath.Join(directory, row.Filename))
+	http.ServeFile(w, r, filepath.Join(directory, row.Filename)) //nolint:gosec
 }
 
 func (s *Server) serveMediaThumb(w http.ResponseWriter, r *http.Request) {
@@ -415,20 +416,19 @@ func (s *Server) serveImportStatus(w http.ResponseWriter, r *http.Request) {
 	resp.Write(w, statusResp)
 }
 
-// used for socket upgrader
-// not checking origin here because currently to become a socket client,
-// you must know the hash of the media, or else provide a token for sensitive info.
-// if there is a problem with this please let me know
+// CheckOrigin is used by the websocket upgrader.
+// We don't check the origin because to become a socket client you must already
+// know the hash of the media, or provide a token for sensitive info.
 func CheckOrigin(r *http.Request) bool {
 	return true
 }
 
-func throttleChan(c <-chan struct{}, min time.Duration, max time.Duration) chan struct{} {
-	ticker := time.NewTicker(max)
+func throttleChan(c <-chan struct{}, lo time.Duration, hi time.Duration) chan struct{} {
+	ticker := time.NewTicker(hi)
 	lastUpdate := time.Time{}
 	out := make(chan struct{})
 	update := func() {
-		if time.Since(lastUpdate) < min {
+		if time.Since(lastUpdate) < lo {
 			return
 		}
 		out <- struct{}{}
@@ -485,8 +485,8 @@ func openGraphReplacer(name string, content string, getMeta func(*http.Request) 
 		meta := getMeta(r)
 		replacer := strings.NewReplacer(
 			"[[og:image]]", meta.link,
-			"[[og:image:width]]", fmt.Sprint(meta.width),
-			"[[og:image:height]]", fmt.Sprint(meta.height),
+			"[[og:image:width]]", strconv.Itoa(meta.width),
+			"[[og:image:height]]", strconv.Itoa(meta.height),
 		)
 		replaced := replacer.Replace(content)
 		http.ServeContent(w, r, name, time.Time{}, strings.NewReader(replaced))

@@ -1,6 +1,6 @@
 package directories
 
-// alias -> path
+// Directories maps an alias to its filesystem path.
 type Directories map[string]string
 
 func (d Directories) PathByAlias(alias string) (string, bool) {

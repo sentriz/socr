@@ -111,7 +111,7 @@ func (i *Importer) ImportMediaFromFile(dirAlias, dir, fileName string, modTime t
 	log.Printf("importing new item. alias %q, filename %q", dirAlias, fileName)
 
 	filePath := filepath.Join(dir, fileName)
-	raw, err := os.ReadFile(filePath)
+	raw, err := os.ReadFile(filePath) //nolint:gosec
 	if err != nil {
 		return "", fmt.Errorf("open file: %w", err)
 	}
@@ -132,7 +132,7 @@ func (i *Importer) ImportMediaFromFile(dirAlias, dir, fileName string, modTime t
 
 func (i *Importer) ScanDirectories() error {
 	if i.IsRunning() {
-		return fmt.Errorf("already running")
+		return errors.New("already running")
 	}
 
 	i.updateStatus(func(s *Status) {
@@ -201,6 +201,41 @@ func (i *Importer) StartWorker() {
 	}
 }
 
+func (i *Importer) WatchUpdates() error {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return fmt.Errorf("create watcher: %w", err)
+	}
+	for alias, dir := range i.directories {
+		if alias == i.directoriesUploadsAlias {
+			continue
+		}
+		if err = watcher.Add(dir); err != nil {
+			return fmt.Errorf("add watcher for %q: %w", alias, err)
+		}
+		log.Printf("starting watcher for %q", dir)
+	}
+	for event := range watcher.Events {
+		if event.Op&fsnotify.Create != fsnotify.Create {
+			continue
+		}
+		if strings.HasSuffix(event.Name, ".tmp") {
+			continue
+		}
+		dir := filepath.Dir(event.Name)
+		dirAlias, ok := i.directories.AliasByPath(dir)
+		if !ok {
+			continue
+		}
+		fileName := filepath.Base(event.Name)
+		modTime := time.Now()
+		if _, err := i.ImportMediaFromFile(dirAlias, dir, fileName, modTime); err != nil {
+			log.Printf("error scanning directory item with event %v: %v", event, err)
+		}
+	}
+	return nil
+}
+
 func (i *Importer) updateStatus(f func(*Status)) {
 	i.status.mu.Lock()
 	defer i.status.mu.Unlock()
@@ -227,7 +262,7 @@ func (i *Importer) insertMedia(media imagery.Media, timestamp time.Time) (db.Med
 	}
 
 	propDimensions := media.Image().Bounds().Size()
-	new, err := i.db.CreateMedia(&db.Media{
+	created, err := i.db.CreateMedia(&db.Media{
 		Hash:           media.Hash(),
 		Type:           db.MediaType(media.Type()),
 		MIME:           media.MIME(),
@@ -241,7 +276,7 @@ func (i *Importer) insertMedia(media imagery.Media, timestamp time.Time) (db.Med
 		return 0, false, fmt.Errorf("inserting media: %w", err)
 	}
 
-	return new.ID, false, nil
+	return created.ID, false, nil
 }
 
 func (i *Importer) insertBlocks(id db.MediaID, image image.Image) error {
@@ -345,41 +380,6 @@ func GuessFileCreated(fileName string, modTime time.Time) time.Time {
 
 	// otherwise, fallback to the file's mod time
 	return modTime
-}
-
-func (i *Importer) WatchUpdates() error {
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		return fmt.Errorf("create watcher: %w", err)
-	}
-	for alias, dir := range i.directories {
-		if alias == i.directoriesUploadsAlias {
-			continue
-		}
-		if err = watcher.Add(dir); err != nil {
-			return fmt.Errorf("add watcher for %q: %w", alias, err)
-		}
-		log.Printf("starting watcher for %q", dir)
-	}
-	for event := range watcher.Events {
-		if event.Op&fsnotify.Create != fsnotify.Create {
-			continue
-		}
-		if strings.HasSuffix(event.Name, ".tmp") {
-			continue
-		}
-		dir := filepath.Dir(event.Name)
-		dirAlias, ok := i.directories.AliasByPath(dir)
-		if !ok {
-			continue
-		}
-		fileName := filepath.Base(event.Name)
-		modTime := time.Now()
-		if _, err := i.ImportMediaFromFile(dirAlias, dir, fileName, modTime); err != nil {
-			log.Printf("error scanning directory item with event %v: %v", event, err)
-		}
-	}
-	return nil
 }
 
 type mediaFile struct {

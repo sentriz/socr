@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -27,7 +28,7 @@ func TokenParse(secret, tokenStr string) error {
 	}
 
 	if _, ok := token.Claims.(jwt.MapClaims); !ok || !token.Valid {
-		return fmt.Errorf("unauthorised")
+		return errors.New("unauthorised")
 	}
 
 	return nil

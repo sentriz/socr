@@ -59,19 +59,19 @@ func (s *Server) WithJWTOrAPIKey() func(http.Handler) http.Handler {
 func (s *Server) WithLogging() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			log.Printf("req %q", r.URL)
+			log.Printf("req %q", r.URL) //nolint:gosec
 			next.ServeHTTP(w, r)
 		})
 	}
 }
 
 func checkAPIKey(apiKey string, r *http.Request) bool {
-	header := r.Header.Get("x-api-key")
+	header := r.Header.Get("X-Api-Key")
 	return apiKey != "" && header == apiKey
 }
 
 func checkJWT(hmacSecret string, r *http.Request) bool {
-	header := r.Header.Get("authorization")
+	header := r.Header.Get("Authorization")
 	header = strings.TrimPrefix(header, "bearer ")
 	header = strings.TrimPrefix(header, "Bearer ")
 	return auth.TokenParse(hmacSecret, header) == nil

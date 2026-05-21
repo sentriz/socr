@@ -15,6 +15,8 @@ import (
 )
 
 func TestExtractText(t *testing.T) {
+	t.Parallel()
+
 	if _, err := exec.LookPath("tesseract"); err != nil {
 		t.Skip("tesseract not found in PATH")
 	}
@@ -23,7 +25,7 @@ func TestExtractText(t *testing.T) {
 		"the quick brown fox j",
 		"umps over the lazy dog",
 		"hello world",
-		"hello hello",
+		"hello",
 	}
 
 	img := renderLines(t, lines)

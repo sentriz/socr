@@ -1,5 +1,0 @@
-FROM golang:1.25
-WORKDIR /src
-
-RUN apt-get update -qq
-RUN apt-get install -y -qq ffmpeg tesseract-ocr tesseract-ocr-eng

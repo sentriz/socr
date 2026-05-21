@@ -1,4 +1,3 @@
-version: "3"
 networks:
   internal: null
   reverse_proxy:

@@ -8,6 +8,8 @@ import (
 )
 
 func TestGuessFileCreated(t *testing.T) {
+	t.Parallel()
+
 	tcases := []struct {
 		filename string
 		stamp    time.Time

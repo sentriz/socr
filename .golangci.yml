@@ -2,80 +2,111 @@ version: "2"
 linters:
   default: none
   enable:
+    - asasalint
     - asciicheck
+    - bidichk
     - bodyclose
-    - cyclop
+    - canonicalheader
+    - containedctx
+    - contextcheck
+    - copyloopvar
+    - decorder
     - dogsled
     - dupl
+    - dupword
     - durationcheck
     - errcheck
+    - errchkjson
+    - errname
     - errorlint
-    - exhaustive
-    - forbidigo
+    - exptostd
+    - fatcontext
     - forcetypeassert
-    - gochecknoglobals
-    - gochecknoinits
-    - gocognit
+    - funcorder
+    - gocheckcompilerdirectives
+    - gochecksumtype
     - goconst
     - gocritic
-    - gocyclo
+    - godot
+    - godox
     - goheader
-    - gomodguard
+    - gomoddirectives
+    - gomodguard_v2
     - goprintffuncname
     - gosec
     - govet
+    - grouper
+    - iface
     - importas
     - ineffassign
+    - interfacebloat
+    - intrange
+    - loggercheck
     - makezero
+    - mirror
     - misspell
+    - musttag
     - nakedret
-    - nestif
     - nilerr
+    - nilnesserr
     - noctx
-    - prealloc
+    - nolintlint
+    - nosprintfhostport
+    - paralleltest
+    - perfsprint
+    - predeclared
+    - promlinter
+    - protogetter
+    - reassign
     - rowserrcheck
+    - spancheck
     - sqlclosecheck
     - staticcheck
-    - testpackage
+    - tagalign
+    - testableexamples
+    - testifylint
     - thelper
     - tparallel
     - unconvert
     - unparam
     - unused
+    - usestdlibvars
+    - usetesting
     - wastedassign
     - whitespace
-  exclusions:
-    generated: lax
-    presets:
-      - comments
-      - common-false-positives
-      - legacy
-      - std-error-handling
-    rules:
-      - linters:
-          - revive
-        text: should have comment
-      - linters:
-          - revive
-        text: comment on exported
-      - linters:
-          - staticcheck
-        text: at least one file in a package should have a package comment
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
   settings:
+    staticcheck:
+      checks:
+        - all
+        - "-QF1008"
+        - "-ST1000"
+    gocritic:
+      disabled-checks:
+        - unlambda
+        - appendAssign
     gosec:
       excludes:
-        - G115
+        - G104 # errors unhandled
+        - G115 # integer overflow conversion
+        - G704 # SSRF via taint analysis - HTTP clients hit user-configured endpoints
+        - G705 # XSS via taint analysis - we don't render untrusted strings as HTML
+    errcheck:
+      exclude-functions:
+        - fmt.Fprintf
+        - os.Setenv
+        - (io.Closer).Close
+        - (*os.File).Close
+        - (*database/sql.DB).Close
+        - (*net/http.ResponseController).Flush
+        - (*bufio.Writer).Flush
+        - (*flag.FlagSet).Parse # have flag.ExitOnError
+  exclusions:
+    rules:
+      - path: '(.+)_test\.go'
+        linters:
+          - gosec
+          - goconst
 formatters:
   enable:
     - gofmt
     - goimports
-  exclusions:
-    generated: lax
-    paths:
-      - third_party$
-      - builtin$
-      - examples$

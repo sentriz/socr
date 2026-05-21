@@ -1,3 +1,0 @@
-FROM node:19-buster-slim
-WORKDIR /src
-CMD [ "sh", "-c", "npm install && npm run-script dev" ]

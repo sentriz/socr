@@ -54,7 +54,7 @@ func main() {
 
 	const numImportWorkers = 1
 	importr := importer.New(dbc, png.Encode, "image/png", confDirs, confUploadsAlias, uint(confThumbnailWidth))
-	for i := 0; i < numImportWorkers; i++ {
+	for i := range numImportWorkers {
 		log.Printf("starting import worker %d", i+1)
 		go importr.StartWorker()
 	}

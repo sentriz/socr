@@ -43,7 +43,7 @@ type BoundingBox struct {
 }
 
 func ExtractText(img []byte) ([]BoundingBox, error) {
-	cmd := exec.Command("tesseract", "stdin", "stdout", "--psm", "1", "tsv") //nolint:gosec,noctx
+	cmd := exec.Command("tesseract", "stdin", "stdout", "--psm", "1", "tsv") //nolint:noctx
 	cmd.Stdin = bytes.NewReader(img)
 
 	var stdout, stderr bytes.Buffer
@@ -153,8 +153,8 @@ func ScaleDownRect(rect image.Rectangle) image.Rectangle {
 func GreyScale(img image.Image) *image.Gray {
 	bounds := img.Bounds()
 	gray := image.NewGray(bounds)
-	for x := 0; x < bounds.Max.X; x++ {
-		for y := 0; y < bounds.Max.Y; y++ {
+	for x := range bounds.Max.X {
+		for y := range bounds.Max.Y {
 			gray.Set(x, y, img.At(x, y))
 		}
 	}
@@ -185,7 +185,7 @@ func VideoThumbnail(data []byte) (image.Image, error) {
 		return nil, fmt.Errorf("write video to tmp: %w", err)
 	}
 	tmp.Close()
-	defer os.Remove(tmp.Name())
+	defer func() { _ = os.Remove(tmp.Name()) }()
 
 	cmd := exec.Command("ffmpeg", "-i", tmp.Name(), "-vframes", "1", "-f", "image2pipe", "-") //nolint:gosec,noctx
 
