@@ -1,16 +1,15 @@
-//nolint:gochecknoglobals
 package main
 
 import (
+	"flag"
+	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"path/filepath"
-	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
+	"go.senan.xyz/flagconf"
 	"go.senan.xyz/socr"
 	"go.senan.xyz/socr/db"
 	"go.senan.xyz/socr/directories"
@@ -22,27 +21,52 @@ import (
 	"image/png"
 )
 
-var (
-	confListenAddr     = mustEnv("SOCR_LISTEN_ADDR")
-	confDBDSN          = mustEnv("SOCR_DB_DSN")
-	confHMACSecret     = mustEnv("SOCR_HMAC_SECRET")
-	confLoginUsername  = mustEnv("SOCR_LOGIN_USERNAME")
-	confLoginPassword  = mustEnv("SOCR_LOGIN_PASSWORD")
-	confAPIKey         = mustEnv("SOCR_API_KEY")
-	confDirs           = envDirs("SOCR_DIR_")
-	confUploadsAlias   = envOr("SOCR_UPLOADS_DIR_ALIAS", "uploads")
-	confThumbnailWidth = envOrInt("SOCR_THUMBNAIL_WIDTH", 315)
-)
-
 func main() {
-	if _, ok := confDirs[confUploadsAlias]; !ok {
+	confListenAddr := flag.String("listen-addr", "", "address to listen on")
+	confDBDSN := flag.String("db-dsn", "", "postgres connection string")
+	confHMACSecret := flag.String("hmac-secret", "", "secret used to sign tokens")
+	confLoginUsername := flag.String("login-username", "", "login username")
+	confLoginPassword := flag.String("login-password", "", "login password")
+	confAPIKey := flag.String("api-key", "", "api key")
+	confUploadsAlias := flag.String("uploads-dir-alias", "uploads", "alias of the uploads directory")
+	confThumbnailWidth := flag.Uint("thumbnail-width", 315, "thumbnail width in pixels")
+
+	var confDirs = dirsFlag{}
+	flag.Var(&confDirs, "dir", "directory in the form alias=path (repeatable)")
+
+	confConfigPath := flag.String("config-path", "", "path to config file")
+
+	flag.Parse()
+	flagconf.ParseEnv()
+	flagconf.ParseConfig(*confConfigPath)
+
+	if *confListenAddr == "" {
+		log.Fatalf("please provide a listen-addr")
+	}
+	if *confDBDSN == "" {
+		log.Fatalf("please provide a db-dsn")
+	}
+	if *confHMACSecret == "" {
+		log.Fatalf("please provide a hmac-secret")
+	}
+	if *confLoginUsername == "" {
+		log.Fatalf("please provide a login-username")
+	}
+	if *confLoginPassword == "" {
+		log.Fatalf("please provide a login-password")
+	}
+	if *confAPIKey == "" {
+		log.Fatalf("please provide a api-key")
+	}
+
+	if _, ok := confDirs[*confUploadsAlias]; !ok {
 		log.Fatalf("please provide an uploads directory")
 	}
 	for alias, path := range confDirs {
 		log.Printf("using directory alias %q path %q", alias, path)
 	}
 
-	dbc, err := db.New(confDBDSN)
+	dbc, err := db.New(*confDBDSN)
 	if err != nil {
 		log.Panicf("error creating database: %v", err)
 	}
@@ -53,7 +77,7 @@ func main() {
 	}
 
 	const numImportWorkers = 1
-	importr := importer.New(dbc, png.Encode, "image/png", confDirs, confUploadsAlias, uint(confThumbnailWidth))
+	importr := importer.New(dbc, png.Encode, "image/png", directories.Directories(confDirs), *confUploadsAlias, *confThumbnailWidth)
 	for i := range numImportWorkers {
 		log.Printf("starting import worker %d", i+1)
 		go importr.StartWorker()
@@ -64,13 +88,13 @@ func main() {
 		}
 	}()
 
-	servr := server.New(dbc, importr, confDirs, confUploadsAlias, confHMACSecret, confLoginUsername, confLoginPassword, confAPIKey)
+	servr := server.New(dbc, importr, directories.Directories(confDirs), *confUploadsAlias, *confHMACSecret, *confLoginUsername, *confLoginPassword, *confAPIKey)
 	go servr.SocketNotifyScannerUpdate()
 	go servr.SocketNotifyMedia()
 
 	router := servr.Router()
 	server := http.Server{
-		Addr:              confListenAddr,
+		Addr:              *confListenAddr,
 		Handler:           router,
 		ReadTimeout:       10 * time.Second,
 		ReadHeaderTimeout: 5 * time.Second,
@@ -79,50 +103,30 @@ func main() {
 	}
 
 	log.Printf("starting socr %s", socr.Version)
-	log.Printf("listening on %q", confListenAddr)
-	log.Printf("starting server: %v", server.ListenAndServe())
+	log.Printf("listening on %q", *confListenAddr)
+	log.Printf("starting server %v", server.ListenAndServe())
 }
 
-func mustEnv(key string) string {
-	if v, ok := os.LookupEnv(key); ok {
-		return v
+type dirsFlag directories.Directories
+
+func (d dirsFlag) String() string {
+	var parts []string
+	for alias, path := range d {
+		parts = append(parts, alias+"="+path)
 	}
-	log.Fatalf("please provide a %q", key)
-	return ""
+	return strings.Join(parts, ", ")
 }
 
-func envOr(key string, or string) string {
-	if v, ok := os.LookupEnv(key); ok {
-		return v
+func (d dirsFlag) Set(v string) error {
+	alias, path, ok := strings.Cut(v, "=")
+	if !ok {
+		return fmt.Errorf("expected alias=path, got %q", v)
 	}
-	return or
-}
-
-func envOrInt(key string, or int) int {
-	if v, ok := os.LookupEnv(key); ok {
-		if i, err := strconv.Atoi(v); err == nil {
-			return i
-		}
+	alias = strings.ToLower(strings.TrimSpace(alias))
+	path = filepath.Clean(strings.TrimSpace(path))
+	if alias == "" || path == "" {
+		return fmt.Errorf("alias and path must be non-empty")
 	}
-	return or
-}
-
-func envDirs(prefix string) directories.Directories {
-	expr := regexp.MustCompile(prefix + `(?P<Alias>[\w_]+)=(?P<Path>.*)`)
-	const (
-		partFull = iota
-		partAlias
-		partPath
-	)
-	dirMap := directories.Directories{}
-	for _, env := range os.Environ() {
-		parts := expr.FindStringSubmatch(env)
-		if len(parts) != 3 {
-			continue
-		}
-		alias := strings.ToLower(parts[partAlias])
-		path := filepath.Clean(parts[partPath])
-		dirMap[alias] = path
-	}
-	return dirMap
+	d[alias] = path
+	return nil
 }

@@ -27,9 +27,7 @@ services:
       - SOCR_API_KEY=bcbdf7753d68d9a1fbb68e25591965fb      # change me
       - SOCR_LOGIN_USERNAME=username                       # change me
       - SOCR_LOGIN_PASSWORD=password                       # change me
-      - SOCR_DIR_EXAMPLE_A=/screenshots/example_a          # change or add more of me
-      - SOCR_DIR_EXAMPLE_B=/screenshots/example_b          # change or add more of me
-      - SOCR_DIR_UPLOADS=/screenshots/uploads
+      - SOCR_DIR=example_a=/screenshots/example_a,example_b=/screenshots/example_b,uploads=/screenshots/uploads
     expose:
       - 80
     labels:
