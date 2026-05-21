@@ -8,7 +8,7 @@
       <li>&mdash; manual upload from UI, where media is added straight to the <span class="code">uploads</span> dir</li>
       <li>&mdash; watching source directories for new media</li>
       <li>&mdash; manually scanning your selected source directories</li>
-      <li class="text-neutral-400">&mdash; periodic scans of the folders, coming soon</li>
+      <li>&mdash; periodic scans of the folders (when <span class="code">scan-interval</span> is set)</li>
     </ul>
     <br />
     as the watcher, by design, will only import new media that is sees, it can sometimes be handy to trigger a manual scan an import. so, if this is a fresh socr installation,

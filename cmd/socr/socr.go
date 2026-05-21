@@ -37,6 +37,7 @@ func main() {
 	confAPIKey := flag.String("api-key", "", "api key")
 	confUploadsAlias := flag.String("uploads-dir-alias", "uploads", "alias of the uploads directory")
 	confThumbnailWidth := flag.Uint("thumbnail-width", 315, "thumbnail width in pixels")
+	confScanInterval := flag.Duration("scan-interval", 0, "interval between periodic scans of source directories")
 
 	var confDirs = dirsFlag{}
 	flag.Var(&confDirs, "dir", "directory in the form alias=path (repeatable)")
@@ -108,6 +109,13 @@ func main() {
 		defer logJob("scan loop")()
 		return importr.RunScanLoop(ctx)
 	})
+
+	if *confScanInterval > 0 {
+		errgrp.Go(func() error {
+			defer logJob("periodic scan", "interval", *confScanInterval)()
+			return importr.RunPeriodicScan(ctx, *confScanInterval)
+		})
+	}
 
 	errgrp.Go(func() error {
 		defer logJob("socket notify scanner update")()

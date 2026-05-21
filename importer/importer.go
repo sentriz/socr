@@ -91,6 +91,19 @@ func (i *Importer) RunScanLoop(ctx context.Context) error {
 	}
 }
 
+func (i *Importer) RunPeriodicScan(ctx context.Context, interval time.Duration) error {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-ticker.C:
+			i.TriggerScan()
+		}
+	}
+}
+
 func (i *Importer) AddNotifyMediaFunc(f NotifyMediaFunc) {
 	i.notifyMediaFuncs = append(i.notifyMediaFuncs, f)
 }
