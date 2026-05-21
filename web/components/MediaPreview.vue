@@ -1,6 +1,6 @@
 <template>
   <media-background v-if="media" :hash="media.hash" class="flex justify-center shadow-inner">
-    <media-highlight :hash="media.hash" class="shadow-sm" v-bind="$attrs" />
+    <media-highlight :hash="media.hash" v-bind="$attrs" />
   </media-background>
   <loading-spinner v-else class="bg-neutral-100" text="processing image" />
 </template>

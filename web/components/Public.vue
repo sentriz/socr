@@ -8,7 +8,7 @@
         </badge-group>
       </div>
     </div>
-    <media-preview :hash="hash" class="max-h-[750px] py-2" />
+    <media-preview :hash="hash" class="max-h-[750px] my-2 shadow-sm" />
     <div v-if="!isVideo" class="container mx-auto p-5">
       <media-lines :hash="hash" />
     </div>
