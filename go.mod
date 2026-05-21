@@ -12,7 +12,6 @@ require (
 	github.com/georgysavva/scany v1.2.3
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/gorilla/handlers v1.5.2
-	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.3
 	github.com/jackc/pgx/v4 v4.18.3
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"net/http"
 	"net/url"
@@ -15,7 +16,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 
 	"go.senan.xyz/socr"
@@ -75,40 +75,28 @@ func New(db *db.DB, importr *importer.Importer, directories directories.Director
 	return servr
 }
 
-func (s *Server) Router() *mux.Router {
-	// begin normal routes
-	r := mux.NewRouter()
-	r.Use(s.WithCORS())
-	r.Use(s.WithLogging())
-	r.HandleFunc("/api/authenticate", s.serveAuthenticate)
-	r.HandleFunc("/api/media/{hash}/raw", s.serveMediaRaw)
-	r.HandleFunc("/api/media/{hash}/thumb", s.serveMediaThumb)
-	r.HandleFunc("/api/media/{hash}", s.serveMedia)
-	r.HandleFunc("/api/websocket", s.serveWebSocket)
+func (s *Server) Router() http.Handler {
+	mux := http.NewServeMux()
 
-	// begin authenticated routes
-	rJWT := r.NewRoute().Subrouter()
-	rJWT.Use(s.WithJWT())
-	rJWT.HandleFunc("/api/ping", s.servePing)
-	rJWT.HandleFunc("/api/start_import", s.serveStartImport)
-	rJWT.HandleFunc("/api/about", s.serveAbout)
-	rJWT.HandleFunc("/api/directories", s.serveDirectories)
-	rJWT.HandleFunc("/api/import_status", s.serveImportStatus)
-	rJWT.HandleFunc("/api/search", s.serveSearch)
+	mux.HandleFunc("/api/authenticate", s.serveAuthenticate)
+	mux.HandleFunc("/api/media/{hash}/raw", s.serveMediaRaw)
+	mux.HandleFunc("/api/media/{hash}/thumb", s.serveMediaThumb)
+	mux.HandleFunc("/api/media/{hash}", s.serveMedia)
+	mux.HandleFunc("/api/websocket", s.serveWebSocket)
 
-	// begin api key routes
-	rAPIKey := r.NewRoute().Subrouter()
-	rAPIKey.Use(s.WithJWTOrAPIKey())
-	rAPIKey.HandleFunc("/api/upload", s.serveUpload)
+	jwt := WithJWT(s.hmacSecret)
+	mux.Handle("/api/ping", jwt(http.HandlerFunc(s.servePing)))
+	mux.Handle("/api/start_import", jwt(http.HandlerFunc(s.serveStartImport)))
+	mux.Handle("/api/about", jwt(http.HandlerFunc(s.serveAbout)))
+	mux.Handle("/api/directories", jwt(http.HandlerFunc(s.serveDirectories)))
+	mux.Handle("/api/import_status", jwt(http.HandlerFunc(s.serveImportStatus)))
+	mux.Handle("/api/search", jwt(http.HandlerFunc(s.serveSearch)))
 
-	// frontend routes
-	dist := http.FileServer(http.FS(web.Dist))
-	r.PathPrefix("/assets/").Handler(dist)
-	r.Handle("/{f}.woff", dist)
-	r.Handle("/{f}.woff2", dist)
-	r.Handle("/favicon.ico", dist)
-	r.Handle("/i/{hash}", openGraphReplacer("index.html", string(web.Index), func(r *http.Request) openGraphContent {
-		media, _ := s.db.GetMediaByHash(r.Context(), mux.Vars(r)["hash"])
+	jwtOrAPIKey := WithJWTOrAPIKey(s.hmacSecret, s.apiKey)
+	mux.Handle("/api/upload", jwtOrAPIKey(http.HandlerFunc(s.serveUpload)))
+
+	mux.Handle("/i/{hash}", openGraphReplacer("index.html", string(web.Index), func(r *http.Request) openGraphContent {
+		media, _ := s.db.GetMediaByHash(r.Context(), r.PathValue("hash"))
 		if media == nil {
 			return openGraphContent{}
 		}
@@ -118,9 +106,25 @@ func (s *Server) Router() *mux.Router {
 			height: media.DimHeight,
 		}
 	}))
-	r.Handle("/", dist)
-	r.NotFoundHandler = http.RedirectHandler("/", http.StatusSeeOther)
-	return r
+
+	dist := http.FileServer(http.FS(web.Dist))
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		p := strings.TrimPrefix(r.URL.Path, "/")
+		if p == "" {
+			dist.ServeHTTP(w, r)
+			return
+		}
+		if _, err := fs.Stat(web.Dist, p); err == nil {
+			dist.ServeHTTP(w, r)
+			return
+		}
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+	})
+
+	var h http.Handler = mux
+	h = WithLogging()(h)
+	h = WithCORS()(h)
+	return h
 }
 
 func (s *Server) SocketNotifyScannerUpdate(ctx context.Context) error {
@@ -246,8 +250,7 @@ func (s *Server) serveDirectories(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) serveMediaRaw(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	hash := vars["hash"]
+	hash := r.PathValue("hash")
 	if hash == "" {
 		resp.Errorf(w, http.StatusBadRequest, "no media hash provided")
 		return
@@ -266,8 +269,7 @@ func (s *Server) serveMediaRaw(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) serveMediaThumb(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	hash := vars["hash"]
+	hash := r.PathValue("hash")
 	if hash == "" {
 		resp.Errorf(w, http.StatusBadRequest, "no media hash provided")
 		return
@@ -281,8 +283,7 @@ func (s *Server) serveMediaThumb(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) serveMedia(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	hash := vars["hash"]
+	hash := r.PathValue("hash")
 	if hash == "" {
 		resp.Errorf(w, http.StatusBadRequest, "no media hash provided")
 		return

@@ -11,7 +11,7 @@ import (
 	"go.senan.xyz/socr/server/resp"
 )
 
-func (s *Server) WithCORS() func(http.Handler) http.Handler {
+func WithCORS() func(http.Handler) http.Handler {
 	return handlers.CORS(
 		handlers.AllowedOrigins([]string{"*"}),
 		handlers.AllowedMethods([]string{"GET", "OPTIONS"}),
@@ -20,10 +20,10 @@ func (s *Server) WithCORS() func(http.Handler) http.Handler {
 	)
 }
 
-func (s *Server) WithJWT() func(http.Handler) http.Handler {
+func WithJWT(hmacSecret string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if checkJWT(s.hmacSecret, r) || checkJWTParam(s.hmacSecret, r) {
+			if checkJWT(hmacSecret, r) || checkJWTParam(hmacSecret, r) {
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -32,10 +32,10 @@ func (s *Server) WithJWT() func(http.Handler) http.Handler {
 	}
 }
 
-func (s *Server) WithAPIKey() func(http.Handler) http.Handler {
+func WithJWTOrAPIKey(hmacSecret, apiKey string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if checkAPIKey(s.apiKey, r) {
+			if checkAPIKey(apiKey, r) || checkJWT(hmacSecret, r) || checkJWTParam(hmacSecret, r) {
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -44,19 +44,7 @@ func (s *Server) WithAPIKey() func(http.Handler) http.Handler {
 	}
 }
 
-func (s *Server) WithJWTOrAPIKey() func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if checkAPIKey(s.apiKey, r) || checkJWT(s.hmacSecret, r) || checkJWTParam(s.hmacSecret, r) {
-				next.ServeHTTP(w, r)
-				return
-			}
-			resp.Errorf(w, http.StatusUnauthorized, "unauthorised")
-		})
-	}
-}
-
-func (s *Server) WithLogging() func(http.Handler) http.Handler {
+func WithLogging() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			log.Printf("req %q", r.URL) //nolint:gosec
