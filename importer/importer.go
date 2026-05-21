@@ -2,6 +2,7 @@ package importer
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"image"
@@ -25,8 +26,8 @@ import (
 
 type EncodeFunc func(io.Writer, image.Image) error
 
-type NotifyMediaFunc func(hash string)
-type NotifyProgressFunc func()
+type NotifyMediaFunc func(ctx context.Context, hash string)
+type NotifyProgressFunc func(ctx context.Context)
 
 type Importer struct {
 	db                      *db.DB
@@ -67,40 +68,40 @@ func (i *Importer) AddNotifyProgressFunc(f NotifyProgressFunc) {
 	i.notifyProgressFuncs = append(i.notifyProgressFuncs, f)
 }
 
-func (i *Importer) ImportMedia(media imagery.Media, dirAlias string, fileName string, timestamp time.Time) error {
-	id, isOld, err := i.insertMedia(media, timestamp)
+func (i *Importer) ImportMedia(ctx context.Context, media imagery.Media, dirAlias string, fileName string, timestamp time.Time) error {
+	id, isOld, err := i.insertMedia(ctx, media, timestamp)
 	if err != nil {
 		return fmt.Errorf("import media with props: %w", err)
 	}
-	if err := i.insertDirInfo(id, dirAlias, fileName); err != nil {
+	if err := i.insertDirInfo(ctx, id, dirAlias, fileName); err != nil {
 		return fmt.Errorf("import dir info: %w", err)
 	}
 	for _, f := range i.notifyMediaFuncs {
-		f(media.Hash())
+		f(ctx, media.Hash())
 	}
 
 	if isOld {
 		return nil
 	}
 
-	if err := i.insertThumbnail(id, media.Image()); err != nil {
+	if err := i.insertThumbnail(ctx, id, media.Image()); err != nil {
 		return fmt.Errorf("import thumbnail: %w", err)
 	}
-	if err := i.insertBlocks(id, media.Image()); err != nil {
+	if err := i.insertBlocks(ctx, id, media.Image()); err != nil {
 		return fmt.Errorf("import blocks: %w", err)
 	}
-	if err := i.db.SetMediaProcessed(id); err != nil {
+	if err := i.db.SetMediaProcessed(ctx, id); err != nil {
 		return fmt.Errorf("set media processed: %w", err)
 	}
 	for _, f := range i.notifyMediaFuncs {
-		f(media.Hash())
+		f(ctx, media.Hash())
 	}
 
 	return nil
 }
 
-func (i *Importer) ImportMediaFromFile(dirAlias, dir, fileName string, modTime time.Time) (string, error) {
-	_, err := i.db.GetDirInfo(dirAlias, fileName)
+func (i *Importer) ImportMediaFromFile(ctx context.Context, dirAlias, dir, fileName string, modTime time.Time) (string, error) {
+	_, err := i.db.GetDirInfo(ctx, dirAlias, fileName)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return "", fmt.Errorf("getting dir info: %w", err)
 	}
@@ -123,26 +124,26 @@ func (i *Importer) ImportMediaFromFile(dirAlias, dir, fileName string, modTime t
 
 	timestamp := GuessFileCreated(fileName, modTime)
 
-	if err := i.ImportMedia(media, dirAlias, fileName, timestamp); err != nil {
+	if err := i.ImportMedia(ctx, media, dirAlias, fileName, timestamp); err != nil {
 		return "", fmt.Errorf("importing media: %w", err)
 	}
 
 	return media.Hash(), nil
 }
 
-func (i *Importer) ScanDirectories() error {
+func (i *Importer) ScanDirectories(ctx context.Context) error {
 	if i.IsRunning() {
 		return errors.New("already running")
 	}
 
-	i.updateStatus(func(s *Status) {
+	i.updateStatus(ctx, func(s *Status) {
 		s.Running = true
 		s.CountTotal = 0
 		s.CountProcessed = 0
 		s.LastHash = ""
 		s.Errors = Errors{}
 	})
-	defer i.updateStatus(func(s *Status) {
+	defer i.updateStatus(ctx, func(s *Status) {
 		s.Running = false
 	})
 
@@ -166,13 +167,17 @@ func (i *Importer) ScanDirectories() error {
 		}
 	}
 
-	i.updateStatus(func(s *Status) {
+	i.updateStatus(ctx, func(s *Status) {
 		s.CountTotal = len(mediaFiles)
 	})
 
 	for idx, mediaFile := range mediaFiles {
-		i.jobs <- mediaFile
-		i.updateStatus(func(s *Status) {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case i.jobs <- mediaFile:
+		}
+		i.updateStatus(ctx, func(s *Status) {
 			s.CountProcessed = idx + 1
 		})
 	}
@@ -191,21 +196,31 @@ func (i *Importer) IsRunning() bool {
 	return i.status.Running
 }
 
-func (i *Importer) StartWorker() {
-	for j := range i.jobs {
-		hash, err := i.ImportMediaFromFile(j.dirAlias, j.dir, j.fileName, j.modTime)
-		i.updateStatus(func(s *Status) {
-			s.LastHash = hash
-			s.AddError(err)
-		})
+func (i *Importer) StartWorker(ctx context.Context) error {
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case j, ok := <-i.jobs:
+			if !ok {
+				return nil
+			}
+			hash, err := i.ImportMediaFromFile(ctx, j.dirAlias, j.dir, j.fileName, j.modTime)
+			i.updateStatus(ctx, func(s *Status) {
+				s.LastHash = hash
+				s.AddError(err)
+			})
+		}
 	}
 }
 
-func (i *Importer) WatchUpdates() error {
+func (i *Importer) WatchUpdates(ctx context.Context) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return fmt.Errorf("create watcher: %w", err)
 	}
+	defer watcher.Close()
+
 	for alias, dir := range i.directories {
 		if alias == i.directoriesUploadsAlias {
 			continue
@@ -215,38 +230,45 @@ func (i *Importer) WatchUpdates() error {
 		}
 		log.Printf("starting watcher for %q", dir)
 	}
-	for event := range watcher.Events {
-		if event.Op&fsnotify.Create != fsnotify.Create {
-			continue
-		}
-		if strings.HasSuffix(event.Name, ".tmp") {
-			continue
-		}
-		dir := filepath.Dir(event.Name)
-		dirAlias, ok := i.directories.AliasByPath(dir)
-		if !ok {
-			continue
-		}
-		fileName := filepath.Base(event.Name)
-		modTime := time.Now()
-		if _, err := i.ImportMediaFromFile(dirAlias, dir, fileName, modTime); err != nil {
-			log.Printf("error scanning directory item with event %v: %v", event, err)
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case event, ok := <-watcher.Events:
+			if !ok {
+				return nil
+			}
+			if event.Op&fsnotify.Create != fsnotify.Create {
+				continue
+			}
+			if strings.HasSuffix(event.Name, ".tmp") {
+				continue
+			}
+			dir := filepath.Dir(event.Name)
+			dirAlias, ok := i.directories.AliasByPath(dir)
+			if !ok {
+				continue
+			}
+			fileName := filepath.Base(event.Name)
+			modTime := time.Now()
+			if _, err := i.ImportMediaFromFile(ctx, dirAlias, dir, fileName, modTime); err != nil {
+				log.Printf("error scanning directory item with event %v: %v", event, err)
+			}
 		}
 	}
-	return nil
 }
 
-func (i *Importer) updateStatus(f func(*Status)) {
+func (i *Importer) updateStatus(ctx context.Context, f func(*Status)) {
 	i.status.mu.Lock()
 	defer i.status.mu.Unlock()
 	f(&i.status)
 	for _, f := range i.notifyProgressFuncs {
-		f()
+		f(ctx)
 	}
 }
 
-func (i *Importer) insertMedia(media imagery.Media, timestamp time.Time) (db.MediaID, bool, error) {
-	old, err := i.db.GetMediaByHash(media.Hash())
+func (i *Importer) insertMedia(ctx context.Context, media imagery.Media, timestamp time.Time) (db.MediaID, bool, error) {
+	old, err := i.db.GetMediaByHash(ctx, media.Hash())
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return 0, false, fmt.Errorf("getting media by hash: %w", err)
 	}
@@ -262,7 +284,7 @@ func (i *Importer) insertMedia(media imagery.Media, timestamp time.Time) (db.Med
 	}
 
 	propDimensions := media.Image().Bounds().Size()
-	created, err := i.db.CreateMedia(&db.Media{
+	created, err := i.db.CreateMedia(ctx, &db.Media{
 		Hash:           media.Hash(),
 		Type:           db.MediaType(media.Type()),
 		MIME:           media.MIME(),
@@ -279,7 +301,7 @@ func (i *Importer) insertMedia(media imagery.Media, timestamp time.Time) (db.Med
 	return created.ID, false, nil
 }
 
-func (i *Importer) insertBlocks(id db.MediaID, image image.Image) error {
+func (i *Importer) insertBlocks(ctx context.Context, id db.MediaID, image image.Image) error {
 	imageGrey := imagery.GreyScale(image)
 	imageBig := imagery.ResizeFactor(imageGrey, imagery.ScaleFactor)
 	imageEncoded := &bytes.Buffer{}
@@ -309,13 +331,13 @@ func (i *Importer) insertBlocks(id db.MediaID, image image.Image) error {
 		})
 	}
 
-	if err := i.db.CreateBlocks(blocks); err != nil {
+	if err := i.db.CreateBlocks(ctx, blocks); err != nil {
 		return fmt.Errorf("inserting blocks: %w", err)
 	}
 	return nil
 }
 
-func (i *Importer) insertThumbnail(id db.MediaID, image image.Image) error {
+func (i *Importer) insertThumbnail(ctx context.Context, id db.MediaID, image image.Image) error {
 	resized := imagery.Resize(image, i.thumbnailWidth, 0)
 	dimensions := resized.Bounds().Size()
 
@@ -332,19 +354,19 @@ func (i *Importer) insertThumbnail(id db.MediaID, image image.Image) error {
 		Timestamp: time.Now(),
 		Data:      data.Bytes(),
 	}
-	if _, err := i.db.CreateThumbnail(thumbnail); err != nil {
+	if _, err := i.db.CreateThumbnail(ctx, thumbnail); err != nil {
 		return fmt.Errorf("insert thumbnail: %w", err)
 	}
 	return nil
 }
 
-func (i *Importer) insertDirInfo(id db.MediaID, dirAlias string, fileName string) error {
+func (i *Importer) insertDirInfo(ctx context.Context, id db.MediaID, dirAlias string, fileName string) error {
 	dirInfo := &db.DirInfo{
 		Filename:       fileName,
 		DirectoryAlias: dirAlias,
 		MediaID:        id,
 	}
-	if _, err := i.db.CreateDirInfo(dirInfo); err != nil {
+	if _, err := i.db.CreateDirInfo(ctx, dirInfo); err != nil {
 		return fmt.Errorf("insert info dir infos: %w", err)
 	}
 	return nil

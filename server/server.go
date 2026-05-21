@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -56,14 +57,20 @@ func New(db *db.DB, importr *importer.Importer, directories directories.Director
 		loginUsername:           loginUsername,
 		loginPassword:           loginPassword,
 		apiKey:                  apkKey,
-		socketMedias:            make(chan string),
-		socketScannerUpdates:    make(chan struct{}),
+		socketMedias:            make(chan string, 1),
+		socketScannerUpdates:    make(chan struct{}, 1),
 	}
-	importr.AddNotifyMediaFunc(func(hash string) {
-		servr.socketMedias <- hash
+	importr.AddNotifyMediaFunc(func(ctx context.Context, hash string) {
+		select {
+		case <-ctx.Done():
+		case servr.socketMedias <- hash:
+		}
 	})
-	importr.AddNotifyProgressFunc(func() {
-		servr.socketScannerUpdates <- struct{}{}
+	importr.AddNotifyProgressFunc(func(ctx context.Context) {
+		select {
+		case <-ctx.Done():
+		case servr.socketScannerUpdates <- struct{}{}:
+		}
 	})
 	return servr
 }
@@ -101,7 +108,7 @@ func (s *Server) Router() *mux.Router {
 	r.Handle("/{f}.woff2", dist)
 	r.Handle("/favicon.ico", dist)
 	r.Handle("/i/{hash}", openGraphReplacer("index.html", string(web.Index), func(r *http.Request) openGraphContent {
-		media, _ := s.db.GetMediaByHash(mux.Vars(r)["hash"])
+		media, _ := s.db.GetMediaByHash(r.Context(), mux.Vars(r)["hash"])
 		if media == nil {
 			return openGraphContent{}
 		}
@@ -116,8 +123,8 @@ func (s *Server) Router() *mux.Router {
 	return r
 }
 
-func (s *Server) SocketNotifyScannerUpdate() {
-	for range throttleChan(s.socketScannerUpdates, 500*time.Millisecond, 2*time.Second) {
+func (s *Server) SocketNotifyScannerUpdate(ctx context.Context) error {
+	for range throttleChan(ctx, s.socketScannerUpdates, 500*time.Millisecond, 2*time.Second) {
 		for client := range s.socketClientsScanner {
 			if err := client.WriteMessage(websocket.TextMessage, []byte(nil)); err != nil {
 				log.Printf("error writing to socket client: %v", err)
@@ -127,16 +134,25 @@ func (s *Server) SocketNotifyScannerUpdate() {
 			}
 		}
 	}
+	return nil
 }
 
-func (s *Server) SocketNotifyMedia() {
-	for hash := range s.socketMedias {
-		for client := range s.socketClientsImporter[hash] {
-			if err := client.WriteMessage(websocket.TextMessage, []byte(nil)); err != nil {
-				log.Printf("error writing to socket client: %v", err)
-				_ = client.Close()
-				delete(s.socketClientsImporter[hash], client)
-				continue
+func (s *Server) SocketNotifyMedia(ctx context.Context) error {
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case hash, ok := <-s.socketMedias:
+			if !ok {
+				return nil
+			}
+			for client := range s.socketClientsImporter[hash] {
+				if err := client.WriteMessage(websocket.TextMessage, []byte(nil)); err != nil {
+					log.Printf("error writing to socket client: %v", err)
+					_ = client.Close()
+					delete(s.socketClientsImporter[hash], client)
+					continue
+				}
 			}
 		}
 	}
@@ -177,9 +193,11 @@ func (s *Server) serveUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// background import uses a context decoupled from the request
 	go func() {
+		ctx := context.Background()
 		timestamp := time.Now()
-		if err := s.importer.ImportMedia(media, s.directoriesUploadsAlias, fileName, timestamp); err != nil {
+		if err := s.importer.ImportMedia(ctx, media, s.directoriesUploadsAlias, fileName, timestamp); err != nil {
 			log.Printf("error processing media %s: %v", media.Hash(), err)
 			return
 		}
@@ -194,7 +212,8 @@ func (s *Server) serveUpload(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) serveStartImport(w http.ResponseWriter, r *http.Request) {
 	go func() {
-		if err := s.importer.ScanDirectories(); err != nil {
+		ctx := context.Background()
+		if err := s.importer.ScanDirectories(ctx); err != nil {
 			log.Printf("error importing: %v", err)
 		}
 	}()
@@ -220,7 +239,7 @@ type DirectoryCount struct {
 }
 
 func (s *Server) serveDirectories(w http.ResponseWriter, r *http.Request) {
-	rawCounts, err := s.db.CountDirectories()
+	rawCounts, err := s.db.CountDirectories(r.Context())
 	if err != nil {
 		resp.Errorf(w, 500, "counting directories by alias: %v", err)
 		return
@@ -243,7 +262,7 @@ func (s *Server) serveMediaRaw(w http.ResponseWriter, r *http.Request) {
 		resp.Errorf(w, http.StatusBadRequest, "no media hash provided")
 		return
 	}
-	row, err := s.db.GetDirInfoByMediaHash(hash)
+	row, err := s.db.GetDirInfoByMediaHash(r.Context(), hash)
 	if err != nil {
 		resp.Errorf(w, http.StatusBadRequest, "requested media not found: %v", err)
 		return
@@ -263,7 +282,7 @@ func (s *Server) serveMediaThumb(w http.ResponseWriter, r *http.Request) {
 		resp.Errorf(w, http.StatusBadRequest, "no media hash provided")
 		return
 	}
-	row, err := s.db.GetThumbnailByMediaHash(hash)
+	row, err := s.db.GetThumbnailByMediaHash(r.Context(), hash)
 	if err != nil {
 		resp.Errorf(w, http.StatusBadRequest, "requested media not found: %v", err)
 		return
@@ -278,7 +297,7 @@ func (s *Server) serveMedia(w http.ResponseWriter, r *http.Request) {
 		resp.Errorf(w, http.StatusBadRequest, "no media hash provided")
 		return
 	}
-	media, err := s.db.GetMediaByHashWithRelations(hash)
+	media, err := s.db.GetMediaByHashWithRelations(r.Context(), hash)
 	if err != nil {
 		resp.Errorf(w, http.StatusBadRequest, "requested media not found: %v", err)
 		return
@@ -308,7 +327,7 @@ func (s *Server) serveSearch(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	start := time.Now()
-	medias, err := s.db.SearchMedias(db.SearchMediasOptions{
+	medias, err := s.db.SearchMedias(r.Context(), db.SearchMediasOptions{
 		Body:      payload.Body,
 		Offset:    payload.Offset,
 		Limit:     payload.Limit,
@@ -423,7 +442,7 @@ func CheckOrigin(r *http.Request) bool {
 	return true
 }
 
-func throttleChan(c <-chan struct{}, lo time.Duration, hi time.Duration) chan struct{} {
+func throttleChan(ctx context.Context, c <-chan struct{}, lo time.Duration, hi time.Duration) chan struct{} {
 	ticker := time.NewTicker(hi)
 	lastUpdate := time.Time{}
 	out := make(chan struct{})
@@ -431,15 +450,25 @@ func throttleChan(c <-chan struct{}, lo time.Duration, hi time.Duration) chan st
 		if time.Since(lastUpdate) < lo {
 			return
 		}
-		out <- struct{}{}
+		select {
+		case <-ctx.Done():
+		case out <- struct{}{}:
+		}
 		lastUpdate = time.Now()
 	}
 	go func() {
+		defer ticker.Stop()
+		defer close(out)
 		for {
 			select {
+			case <-ctx.Done():
+				return
 			case <-ticker.C:
 				update()
-			case <-c:
+			case _, ok := <-c:
+				if !ok {
+					return
+				}
 				update()
 			}
 		}

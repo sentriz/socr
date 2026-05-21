@@ -1,15 +1,22 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"go.senan.xyz/flagconf"
+	"golang.org/x/sync/errgroup"
+
 	"go.senan.xyz/socr"
 	"go.senan.xyz/socr/db"
 	"go.senan.xyz/socr/directories"
@@ -66,45 +73,79 @@ func main() {
 		log.Printf("using directory alias %q path %q", alias, path)
 	}
 
-	dbc, err := db.New(*confDBDSN)
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+
+	dbc, err := db.New(ctx, *confDBDSN)
 	if err != nil {
 		log.Panicf("error creating database: %v", err)
 	}
 	defer dbc.Close()
 
-	if err := dbc.Migrate(); err != nil {
+	if err := dbc.Migrate(ctx); err != nil {
 		log.Panicf("error running migrations: %v", err)
 	}
 
 	const numImportWorkers = 1
 	importr := importer.New(dbc, png.Encode, "image/png", directories.Directories(confDirs), *confUploadsAlias, *confThumbnailWidth)
-	for i := range numImportWorkers {
-		log.Printf("starting import worker %d", i+1)
-		go importr.StartWorker()
-	}
-	go func() {
-		if err := importr.WatchUpdates(); err != nil {
-			log.Printf("error starting watcher: %v", err)
-		}
-	}()
-
 	servr := server.New(dbc, importr, directories.Directories(confDirs), *confUploadsAlias, *confHMACSecret, *confLoginUsername, *confLoginPassword, *confAPIKey)
-	go servr.SocketNotifyScannerUpdate()
-	go servr.SocketNotifyMedia()
 
-	router := servr.Router()
-	server := http.Server{
-		Addr:              *confListenAddr,
-		Handler:           router,
-		ReadTimeout:       10 * time.Second,
-		ReadHeaderTimeout: 5 * time.Second,
-		IdleTimeout:       60 * time.Second,
-		MaxHeaderBytes:    1024 * 64,
+	errgrp, ctx := errgroup.WithContext(ctx)
+
+	for i := range numImportWorkers {
+		errgrp.Go(func() error {
+			defer logJob("import worker", "n", i+1)()
+			return importr.StartWorker(ctx)
+		})
 	}
 
-	log.Printf("starting socr %s", socr.Version)
-	log.Printf("listening on %q", *confListenAddr)
-	log.Printf("starting server %v", server.ListenAndServe())
+	errgrp.Go(func() error {
+		defer logJob("watch updates")()
+		return importr.WatchUpdates(ctx)
+	})
+
+	errgrp.Go(func() error {
+		defer logJob("socket notify scanner update")()
+		return servr.SocketNotifyScannerUpdate(ctx)
+	})
+
+	errgrp.Go(func() error {
+		defer logJob("socket notify media")()
+		return servr.SocketNotifyMedia(ctx)
+	})
+
+	errgrp.Go(func() error {
+		defer logJob("http", "addr", *confListenAddr)()
+
+		httpServer := &http.Server{
+			Addr:              *confListenAddr,
+			Handler:           servr.Router(),
+			ReadTimeout:       10 * time.Second,
+			ReadHeaderTimeout: 5 * time.Second,
+			IdleTimeout:       60 * time.Second,
+			MaxHeaderBytes:    1024 * 64,
+			BaseContext:       func(l net.Listener) context.Context { return ctx },
+		}
+		errgrp.Go(func() error {
+			<-ctx.Done()
+			shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			return httpServer.Shutdown(shutdownCtx)
+		})
+
+		log.Printf("starting socr %s", socr.Version)
+		log.Printf("listening on %q", *confListenAddr)
+		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			return err
+		}
+		return nil
+	})
+
+	if err := errgrp.Wait(); err != nil {
+		log.Panic(err)
+	}
+
+	log.Print("shutdown complete")
 }
 
 type dirsFlag directories.Directories
@@ -129,4 +170,9 @@ func (d dirsFlag) Set(v string) error {
 	}
 	d[alias] = path
 	return nil
+}
+
+func logJob(jobName string, args ...any) func() {
+	log.Printf("starting job %q %v", jobName, args)
+	return func() { log.Printf("stopped job %q", jobName) }
 }

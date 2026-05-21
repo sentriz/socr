@@ -25,8 +25,8 @@ type DB struct {
 	sq.StatementBuilderType
 }
 
-func New(dsn string) (*DB, error) {
-	pool, err := waitConnect(context.Background(), dsn, 500*time.Millisecond, 10)
+func New(ctx context.Context, dsn string) (*DB, error) {
+	pool, err := waitConnect(ctx, dsn, 500*time.Millisecond, 10)
 	if err != nil {
 		return nil, fmt.Errorf("create and connect pool: %w", err)
 	}
@@ -44,32 +44,36 @@ func waitConnect(ctx context.Context, dsn string, interval time.Duration, times 
 		if pool, err = pgxpool.Connect(ctx, dsn); err == nil {
 			return pool, nil
 		}
-		time.Sleep(interval)
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-time.After(interval):
+		}
 	}
 	return nil, fmt.Errorf("failed after %d tries: %w", times, err)
 }
 
-func (db *DB) SchemaVersion() (int, error) {
+func (db *DB) SchemaVersion(ctx context.Context) (int, error) {
 	q := db.
 		Select("version").
 		From("schema_version")
 
 	sql, args, _ := q.ToSql()
 	var result int
-	return result, pgxscan.Get(context.Background(), db, &result, sql, args...)
+	return result, pgxscan.Get(ctx, db, &result, sql, args...)
 }
 
-func (db *DB) SetSchemaVersion(version int) error {
+func (db *DB) SetSchemaVersion(ctx context.Context, version int) error {
 	q := db.
 		Update("schema_version").
 		Set("version", version)
 
 	sql, args, _ := q.ToSql()
-	_, err := db.Exec(context.Background(), sql, args...)
+	_, err := db.Exec(ctx, sql, args...)
 	return err
 }
 
-func (db *DB) Migrate() error {
+func (db *DB) Migrate(ctx context.Context) error {
 	files, err := fs.Glob(migrations, "*/*.sql")
 	if err != nil {
 		return fmt.Errorf("globbing migrations: %w", err)
@@ -80,7 +84,7 @@ func (db *DB) Migrate() error {
 	// select the last version from the db. an err is likely relation
 	// schema_version doesn't exist, meaning the first migration hasn't
 	// run yet. so we can take the zero value to be true
-	versionCurrent, _ := db.SchemaVersion()
+	versionCurrent, _ := db.SchemaVersion(ctx)
 	versionLatest := len(files)
 
 	for i := versionCurrent; i < versionLatest; i++ {
@@ -92,15 +96,15 @@ func (db *DB) Migrate() error {
 		migration, _ := migrations.Open(files[i])
 		migrationBytes, _ := io.ReadAll(migration)
 
-		err := db.BeginFunc(context.Background(), func(tx pgx.Tx) error {
-			_, err := tx.Exec(context.Background(), string(migrationBytes))
+		err := db.BeginFunc(ctx, func(tx pgx.Tx) error {
+			_, err := tx.Exec(ctx, string(migrationBytes))
 			return err
 		})
 		if err != nil {
 			return fmt.Errorf("running %s: %w", infoName, err)
 		}
 
-		if err := db.SetSchemaVersion(i + 1); err != nil {
+		if err := db.SetSchemaVersion(ctx, i+1); err != nil {
 			return fmt.Errorf("updating version: %w", err)
 		}
 	}
@@ -108,7 +112,7 @@ func (db *DB) Migrate() error {
 	return nil
 }
 
-func (db *DB) CreateMedia(media *Media) (*Media, error) {
+func (db *DB) CreateMedia(ctx context.Context, media *Media) (*Media, error) {
 	q := db.
 		Insert("medias").
 		Columns("hash", "type", "mime", "timestamp", "dim_width", "dim_height", "dominant_colour", "blurhash").
@@ -117,7 +121,7 @@ func (db *DB) CreateMedia(media *Media) (*Media, error) {
 
 	sql, args, _ := q.ToSql()
 	var result Media
-	return &result, pgxscan.Get(context.Background(), db, &result, sql, args...)
+	return &result, pgxscan.Get(ctx, db, &result, sql, args...)
 }
 
 type SearchMediasOptions struct {
@@ -132,7 +136,7 @@ type SearchMediasOptions struct {
 	DateTo    time.Time
 }
 
-func (db *DB) GetMediaByID(id int) (*Media, error) {
+func (db *DB) GetMediaByID(ctx context.Context, id int) (*Media, error) {
 	q := db.
 		Select("medias.*").
 		From("medias").
@@ -141,10 +145,10 @@ func (db *DB) GetMediaByID(id int) (*Media, error) {
 
 	sql, args, _ := q.ToSql()
 	var result Media
-	return &result, pgxscan.Get(context.Background(), db, &result, sql, args...)
+	return &result, pgxscan.Get(ctx, db, &result, sql, args...)
 }
 
-func (db *DB) GetMediaByHash(hash string) (*Media, error) {
+func (db *DB) GetMediaByHash(ctx context.Context, hash string) (*Media, error) {
 	q := db.
 		Select("*").
 		From("medias").
@@ -153,10 +157,10 @@ func (db *DB) GetMediaByHash(hash string) (*Media, error) {
 
 	sql, args, _ := q.ToSql()
 	var result Media
-	return &result, pgxscan.Get(context.Background(), db, &result, sql, args...)
+	return &result, pgxscan.Get(ctx, db, &result, sql, args...)
 }
 
-func (db *DB) GetMediaByHashWithRelations(hash string) (*Media, error) {
+func (db *DB) GetMediaByHashWithRelations(ctx context.Context, hash string) (*Media, error) {
 	colAggBlocks := db.
 		Select("json_agg(blocks order by index)").
 		From("blocks").
@@ -176,10 +180,10 @@ func (db *DB) GetMediaByHashWithRelations(hash string) (*Media, error) {
 
 	sql, args, _ := q.ToSql()
 	var result Media
-	return &result, pgxscan.Get(context.Background(), db, &result, sql, args...)
+	return &result, pgxscan.Get(ctx, db, &result, sql, args...)
 }
 
-func (db *DB) SearchMedias(options SearchMediasOptions) ([]*Media, error) {
+func (db *DB) SearchMedias(ctx context.Context, options SearchMediasOptions) ([]*Media, error) {
 	if !isSortField(options.SortField) {
 		return nil, fmt.Errorf("invalid sort field %q provided", options.SortField)
 	}
@@ -223,21 +227,21 @@ func (db *DB) SearchMedias(options SearchMediasOptions) ([]*Media, error) {
 
 	sql, args, _ := q.ToSql()
 	var results []*Media
-	return results, pgxscan.Select(context.Background(), db, &results, sql, args...)
+	return results, pgxscan.Select(ctx, db, &results, sql, args...)
 }
 
-func (db *DB) SetMediaProcessed(id MediaID) error {
+func (db *DB) SetMediaProcessed(ctx context.Context, id MediaID) error {
 	q := db.
 		Update("medias").
 		Where(sq.Eq{"id": id}).
 		Set("processed", true)
 
 	sql, args, _ := q.ToSql()
-	_, err := db.Exec(context.Background(), sql, args...)
+	_, err := db.Exec(ctx, sql, args...)
 	return err
 }
 
-func (db *DB) CreateBlocks(blocks []*Block) error {
+func (db *DB) CreateBlocks(ctx context.Context, blocks []*Block) error {
 	if len(blocks) == 0 {
 		return nil
 	}
@@ -250,11 +254,11 @@ func (db *DB) CreateBlocks(blocks []*Block) error {
 	}
 
 	sql, args, _ := q.ToSql()
-	_, err := db.Exec(context.Background(), sql, args...)
+	_, err := db.Exec(ctx, sql, args...)
 	return err
 }
 
-func (db *DB) CreateDirInfo(dirInfo *DirInfo) (*DirInfo, error) {
+func (db *DB) CreateDirInfo(ctx context.Context, dirInfo *DirInfo) (*DirInfo, error) {
 	q := db.
 		Insert("dir_infos").
 		Columns("media_id", "filename", "directory_alias").
@@ -264,10 +268,10 @@ func (db *DB) CreateDirInfo(dirInfo *DirInfo) (*DirInfo, error) {
 
 	sql, args, _ := q.ToSql()
 	var result DirInfo
-	return &result, pgxscan.Get(context.Background(), db, &result, sql, args...)
+	return &result, pgxscan.Get(ctx, db, &result, sql, args...)
 }
 
-func (db *DB) CreateThumbnail(thumbnail *Thumbnail) (*Thumbnail, error) {
+func (db *DB) CreateThumbnail(ctx context.Context, thumbnail *Thumbnail) (*Thumbnail, error) {
 	q := db.
 		Insert("thumbnails").
 		Columns("media_id", "mime", "dim_width", "dim_height", "timestamp", "data").
@@ -276,10 +280,10 @@ func (db *DB) CreateThumbnail(thumbnail *Thumbnail) (*Thumbnail, error) {
 
 	sql, args, _ := q.ToSql()
 	var result Thumbnail
-	return &result, pgxscan.Get(context.Background(), db, &result, sql, args...)
+	return &result, pgxscan.Get(ctx, db, &result, sql, args...)
 }
 
-func (db *DB) GetDirInfo(directoryAlias string, filename string) (*DirInfo, error) {
+func (db *DB) GetDirInfo(ctx context.Context, directoryAlias string, filename string) (*DirInfo, error) {
 	q := db.
 		Select("*").
 		From("dir_infos").
@@ -291,10 +295,10 @@ func (db *DB) GetDirInfo(directoryAlias string, filename string) (*DirInfo, erro
 
 	sql, args, _ := q.ToSql()
 	var result DirInfo
-	return &result, pgxscan.Get(context.Background(), db, &result, sql, args...)
+	return &result, pgxscan.Get(ctx, db, &result, sql, args...)
 }
 
-func (db *DB) GetDirInfoByMediaHash(hash string) (*DirInfo, error) {
+func (db *DB) GetDirInfoByMediaHash(ctx context.Context, hash string) (*DirInfo, error) {
 	q := db.
 		Select("dir_infos.*").
 		From("dir_infos").
@@ -304,10 +308,10 @@ func (db *DB) GetDirInfoByMediaHash(hash string) (*DirInfo, error) {
 
 	sql, args, _ := q.ToSql()
 	var result DirInfo
-	return &result, pgxscan.Get(context.Background(), db, &result, sql, args...)
+	return &result, pgxscan.Get(ctx, db, &result, sql, args...)
 }
 
-func (db *DB) GetThumbnailByMediaHash(hash string) (*Thumbnail, error) {
+func (db *DB) GetThumbnailByMediaHash(ctx context.Context, hash string) (*Thumbnail, error) {
 	q := db.
 		Select("thumbnails.*").
 		From("thumbnails").
@@ -317,10 +321,10 @@ func (db *DB) GetThumbnailByMediaHash(hash string) (*Thumbnail, error) {
 
 	sql, args, _ := q.ToSql()
 	var result Thumbnail
-	return &result, pgxscan.Get(context.Background(), db, &result, sql, args...)
+	return &result, pgxscan.Get(ctx, db, &result, sql, args...)
 }
 
-func (db *DB) CountDirectories() ([]*DirectoryCount, error) {
+func (db *DB) CountDirectories(ctx context.Context) ([]*DirectoryCount, error) {
 	q := db.
 		Select(
 			"directory_alias",
@@ -331,7 +335,7 @@ func (db *DB) CountDirectories() ([]*DirectoryCount, error) {
 
 	sql, args, _ := q.ToSql()
 	var result []*DirectoryCount
-	return result, pgxscan.Select(context.Background(), db, &result, sql, args...)
+	return result, pgxscan.Select(ctx, db, &result, sql, args...)
 }
 
 func isSortField(f string) bool {
