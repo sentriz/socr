@@ -193,15 +193,10 @@ func (s *Server) serveUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// background import uses a context decoupled from the request
-	go func() {
-		ctx := context.Background()
-		timestamp := time.Now()
-		if err := s.importer.ImportMedia(ctx, media, s.directoriesUploadsAlias, fileName, timestamp); err != nil {
-			log.Printf("error processing media %s: %v", media.Hash(), err)
-			return
-		}
-	}()
+	if err := s.importer.EnqueueFile(r.Context(), s.directoriesUploadsAlias, uploadsDir, fileName, time.Now()); err != nil {
+		resp.Errorf(w, http.StatusInternalServerError, "enqueue upload: %v", err)
+		return
+	}
 
 	resp.Write(w, struct {
 		ID string `json:"id"`
@@ -211,12 +206,7 @@ func (s *Server) serveUpload(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) serveStartImport(w http.ResponseWriter, r *http.Request) {
-	go func() {
-		ctx := context.Background()
-		if err := s.importer.ScanDirectories(ctx); err != nil {
-			log.Printf("error importing: %v", err)
-		}
-	}()
+	s.importer.TriggerScan()
 	resp.Write(w, struct{}{})
 }
 

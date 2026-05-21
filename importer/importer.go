@@ -37,8 +37,10 @@ type Importer struct {
 	directoriesUploadsAlias string
 	thumbnailWidth          uint
 
+	statusMu            sync.RWMutex
 	status              Status
 	jobs                chan *mediaFile
+	scanTriggers        chan struct{}
 	notifyMediaFuncs    []NotifyMediaFunc
 	notifyProgressFuncs []NotifyProgressFunc
 }
@@ -55,8 +57,37 @@ func New(
 		directoriesUploadsAlias: directoriesUploadsAlias,
 		thumbnailWidth:          thumbnailWidth,
 
-		status: Status{mu: &sync.RWMutex{}},
-		jobs:   make(chan *mediaFile),
+		jobs:         make(chan *mediaFile),
+		scanTriggers: make(chan struct{}, 1),
+	}
+}
+
+func (i *Importer) TriggerScan() {
+	select {
+	case i.scanTriggers <- struct{}{}:
+	default:
+	}
+}
+
+func (i *Importer) EnqueueFile(ctx context.Context, alias, dir, fileName string, modTime time.Time) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case i.jobs <- &mediaFile{alias, dir, fileName, modTime}:
+		return nil
+	}
+}
+
+func (i *Importer) RunScanLoop(ctx context.Context) error {
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-i.scanTriggers:
+			if err := i.scanDirectories(ctx); err != nil {
+				log.Printf("error scanning directories: %v", err)
+			}
+		}
 	}
 }
 
@@ -68,39 +99,7 @@ func (i *Importer) AddNotifyProgressFunc(f NotifyProgressFunc) {
 	i.notifyProgressFuncs = append(i.notifyProgressFuncs, f)
 }
 
-func (i *Importer) ImportMedia(ctx context.Context, media imagery.Media, dirAlias string, fileName string, timestamp time.Time) error {
-	id, isOld, err := i.insertMedia(ctx, media, timestamp)
-	if err != nil {
-		return fmt.Errorf("import media with props: %w", err)
-	}
-	if err := i.insertDirInfo(ctx, id, dirAlias, fileName); err != nil {
-		return fmt.Errorf("import dir info: %w", err)
-	}
-	for _, f := range i.notifyMediaFuncs {
-		f(ctx, media.Hash())
-	}
-
-	if isOld {
-		return nil
-	}
-
-	if err := i.insertThumbnail(ctx, id, media.Image()); err != nil {
-		return fmt.Errorf("import thumbnail: %w", err)
-	}
-	if err := i.insertBlocks(ctx, id, media.Image()); err != nil {
-		return fmt.Errorf("import blocks: %w", err)
-	}
-	if err := i.db.SetMediaProcessed(ctx, id); err != nil {
-		return fmt.Errorf("set media processed: %w", err)
-	}
-	for _, f := range i.notifyMediaFuncs {
-		f(ctx, media.Hash())
-	}
-
-	return nil
-}
-
-func (i *Importer) ImportMediaFromFile(ctx context.Context, dirAlias, dir, fileName string, modTime time.Time) (string, error) {
+func (i *Importer) importMediaFromFile(ctx context.Context, dirAlias, dir, fileName string, modTime time.Time) (string, error) {
 	_, err := i.db.GetDirInfo(ctx, dirAlias, fileName)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return "", fmt.Errorf("getting dir info: %w", err)
@@ -124,18 +123,38 @@ func (i *Importer) ImportMediaFromFile(ctx context.Context, dirAlias, dir, fileN
 
 	timestamp := GuessFileCreated(fileName, modTime)
 
-	if err := i.ImportMedia(ctx, media, dirAlias, fileName, timestamp); err != nil {
-		return "", fmt.Errorf("importing media: %w", err)
+	id, isOld, err := i.insertMedia(ctx, media, timestamp)
+	if err != nil {
+		return "", fmt.Errorf("insert media: %w", err)
+	}
+	if err := i.insertDirInfo(ctx, id, dirAlias, fileName); err != nil {
+		return "", fmt.Errorf("insert dir info: %w", err)
+	}
+	for _, f := range i.notifyMediaFuncs {
+		f(ctx, media.Hash())
+	}
+
+	if isOld {
+		return media.Hash(), nil
+	}
+
+	if err := i.insertThumbnail(ctx, id, media.Image()); err != nil {
+		return "", fmt.Errorf("insert thumbnail: %w", err)
+	}
+	if err := i.insertBlocks(ctx, id, media.Image()); err != nil {
+		return "", fmt.Errorf("insert blocks: %w", err)
+	}
+	if err := i.db.SetMediaProcessed(ctx, id); err != nil {
+		return "", fmt.Errorf("set media processed: %w", err)
+	}
+	for _, f := range i.notifyMediaFuncs {
+		f(ctx, media.Hash())
 	}
 
 	return media.Hash(), nil
 }
 
-func (i *Importer) ScanDirectories(ctx context.Context) error {
-	if i.IsRunning() {
-		return errors.New("already running")
-	}
-
+func (i *Importer) scanDirectories(ctx context.Context) error {
 	i.updateStatus(ctx, func(s *Status) {
 		s.Running = true
 		s.CountTotal = 0
@@ -185,15 +204,9 @@ func (i *Importer) ScanDirectories(ctx context.Context) error {
 }
 
 func (i *Importer) Status() Status {
-	i.status.mu.RLock()
-	defer i.status.mu.RUnlock()
+	i.statusMu.RLock()
+	defer i.statusMu.RUnlock()
 	return i.status
-}
-
-func (i *Importer) IsRunning() bool {
-	i.status.mu.RLock()
-	defer i.status.mu.RUnlock()
-	return i.status.Running
 }
 
 func (i *Importer) StartWorker(ctx context.Context) error {
@@ -205,7 +218,7 @@ func (i *Importer) StartWorker(ctx context.Context) error {
 			if !ok {
 				return nil
 			}
-			hash, err := i.ImportMediaFromFile(ctx, j.dirAlias, j.dir, j.fileName, j.modTime)
+			hash, err := i.importMediaFromFile(ctx, j.dirAlias, j.dir, j.fileName, j.modTime)
 			i.updateStatus(ctx, func(s *Status) {
 				s.LastHash = hash
 				s.AddError(err)
@@ -250,18 +263,17 @@ func (i *Importer) WatchUpdates(ctx context.Context) error {
 				continue
 			}
 			fileName := filepath.Base(event.Name)
-			modTime := time.Now()
-			if _, err := i.ImportMediaFromFile(ctx, dirAlias, dir, fileName, modTime); err != nil {
-				log.Printf("error scanning directory item with event %v: %v", event, err)
+			if err := i.EnqueueFile(ctx, dirAlias, dir, fileName, time.Now()); err != nil {
+				log.Printf("error enqueueing watcher event %v: %v", event, err)
 			}
 		}
 	}
 }
 
 func (i *Importer) updateStatus(ctx context.Context, f func(*Status)) {
-	i.status.mu.Lock()
-	defer i.status.mu.Unlock()
+	i.statusMu.Lock()
 	f(&i.status)
+	i.statusMu.Unlock()
 	for _, f := range i.notifyProgressFuncs {
 		f(ctx)
 	}
@@ -294,6 +306,14 @@ func (i *Importer) insertMedia(ctx context.Context, media imagery.Media, timesta
 		DominantColour: propDominantColour,
 		Blurhash:       propBlurhash,
 	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		// another worker inserted this hash concurrently; treat as already imported
+		existing, err := i.db.GetMediaByHash(ctx, media.Hash())
+		if err != nil {
+			return 0, false, fmt.Errorf("getting raced media: %w", err)
+		}
+		return existing.ID, true, nil
+	}
 	if err != nil {
 		return 0, false, fmt.Errorf("inserting media: %w", err)
 	}
@@ -366,7 +386,7 @@ func (i *Importer) insertDirInfo(ctx context.Context, id db.MediaID, dirAlias st
 		DirectoryAlias: dirAlias,
 		MediaID:        id,
 	}
-	if _, err := i.db.CreateDirInfo(ctx, dirInfo); err != nil {
+	if err := i.db.CreateDirInfo(ctx, dirInfo); err != nil {
 		return fmt.Errorf("insert info dir infos: %w", err)
 	}
 	return nil
@@ -418,7 +438,6 @@ type StatusError struct {
 }
 
 type Status struct {
-	mu             *sync.RWMutex
 	Running        bool
 	CountTotal     int
 	CountProcessed int

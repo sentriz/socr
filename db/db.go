@@ -117,6 +117,7 @@ func (db *DB) CreateMedia(ctx context.Context, media *Media) (*Media, error) {
 		Insert("medias").
 		Columns("hash", "type", "mime", "timestamp", "dim_width", "dim_height", "dominant_colour", "blurhash").
 		Values(media.Hash, media.Type, media.MIME, media.Timestamp, media.DimWidth, media.DimHeight, media.DominantColour, media.Blurhash).
+		Suffix("on conflict (hash) do nothing").
 		Suffix("returning *")
 
 	sql, args, _ := q.ToSql()
@@ -258,17 +259,16 @@ func (db *DB) CreateBlocks(ctx context.Context, blocks []*Block) error {
 	return err
 }
 
-func (db *DB) CreateDirInfo(ctx context.Context, dirInfo *DirInfo) (*DirInfo, error) {
+func (db *DB) CreateDirInfo(ctx context.Context, dirInfo *DirInfo) error {
 	q := db.
 		Insert("dir_infos").
 		Columns("media_id", "filename", "directory_alias").
 		Values(dirInfo.MediaID, dirInfo.Filename, dirInfo.DirectoryAlias).
-		Suffix("on conflict do nothing").
-		Suffix("returning *")
+		Suffix("on conflict do nothing")
 
 	sql, args, _ := q.ToSql()
-	var result DirInfo
-	return &result, pgxscan.Get(ctx, db, &result, sql, args...)
+	_, err := db.Exec(ctx, sql, args...)
+	return err
 }
 
 func (db *DB) CreateThumbnail(ctx context.Context, thumbnail *Thumbnail) (*Thumbnail, error) {

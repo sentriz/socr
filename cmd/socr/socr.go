@@ -86,12 +86,12 @@ func main() {
 		log.Panicf("error running migrations: %v", err)
 	}
 
-	const numImportWorkers = 1
 	importr := importer.New(dbc, png.Encode, "image/png", directories.Directories(confDirs), *confUploadsAlias, *confThumbnailWidth)
 	servr := server.New(dbc, importr, directories.Directories(confDirs), *confUploadsAlias, *confHMACSecret, *confLoginUsername, *confLoginPassword, *confAPIKey)
 
 	errgrp, ctx := errgroup.WithContext(ctx)
 
+	const numImportWorkers = 4
 	for i := range numImportWorkers {
 		errgrp.Go(func() error {
 			defer logJob("import worker", "n", i+1)()
@@ -102,6 +102,11 @@ func main() {
 	errgrp.Go(func() error {
 		defer logJob("watch updates")()
 		return importr.WatchUpdates(ctx)
+	})
+
+	errgrp.Go(func() error {
+		defer logJob("scan loop")()
+		return importr.RunScanLoop(ctx)
 	})
 
 	errgrp.Go(func() error {
