@@ -130,6 +130,7 @@ func (i *Importer) StartWorker(ctx context.Context) error {
 			hash, err := i.importMediaFromFile(ctx, j.dirAlias, j.dir, j.fileName, j.modTime)
 			i.updateStatus(ctx, func(s *Status) {
 				s.LastHash = hash
+				s.CountProcessed++
 				s.AddError(err)
 			})
 		}
@@ -250,7 +251,11 @@ func (i *Importer) scanDirectories(ctx context.Context) error {
 	for alias, dir := range i.directories {
 		files, err := os.ReadDir(dir)
 		if err != nil {
-			return fmt.Errorf("listing dir %q: %w", dir, err)
+			log.Printf("listing dir %q: %v", dir, err)
+			i.updateStatus(ctx, func(s *Status) {
+				s.AddError(fmt.Errorf("listing dir %q: %w", dir, err))
+			})
+			continue
 		}
 		for _, file := range files {
 			if file.IsDir() {
@@ -259,7 +264,11 @@ func (i *Importer) scanDirectories(ctx context.Context) error {
 			fileName := file.Name()
 			info, err := file.Info()
 			if err != nil {
-				return fmt.Errorf("get file info %q: %w", fileName, err)
+				log.Printf("get file info %q: %v", fileName, err)
+				i.updateStatus(ctx, func(s *Status) {
+					s.AddError(fmt.Errorf("get file info %q: %w", fileName, err))
+				})
+				continue
 			}
 			modTime := info.ModTime()
 			mediaFiles = append(mediaFiles, &mediaFile{alias, dir, fileName, modTime})
@@ -270,15 +279,12 @@ func (i *Importer) scanDirectories(ctx context.Context) error {
 		s.CountTotal = len(mediaFiles)
 	})
 
-	for idx, mediaFile := range mediaFiles {
+	for _, mediaFile := range mediaFiles {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		case i.jobs <- mediaFile:
 		}
-		i.updateStatus(ctx, func(s *Status) {
-			s.CountProcessed = idx + 1
-		})
 	}
 	return nil
 }
@@ -467,6 +473,7 @@ func (s *Status) AddError(err error) {
 		Error: err,
 	})
 	if len(s.Errors) > 20 {
-		s.Errors = s.Errors[1:]
+		copy(s.Errors, s.Errors[1:])
+		s.Errors = s.Errors[:len(s.Errors)-1]
 	}
 }
