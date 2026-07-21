@@ -29,7 +29,7 @@ func TestExtractText(t *testing.T) {
 	}
 
 	img := renderLines(t, lines)
-	scaled := ResizeFactor(img, ScaleFactor)
+	scaled, _ := ScaleForOCR(img)
 
 	var buf bytes.Buffer
 	if err := png.Encode(&buf, scaled); err != nil {

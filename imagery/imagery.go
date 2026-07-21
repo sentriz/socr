@@ -46,6 +46,10 @@ func ExtractText(img []byte) ([]BoundingBox, error) {
 	cmd := exec.Command("tesseract", "stdin", "stdout", "--psm", "1", "tsv") //nolint:noctx
 	cmd.Stdin = bytes.NewReader(img)
 
+	// pin each process to one thread; we get parallelism from running many workers, and
+	// tesseract's OpenMP threading otherwise oversubscribes the CPU and thrashes
+	cmd.Env = append(os.Environ(), "OMP_THREAD_LIMIT=1")
+
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -129,24 +133,25 @@ func parseTesseractTSV(r io.Reader) ([]BoundingBox, error) {
 }
 
 const (
-	ScaleFactor = 3
+	ocrScaleFactor = 3
+	ocrMaxEdge     = 3000
 )
 
-func ResizeFactor(img image.Image, factor int) image.Image {
-	return resize.Resize(
-		uint(img.Bounds().Max.X*factor), 0,
-		img, resize.Lanczos3,
-	)
+func ScaleForOCR(img image.Image) (image.Image, float64) {
+	longEdge := max(img.Bounds().Dx(), img.Bounds().Dy())
+	factor := max(1, min(float64(ocrScaleFactor), float64(ocrMaxEdge)/float64(longEdge)))
+	scaled := resize.Resize(uint(float64(img.Bounds().Dx())*factor), 0, img, resize.Lanczos3)
+	return scaled, factor
 }
 
 func Resize(img image.Image, width, height uint) image.Image {
 	return resize.Resize(width, height, img, resize.Lanczos3)
 }
 
-func ScaleDownRect(rect image.Rectangle) image.Rectangle {
+func ScaleDownRect(rect image.Rectangle, factor float64) image.Rectangle {
 	return image.Rectangle{
-		Min: image.Point{X: rect.Min.X / ScaleFactor, Y: rect.Min.Y / ScaleFactor},
-		Max: image.Point{X: rect.Max.X / ScaleFactor, Y: rect.Max.Y / ScaleFactor},
+		Min: image.Point{X: int(float64(rect.Min.X) / factor), Y: int(float64(rect.Min.Y) / factor)},
+		Max: image.Point{X: int(float64(rect.Max.X) / factor), Y: int(float64(rect.Max.Y) / factor)},
 	}
 }
 

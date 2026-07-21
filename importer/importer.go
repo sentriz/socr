@@ -342,9 +342,9 @@ func (i *Importer) insertMedia(ctx context.Context, media imagery.Media, timesta
 
 func (i *Importer) insertBlocks(ctx context.Context, id db.MediaID, image image.Image) error {
 	imageGrey := imagery.GreyScale(image)
-	imageBig := imagery.ResizeFactor(imageGrey, imagery.ScaleFactor)
+	imageScaled, scaleFactor := imagery.ScaleForOCR(imageGrey)
 	imageEncoded := &bytes.Buffer{}
-	if err := i.defaultEncoder(imageEncoded, imageBig); err != nil {
+	if err := i.defaultEncoder(imageEncoded, imageScaled); err != nil {
 		return fmt.Errorf("encode scaled and greyed image: %w", err)
 	}
 	rawBlocks, err := imagery.ExtractText(imageEncoded.Bytes())
@@ -358,7 +358,7 @@ func (i *Importer) insertBlocks(ctx context.Context, id db.MediaID, image image.
 			continue
 		}
 
-		rect := imagery.ScaleDownRect(rawBlock.Box)
+		rect := imagery.ScaleDownRect(rawBlock.Box, scaleFactor)
 		blocks = append(blocks, &db.Block{
 			MediaID: id,
 			Index:   idx,

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"syscall"
 	"time"
@@ -92,7 +93,7 @@ func main() {
 
 	errgrp, ctx := errgroup.WithContext(ctx)
 
-	const numImportWorkers = 4
+	numImportWorkers := runtime.NumCPU()
 	for i := range numImportWorkers {
 		errgrp.Go(func() error {
 			defer logJob("import worker", "n", i+1)()
