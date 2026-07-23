@@ -1,7 +1,7 @@
 <template>
   <div class="flex items-center leading-normal">
     <!-- left -->
-    <router-link :to="{ name: routes.SEARCH }" class="h-6 flex-grow text-xl">
+    <router-link :to="{ name: routes.SEARCH }" class="h-6 grow text-xl">
       <x-mark-icon class="h-full text-neutral-800 hover:text-neutral-600" />
     </router-link>
     <!-- right -->

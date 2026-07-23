@@ -1,6 +1,6 @@
 <template>
   <transition-fade>
-    <div v-if="loading" class="absolute inset-0 z-10 flex items-center justify-center bg-neutral-700 bg-opacity-75 transition-opacity">
+    <div v-if="loading" class="absolute inset-0 z-10 flex items-center justify-center bg-neutral-700/75 transition-opacity">
       <loading-spinner :text="props.text" />
     </div>
   </transition-fade>

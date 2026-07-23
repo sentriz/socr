@@ -4,7 +4,7 @@
     class="flex min-w-0 divide-x divide-neutral-300 whitespace-nowrap rounded border border-neutral-300 bg-white text-neutral-700"
     :class="{ 'pointer-events-none text-neutral-500 contrast-125': disabled }"
   >
-    <div class="padded w-[6.5rem] flex-shrink-0 rounded-l bg-neutral-200 text-right lg:text-left">
+    <div class="padded w-[6.5rem] shrink-0 rounded-l bg-neutral-200 text-right lg:text-left">
       {{ props.label }}
     </div>
     <div class="relative w-full" v-if="props.items.length">

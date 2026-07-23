@@ -19,15 +19,15 @@
 
 @layer components {
   .padded { @apply py-1 px-4; }
-  .box    { @apply border border-solid border-neutral-100 shadow-sm; }
+  .box    { @apply border border-solid border-neutral-100 shadow-xs; }
 
   .inp       { @apply appearance-none border border-neutral-300 rounded py-1 px-4 text-neutral-700; }
-  .inp:focus { @apply outline-none ring; }
+  .inp:focus { @apply outline-hidden ring-3 ring-blue-500/50; }
   .inp-error { @apply border-red-500; }
   .inp-label { @apply block text-neutral-700 text-sm font-bold mb-2; }
 
   .btn          { @apply block bg-blue-500 text-white py-1 px-4 rounded; }
-  .btn:focus    { @apply outline-none ring; }
+  .btn:focus    { @apply outline-hidden ring-3 ring-blue-500/50; }
   .btn:hover    { @apply bg-blue-600; }
   .btn:disabled { @apply opacity-50 cursor-not-allowed; }
 
