@@ -134,7 +134,6 @@ func main() {
 		httpServer := &http.Server{
 			Addr:              *confListenAddr,
 			Handler:           servr.Router(),
-			ReadTimeout:       10 * time.Second,
 			ReadHeaderTimeout: 5 * time.Second,
 			IdleTimeout:       60 * time.Second,
 			MaxHeaderBytes:    1024 * 64,
