@@ -8,7 +8,7 @@ require (
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/cenkalti/dominantcolor v1.0.3
 	github.com/cespare/xxhash v1.1.0
-	github.com/fsnotify/fsnotify v1.9.0
+	github.com/fsnotify/fsnotify v1.10.1
 	github.com/georgysavva/scany v1.2.3
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/gorilla/handlers v1.5.2
@@ -16,8 +16,8 @@ require (
 	github.com/jackc/pgx/v4 v4.18.3
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	go.senan.xyz/flagconf v0.1.11
-	golang.org/x/image v0.37.0
-	golang.org/x/sync v0.20.0
+	golang.org/x/image v0.42.0
+	golang.org/x/sync v0.21.0
 )
 
 require (
@@ -34,5 +34,5 @@ require (
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	golang.org/x/crypto v0.49.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
-	golang.org/x/text v0.35.0 // indirect
+	golang.org/x/text v0.38.0 // indirect
 )
